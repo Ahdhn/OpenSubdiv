@@ -240,6 +240,8 @@ int   g_width,
 // performance
 float g_cpuTime = 0;
 float g_gpuTime = 0;
+float g_vertPerSec = 0;
+float g_alpha= 0.01;
 
 // geometry
 std::vector<float> g_orgPositions,
@@ -390,6 +392,9 @@ updateGeom() {
 
     glBindBuffer(GL_ARRAY_BUFFER, g_vertexBuffer->GetGpuBuffer());
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    /* exponential averaging. vertPerSec is really vert/ms */
+    g_vertPerSec = (1.0-g_alpha)*g_vertPerSec + g_alpha*(g_osdmesh->GetFarMesh()->GetNumVertices() / g_cpuTime);
 }
 
 //-------------------------------------------------------------------------------
@@ -664,6 +669,7 @@ display() {
         drawString(10, 70, "CPU TIME = %.3f ms", g_cpuTime);
         drawString(10, 90, "GPU TIME = %.3f ms", g_gpuTime);
         drawString(10, 110, "SUBDIVISION = %s", g_scheme==kBilinear ? "BILINEAR" : (g_scheme == kLoop ? "LOOP" : "CATMARK"));
+        drawString(10, 130, "AVG VERT/MS = %4.f", g_vertPerSec);
         
         drawString(10, g_height-30, "w:   toggle wireframe");
         drawString(10, g_height-50, "e:   display normal vector");
