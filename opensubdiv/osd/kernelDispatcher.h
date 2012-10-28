@@ -176,6 +176,7 @@ protected:
 
     protected:
         friend class OsdCpuKernelDispatcher;
+        friend class OsdPoskiKernelDispatcher;
         friend class OsdGlslKernelDispatcher;
         friend class OsdCudaKernelDispatcher;
         friend class OsdClKernelDispatcher;
