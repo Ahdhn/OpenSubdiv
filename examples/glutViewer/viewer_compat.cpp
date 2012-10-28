@@ -880,6 +880,10 @@ int main(int argc, char ** argv) {
     OpenSubdiv::OsdClKernelDispatcher::Register();
 #endif
 
+#if OPENSUBDIV_HAS_POSKI
+    OpenSubdiv::OsdPoskiKernelDispatcher::Register();
+#endif
+
 #if OPENSUBDIV_HAS_CUDA
     OpenSubdiv::OsdCudaKernelDispatcher::Register();
 
