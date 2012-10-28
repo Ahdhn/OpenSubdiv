@@ -1,64 +1,7 @@
-//
-//     Copyright (C) Pixar. All rights reserved.
-//
-//     This license governs use of the accompanying software. If you
-//     use the software, you accept this license. If you do not accept
-//     the license, do not use the software.
-//
-//     1. Definitions
-//     The terms "reproduce," "reproduction," "derivative works," and
-//     "distribution" have the same meaning here as under U.S.
-//     copyright law.  A "contribution" is the original software, or
-//     any additions or changes to the software.
-//     A "contributor" is any person or entity that distributes its
-//     contribution under this license.
-//     "Licensed patents" are a contributor's patent claims that read
-//     directly on its contribution.
-//
-//     2. Grant of Rights
-//     (A) Copyright Grant- Subject to the terms of this license,
-//     including the license conditions and limitations in section 3,
-//     each contributor grants you a non-exclusive, worldwide,
-//     royalty-free copyright license to reproduce its contribution,
-//     prepare derivative works of its contribution, and distribute
-//     its contribution or any derivative works that you create.
-//     (B) Patent Grant- Subject to the terms of this license,
-//     including the license conditions and limitations in section 3,
-//     each contributor grants you a non-exclusive, worldwide,
-//     royalty-free license under its licensed patents to make, have
-//     made, use, sell, offer for sale, import, and/or otherwise
-//     dispose of its contribution in the software or derivative works
-//     of the contribution in the software.
-//
-//     3. Conditions and Limitations
-//     (A) No Trademark License- This license does not grant you
-//     rights to use any contributor's name, logo, or trademarks.
-//     (B) If you bring a patent claim against any contributor over
-//     patents that you claim are infringed by the software, your
-//     patent license from such contributor to the software ends
-//     automatically.
-//     (C) If you distribute any portion of the software, you must
-//     retain all copyright, patent, trademark, and attribution
-//     notices that are present in the software.
-//     (D) If you distribute any portion of the software in source
-//     code form, you may do so only under this license by including a
-//     complete copy of this license with your distribution. If you
-//     distribute any portion of the software in compiled or object
-//     code form, you may only do so under a license that complies
-//     with this license.
-//     (E) The software is licensed "as-is." You bear the risk of
-//     using it. The contributors give no express warranties,
-//     guarantees or conditions. You may have additional consumer
-//     rights under your local laws which this license cannot change.
-//     To the extent permitted under your local laws, the contributors
-//     exclude the implied warranties of merchantability, fitness for
-//     a particular purpose and non-infringement.
-//
-
 #include "../version.h"
 #include "../osd/mutex.h"
-#include "../osd/cpuDispatcher.h"
-#include "../osd/cpuKernel.h"
+#include "../osd/poskiDispatcher.h"
+#include "../osd/poskiKernel.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -70,14 +13,14 @@
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
-OsdCpuKernelDispatcher::Table::~Table() {
+OsdPoskiKernelDispatcher::Table::~Table() {
 
     if (ptr)
         free(ptr);
 }
 
 void
-OsdCpuKernelDispatcher::Table::Copy( int size, const void *table ) {
+OsdPoskiKernelDispatcher::Table::Copy( int size, const void *table ) {
 
     if (size > 0) {
         if (ptr)
@@ -87,61 +30,56 @@ OsdCpuKernelDispatcher::Table::Copy( int size, const void *table ) {
     }
 }
 
-OsdCpuKernelDispatcher::OsdCpuKernelDispatcher( int levels, int numOmpThreads )
+OsdPoskiKernelDispatcher::OsdPoskiKernelDispatcher( int levels, int numOmpThreads )
     : OsdKernelDispatcher(levels), _currentVertexBuffer(NULL), _currentVaryingBuffer(NULL), _vdesc(NULL), _numOmpThreads(numOmpThreads) {
     _tables.resize(TABLE_MAX);
 }
 
-OsdCpuKernelDispatcher::~OsdCpuKernelDispatcher() {
+OsdPoskiKernelDispatcher::~OsdPoskiKernelDispatcher() {
 
     if (_vdesc)
         delete _vdesc;
 }
 
-static OsdCpuKernelDispatcher::OsdKernelDispatcher *
+static OsdPoskiKernelDispatcher::OsdKernelDispatcher *
 Create(int levels) {
-    return new OsdCpuKernelDispatcher(levels);
+    return new OsdPoskiKernelDispatcher(levels);
 }
 
 #ifdef OPENSUBDIV_HAS_OPENMP
-static OsdCpuKernelDispatcher::OsdKernelDispatcher *
+static OsdPoskiKernelDispatcher::OsdKernelDispatcher *
 CreateOmp(int levels) {
-    return new OsdCpuKernelDispatcher(levels, omp_get_num_procs());
+    return new OsdPoskiKernelDispatcher(levels, omp_get_num_procs());
 }
 #endif
 
 void
-OsdCpuKernelDispatcher::Register() {
-
-    Factory::GetInstance().Register(Create, kCPU);
-#ifdef OPENSUBDIV_HAS_OPENMP
-    Factory::GetInstance().Register(CreateOmp, kOPENMP);
-#endif
-
+OsdPoskiKernelDispatcher::Register() {
+    Factory::GetInstance().Register(Create, kPOSKI);
 }
 
 void
-OsdCpuKernelDispatcher::OnKernelLaunch() {
+OsdPoskiKernelDispatcher::OnKernelLaunch() {
 #ifdef OPENSUBDIV_HAS_OPENMP
     omp_set_num_threads(_numOmpThreads);
 #endif
 }
 
 void
-OsdCpuKernelDispatcher::CopyTable(int tableIndex, size_t size, const void *ptr) {
+OsdPoskiKernelDispatcher::CopyTable(int tableIndex, size_t size, const void *ptr) {
 
     _tables[tableIndex].Copy((int)size, ptr);
 }
 
 void
-OsdCpuKernelDispatcher::AllocateEditTables(int n) {
+OsdPoskiKernelDispatcher::AllocateEditTables(int n) {
 
     _editTables.resize(n*2);
     _edits.resize(n);
 }
 
 void
-OsdCpuKernelDispatcher::UpdateEditTable(int tableIndex, const FarTable<unsigned int> &offsets, const FarTable<float> &values,
+OsdPoskiKernelDispatcher::UpdateEditTable(int tableIndex, const FarTable<unsigned int> &offsets, const FarTable<float> &values,
                                         int operation, int primVarOffset, int primVarWidth) {
 
     _editTables[tableIndex*2+0].Copy(offsets.GetMemoryUsed(), offsets[0]);
@@ -161,21 +99,21 @@ OsdCpuKernelDispatcher::UpdateEditTable(int tableIndex, const FarTable<unsigned 
 }
 
 OsdVertexBuffer *
-OsdCpuKernelDispatcher::InitializeVertexBuffer(int numElements, int numVertices)
+OsdPoskiKernelDispatcher::InitializeVertexBuffer(int numElements, int numVertices)
 {
-    return new OsdCpuVertexBuffer(numElements, numVertices);
+    return new OsdPoskiVertexBuffer(numElements, numVertices);
 }
 
 void
-OsdCpuKernelDispatcher::BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying) {
+OsdPoskiKernelDispatcher::BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying) {
 
     if (vertex)
-        _currentVertexBuffer = dynamic_cast<OsdCpuVertexBuffer *>(vertex);
+        _currentVertexBuffer = dynamic_cast<OsdPoskiVertexBuffer *>(vertex);
     else
         _currentVertexBuffer = NULL;
 
     if (varying)
-        _currentVaryingBuffer = dynamic_cast<OsdCpuVertexBuffer *>(varying);
+        _currentVaryingBuffer = dynamic_cast<OsdPoskiVertexBuffer *>(varying);
     else
         _currentVaryingBuffer = NULL;
 
@@ -184,7 +122,7 @@ OsdCpuKernelDispatcher::BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffe
 }
 
 void
-OsdCpuKernelDispatcher::UnbindVertexBuffer()
+OsdPoskiKernelDispatcher::UnbindVertexBuffer()
 {
     delete _vdesc;
     _vdesc = NULL;
@@ -194,11 +132,11 @@ OsdCpuKernelDispatcher::UnbindVertexBuffer()
 }
 
 void
-OsdCpuKernelDispatcher::Synchronize() { }
+OsdPoskiKernelDispatcher::Synchronize() { }
 
 
 void
-OsdCpuKernelDispatcher::ApplyBilinearFaceVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
+OsdPoskiKernelDispatcher::ApplyBilinearFaceVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
 
     computeFace(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
                 (int*)_tables[F_IT].ptr + _tableOffsets[F_IT][level-1],
@@ -207,7 +145,7 @@ OsdCpuKernelDispatcher::ApplyBilinearFaceVerticesKernel( FarMesh<OsdVertex> * me
 }
 
 void
-OsdCpuKernelDispatcher::ApplyBilinearEdgeVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
+OsdPoskiKernelDispatcher::ApplyBilinearEdgeVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
 
     computeBilinearEdge(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
                         (int*)_tables[E_IT].ptr + _tableOffsets[E_IT][level-1],
@@ -216,7 +154,7 @@ OsdCpuKernelDispatcher::ApplyBilinearEdgeVerticesKernel( FarMesh<OsdVertex> * me
 }
 
 void
-OsdCpuKernelDispatcher::ApplyBilinearVertexVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
+OsdPoskiKernelDispatcher::ApplyBilinearVertexVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
 
     computeBilinearVertex(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
                           (int*)_tables[V_ITa].ptr + _tableOffsets[V_ITa][level-1],
@@ -224,7 +162,7 @@ OsdCpuKernelDispatcher::ApplyBilinearVertexVerticesKernel( FarMesh<OsdVertex> * 
 }
 
 void
-OsdCpuKernelDispatcher::ApplyCatmarkFaceVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
+OsdPoskiKernelDispatcher::ApplyCatmarkFaceVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
 
     computeFace(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
                 (int*)_tables[F_IT].ptr + _tableOffsets[F_IT][level-1],
@@ -233,7 +171,7 @@ OsdCpuKernelDispatcher::ApplyCatmarkFaceVerticesKernel( FarMesh<OsdVertex> * mes
 }
 
 void
-OsdCpuKernelDispatcher::ApplyCatmarkEdgeVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
+OsdPoskiKernelDispatcher::ApplyCatmarkEdgeVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
 
     computeEdge(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
                 (int*)_tables[E_IT].ptr + _tableOffsets[E_IT][level-1],
@@ -243,7 +181,7 @@ OsdCpuKernelDispatcher::ApplyCatmarkEdgeVerticesKernel( FarMesh<OsdVertex> * mes
 }
 
 void
-OsdCpuKernelDispatcher::ApplyCatmarkVertexVerticesKernelB( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
+OsdPoskiKernelDispatcher::ApplyCatmarkVertexVerticesKernelB( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
 
     computeVertexB(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
                    (int*)_tables[V_ITa].ptr + _tableOffsets[V_ITa][level-1],
@@ -253,7 +191,7 @@ OsdCpuKernelDispatcher::ApplyCatmarkVertexVerticesKernelB( FarMesh<OsdVertex> * 
 }
 
 void
-OsdCpuKernelDispatcher::ApplyCatmarkVertexVerticesKernelA( FarMesh<OsdVertex> * mesh, int offset, bool pass, int level, int start, int end, void * data) const {
+OsdPoskiKernelDispatcher::ApplyCatmarkVertexVerticesKernelA( FarMesh<OsdVertex> * mesh, int offset, bool pass, int level, int start, int end, void * data) const {
 
     computeVertexA(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
                    (int*)_tables[V_ITa].ptr + _tableOffsets[V_ITa][level-1],
@@ -262,7 +200,7 @@ OsdCpuKernelDispatcher::ApplyCatmarkVertexVerticesKernelA( FarMesh<OsdVertex> * 
 }
 
 void
-OsdCpuKernelDispatcher::ApplyLoopEdgeVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
+OsdPoskiKernelDispatcher::ApplyLoopEdgeVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
 
     computeEdge(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
                 (int*)_tables[E_IT].ptr + _tableOffsets[E_IT][level-1],
@@ -272,7 +210,7 @@ OsdCpuKernelDispatcher::ApplyLoopEdgeVerticesKernel( FarMesh<OsdVertex> * mesh, 
 }
 
 void
-OsdCpuKernelDispatcher::ApplyLoopVertexVerticesKernelB( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
+OsdPoskiKernelDispatcher::ApplyLoopVertexVerticesKernelB( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
 
     computeLoopVertexB(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
                        (int*)_tables[V_ITa].ptr + _tableOffsets[V_ITa][level-1],
@@ -282,7 +220,7 @@ OsdCpuKernelDispatcher::ApplyLoopVertexVerticesKernelB( FarMesh<OsdVertex> * mes
 }
 
 void
-OsdCpuKernelDispatcher::ApplyLoopVertexVerticesKernelA( FarMesh<OsdVertex> * mesh, int offset, bool pass, int level, int start, int end, void * data) const {
+OsdPoskiKernelDispatcher::ApplyLoopVertexVerticesKernelA( FarMesh<OsdVertex> * mesh, int offset, bool pass, int level, int start, int end, void * data) const {
 
     computeVertexA(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
                    (int*)_tables[V_ITa].ptr + _tableOffsets[V_ITa][level-1],
@@ -291,7 +229,7 @@ OsdCpuKernelDispatcher::ApplyLoopVertexVerticesKernelA( FarMesh<OsdVertex> * mes
 }
 
 void
-OsdCpuKernelDispatcher::ApplyVertexEdits(FarMesh<OsdVertex> *mesh, int offset, int level, void * clientdata) const {
+OsdPoskiKernelDispatcher::ApplyVertexEdits(FarMesh<OsdVertex> *mesh, int offset, int level, void * clientdata) const {
     for (int i=0; i<(int)_edits.size(); ++i) {
         const VertexEditArrayInfo &info = _edits[i];
 
@@ -310,4 +248,3 @@ OsdCpuKernelDispatcher::ApplyVertexEdits(FarMesh<OsdVertex> *mesh, int offset, i
 } // end namespace OPENSUBDIV_VERSION
 
 } // end namespace OpenSubdiv
-
