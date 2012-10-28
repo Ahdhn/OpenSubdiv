@@ -100,6 +100,7 @@ set(CMAKE_SUPPRESS_REGENERATION TRUE)
 find_package(OpenMP)
 find_package(OpenGL)
 find_package(OpenCL)
+find_package(pOSKI)
 find_package(CUDA)
 find_package(GLUT)
 find_package(PTex)
@@ -149,6 +150,17 @@ else()
         "OpenCL was not found : support for OpenCL parallel compute kernels "
         "will be disabled in Osd.  If you have the OpenCL SDK installed, "
         "please refer to the FindOpenCL.cmake in ${PROJECT_SOURCE_DIR}/cmake.")
+endif()
+
+if(POSKI_FOUND)
+    add_definitions(
+        -DOPENSUBDIV_HAS_POSKI
+    )
+else()
+    message(WARNING
+        "pOSKI was not found : support for pOSKI parallel compute kernels "
+        "will be disabled in Osd.  If you have pOSKI installed, "
+        "please refer to the FindPOSKI.cmake in ${PROJECT_SOURCE_DIR}/cmake.")
 endif()
 
 if(CUDA_FOUND)

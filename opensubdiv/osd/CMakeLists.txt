@@ -89,6 +89,8 @@ set(PRIVATE_HEADER_FILES
 set(PUBLIC_HEADER_FILES
     cpuDispatcher.h
     cpuKernel.h
+    poskiDispatcher.h
+    poskiKernel.h
     elementArrayBuffer.h
     kernelDispatcher.h
     mesh.h
@@ -175,6 +177,23 @@ if ( OPENCL_FOUND )
     )
     list(APPEND PLATFORM_LIBRARIES
         ${OPENCL_LIBRARIES}
+    )
+endif()
+
+#-------------------------------------------------------------------------------
+# pOSKI code & dependencies
+if ( POSKI_FOUND )
+    list(APPEND SOURCE_FILES
+        poskiDispatcher.cpp
+    )
+    list(APPEND PUBLIC_HEADER_FILES
+        poskiDispatcher.h
+    )
+    list(APPEND KERNEL_FILES
+        poskiKernel.cpp
+    )
+    list(APPEND PLATFORM_LIBRARIES
+        ${POSKI_LIBRARIES}
     )
 endif()
 
