@@ -101,19 +101,19 @@ OsdPoskiKernelDispatcher::UpdateEditTable(int tableIndex, const FarTable<unsigne
 OsdVertexBuffer *
 OsdPoskiKernelDispatcher::InitializeVertexBuffer(int numElements, int numVertices)
 {
-    return new OsdPoskiVertexBuffer(numElements, numVertices);
+    return new OsdCpuVertexBuffer(numElements, numVertices);
 }
 
 void
 OsdPoskiKernelDispatcher::BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying) {
 
     if (vertex)
-        _currentVertexBuffer = dynamic_cast<OsdPoskiVertexBuffer *>(vertex);
+        _currentVertexBuffer = dynamic_cast<OsdCpuVertexBuffer *>(vertex);
     else
         _currentVertexBuffer = NULL;
 
     if (varying)
-        _currentVaryingBuffer = dynamic_cast<OsdPoskiVertexBuffer *>(varying);
+        _currentVaryingBuffer = dynamic_cast<OsdCpuVertexBuffer *>(varying);
     else
         _currentVaryingBuffer = NULL;
 

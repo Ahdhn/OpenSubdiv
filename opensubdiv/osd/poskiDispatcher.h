@@ -75,11 +75,11 @@ protected:
         void *ptr;
     };
 
-    float *GetVertexBuffer() const { return _currentVertexBuffer ? _currentVertexBuffer->GetPoskiBuffer() : NULL; }
+    float *GetVertexBuffer() const { return _currentVertexBuffer ? _currentVertexBuffer->GetCpuBuffer() : NULL; }
 
-    float *GetVaryingBuffer() const { return _currentVaryingBuffer ? _currentVaryingBuffer->GetPoskiBuffer() : NULL; }
+    float *GetVaryingBuffer() const { return _currentVaryingBuffer ? _currentVaryingBuffer->GetCpuBuffer() : NULL; }
 
-    OsdPoskiVertexBuffer *_currentVertexBuffer,
+    OsdCpuVertexBuffer *_currentVertexBuffer,
                        *_currentVaryingBuffer;
 
     VertexDescriptor *_vdesc;
