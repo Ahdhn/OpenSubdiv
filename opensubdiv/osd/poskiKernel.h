@@ -2,6 +2,9 @@
 #define OSD_POSKI_KERNEL_H
 
 #include "../version.h"
+
+#include <oski/oski.h>
+
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
