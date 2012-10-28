@@ -82,6 +82,7 @@ public:
                       kCUDA = 2,
                       kGLSL = 3,
                       kCL = 4,
+                      kPOSKI = 5,
                       kMAX };
 
 

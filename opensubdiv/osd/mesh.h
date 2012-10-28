@@ -92,7 +92,7 @@ public:
 
     // Given a valid HbrMesh, create an OsdMesh
     //   - capable of densely refining up to 'level'
-    //   - subdivision kernel one of (kCPU, kOPENMP, kCUDA, kGLSL, kCL)
+    //   - subdivision kernel one of (kCPU, kOPENMP, kCUDA, kGLSL, kCL, kPOSKI)
     //   - optional "remapping" vector that connects Osd and Hbr vertex indices
     //     (for regression)
     bool Create(OsdHbrMesh *hbrMesh, int level, int kernel, std::vector<int> * remap=0);
