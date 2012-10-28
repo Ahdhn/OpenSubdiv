@@ -1,3 +1,6 @@
 
 # ignore stringified kernels
 *.inc
+
+# build directory
+build
