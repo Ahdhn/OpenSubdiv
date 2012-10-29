@@ -29,14 +29,12 @@ struct PoskiVertexDescriptor {
         int s = srcIndex * numVertexElements;
         for (int i = 0; i < numVertexElements; ++i)
             vertex[d++] += vertex[s++] * weight;
-        printf("poski vertex[%d] += vertex[%d] * %f\n", dstIndex, srcIndex, weight);
     }
     void AddVaryingWithWeight(float *varying, int dstIndex, int srcIndex, float weight) const {
         int d = dstIndex * numVaryingElements;
         int s = srcIndex * numVaryingElements;
         for (int i = 0; i < numVaryingElements; ++i)
             varying[d++] += varying[s++] * weight;
-        printf("poski varying[%d] += varying[%d] * %f\n", dstIndex, srcIndex, weight);
     }
 
     void ApplyVertexEditAdd(float *vertex, int primVarOffset, int primVarWidth, int editIndex, const float *editValues) const {
