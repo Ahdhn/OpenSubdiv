@@ -81,6 +81,10 @@
     #include <osd/clDispatcher.h>
 #endif
 
+#ifdef OPENSUBDIV_HAS_POSKI
+    #include <osd/poskiDispatcher.h>
+#endif
+
 #ifdef OPENSUBDIV_HAS_CUDA
     #include <osd/cudaDispatcher.h>
 
@@ -437,6 +441,8 @@ const char *getKernelName(int kernel) {
         return "GLSL";
     else if (kernel == OpenSubdiv::OsdKernelDispatcher::kCL)
         return "OpenCL";
+    else if (kernel == OpenSubdiv::OsdKernelDispatcher::kPOSKI)
+        return "pOSKI";
     return "Unknown";
 }
 

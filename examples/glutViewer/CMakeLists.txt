@@ -64,6 +64,7 @@ set(SHADER_FILES
 set(PLATFORM_LIBRARIES
     ${OSD_LINK_TARGET}
     ${OPENGL_LIBRARY}
+    ${POSKI_LIBRARY}
     ${GLEW_LIBRARY}
     ${GLUT_LIBRARIES}
 )
@@ -73,6 +74,7 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/regression
     ${GLEW_INCLUDE_DIR}
     ${GLUT_INCLUDE_DIR}
+    ${POSKI_INCLUDE_DIR}
 )
 
 #-------------------------------------------------------------------------------
