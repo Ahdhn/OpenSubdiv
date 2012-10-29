@@ -60,6 +60,7 @@
 include_directories(
     ${OPENGL_INCLUDE_DIR}
     ${GLEW_INCLUDE_DIR}
+    ${POSKI_INCLUDE_DIR}
     ${PROJECT_SOURCE_DIR}/opensubdiv
 )
 
@@ -68,6 +69,8 @@ include_directories(
 set(SOURCE_FILES
     cpuDispatcher.cpp
     cpuKernel.cpp
+    poskiDispatcher.cpp
+    poskiKernel.cpp
     elementArrayBuffer.cpp
     kernelDispatcher.cpp
     mesh.cpp
