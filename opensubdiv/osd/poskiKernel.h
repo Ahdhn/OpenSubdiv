@@ -57,23 +57,23 @@ struct VertexDescriptor {
 
 extern "C" {
 
-void computeFace(const VertexDescriptor *vdesc, float * vertex, float * varying, const int *F_IT, const int *F_ITa, int offset, int start, int end);
+void poskiComputeFace(const VertexDescriptor *vdesc, float * vertex, float * varying, const int *F_IT, const int *F_ITa, int offset, int start, int end);
 
-void computeEdge(const VertexDescriptor *vdesc, float *vertex, float * varying, const int *E_IT, const float *E_W, int offset, int start, int end);
+void poskiComputeEdge(const VertexDescriptor *vdesc, float *vertex, float * varying, const int *E_IT, const float *E_W, int offset, int start, int end);
 
-void computeVertexA(const VertexDescriptor *vdesc, float *vertex, float * varying, const int *V_ITa, const float *V_W, int offset, int start, int end, int pass);
+void poskiComputeVertexA(const VertexDescriptor *vdesc, float *vertex, float * varying, const int *V_ITa, const float *V_W, int offset, int start, int end, int pass);
 
-void computeVertexB(const VertexDescriptor *vdesc, float *vertex, float * varying, const int *V_ITa, const int *V_IT, const float *V_W, int offset, int start, int end);
+void poskiComputeVertexB(const VertexDescriptor *vdesc, float *vertex, float * varying, const int *V_ITa, const int *V_IT, const float *V_W, int offset, int start, int end);
 
-void computeLoopVertexB(const VertexDescriptor *vdesc, float *vertex, float * varying, const int *V_ITa, const int *V_IT, const float *V_W, int offset, int start, int end);
+void poskiComputeLoopVertexB(const VertexDescriptor *vdesc, float *vertex, float * varying, const int *V_ITa, const int *V_IT, const float *V_W, int offset, int start, int end);
 
-void computeBilinearEdge(const VertexDescriptor *vdesc, float *vertex, float * varying, const int *E_IT, int offset, int start, int end);
+void poskiComputeBilinearEdge(const VertexDescriptor *vdesc, float *vertex, float * varying, const int *E_IT, int offset, int start, int end);
 
-void computeBilinearVertex(const VertexDescriptor *vdesc, float *vertex, float * varying, const int *V_ITa, int offset, int start, int end);
+void poskiComputeBilinearVertex(const VertexDescriptor *vdesc, float *vertex, float * varying, const int *V_ITa, int offset, int start, int end);
 
-void editVertexAdd(const VertexDescriptor *vdesc, float *vertex, int primVarOffset, int primVarWidth, int count, const int *editIndices, const float *editValues);
+void poskiEditVertexAdd(const VertexDescriptor *vdesc, float *vertex, int primVarOffset, int primVarWidth, int count, const int *editIndices, const float *editValues);
 
-void editVertexSet(const VertexDescriptor *vdesc, float *vertex, int primVarOffset, int primVarWidth, int count, const int *editIndices, const float *editValues);
+void poskiEditVertexSet(const VertexDescriptor *vdesc, float *vertex, int primVarOffset, int primVarWidth, int count, const int *editIndices, const float *editValues);
 
 }
 

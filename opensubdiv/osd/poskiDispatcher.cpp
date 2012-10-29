@@ -138,7 +138,7 @@ OsdPoskiKernelDispatcher::Synchronize() { }
 void
 OsdPoskiKernelDispatcher::ApplyBilinearFaceVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
 
-    computeFace(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
+    poskiComputeFace(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
                 (int*)_tables[F_IT].ptr + _tableOffsets[F_IT][level-1],
                 (int*)_tables[F_ITa].ptr + _tableOffsets[F_ITa][level-1],
                 offset, start, end);
@@ -147,7 +147,7 @@ OsdPoskiKernelDispatcher::ApplyBilinearFaceVerticesKernel( FarMesh<OsdVertex> * 
 void
 OsdPoskiKernelDispatcher::ApplyBilinearEdgeVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
 
-    computeBilinearEdge(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
+    poskiComputeBilinearEdge(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
                         (int*)_tables[E_IT].ptr + _tableOffsets[E_IT][level-1],
                         offset,
                         start, end);
@@ -156,7 +156,7 @@ OsdPoskiKernelDispatcher::ApplyBilinearEdgeVerticesKernel( FarMesh<OsdVertex> * 
 void
 OsdPoskiKernelDispatcher::ApplyBilinearVertexVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
 
-    computeBilinearVertex(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
+    poskiComputeBilinearVertex(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
                           (int*)_tables[V_ITa].ptr + _tableOffsets[V_ITa][level-1],
                           offset, start, end);
 }
@@ -164,7 +164,7 @@ OsdPoskiKernelDispatcher::ApplyBilinearVertexVerticesKernel( FarMesh<OsdVertex> 
 void
 OsdPoskiKernelDispatcher::ApplyCatmarkFaceVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
 
-    computeFace(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
+    poskiComputeFace(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
                 (int*)_tables[F_IT].ptr + _tableOffsets[F_IT][level-1],
                 (int*)_tables[F_ITa].ptr + _tableOffsets[F_ITa][level-1],
                 offset, start, end);
@@ -173,7 +173,7 @@ OsdPoskiKernelDispatcher::ApplyCatmarkFaceVerticesKernel( FarMesh<OsdVertex> * m
 void
 OsdPoskiKernelDispatcher::ApplyCatmarkEdgeVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
 
-    computeEdge(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
+    poskiComputeEdge(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
                 (int*)_tables[E_IT].ptr + _tableOffsets[E_IT][level-1],
                 (float*)_tables[E_W].ptr + _tableOffsets[E_W][level-1],
                 offset,
@@ -183,7 +183,7 @@ OsdPoskiKernelDispatcher::ApplyCatmarkEdgeVerticesKernel( FarMesh<OsdVertex> * m
 void
 OsdPoskiKernelDispatcher::ApplyCatmarkVertexVerticesKernelB( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
 
-    computeVertexB(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
+    poskiComputeVertexB(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
                    (int*)_tables[V_ITa].ptr + _tableOffsets[V_ITa][level-1],
                    (int*)_tables[V_IT].ptr + _tableOffsets[V_IT][level-1],
                    (float*)_tables[V_W].ptr + _tableOffsets[V_W][level-1],
@@ -193,7 +193,7 @@ OsdPoskiKernelDispatcher::ApplyCatmarkVertexVerticesKernelB( FarMesh<OsdVertex> 
 void
 OsdPoskiKernelDispatcher::ApplyCatmarkVertexVerticesKernelA( FarMesh<OsdVertex> * mesh, int offset, bool pass, int level, int start, int end, void * data) const {
 
-    computeVertexA(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
+    poskiComputeVertexA(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
                    (int*)_tables[V_ITa].ptr + _tableOffsets[V_ITa][level-1],
                    (float*)_tables[V_W].ptr + _tableOffsets[V_W][level-1],
                    offset, start, end, pass);
@@ -202,7 +202,7 @@ OsdPoskiKernelDispatcher::ApplyCatmarkVertexVerticesKernelA( FarMesh<OsdVertex> 
 void
 OsdPoskiKernelDispatcher::ApplyLoopEdgeVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
 
-    computeEdge(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
+    poskiComputeEdge(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
                 (int*)_tables[E_IT].ptr + _tableOffsets[E_IT][level-1],
                 (float*)_tables[E_W].ptr + _tableOffsets[E_W][level-1],
                 offset,
@@ -212,7 +212,7 @@ OsdPoskiKernelDispatcher::ApplyLoopEdgeVerticesKernel( FarMesh<OsdVertex> * mesh
 void
 OsdPoskiKernelDispatcher::ApplyLoopVertexVerticesKernelB( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
 
-    computeLoopVertexB(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
+    poskiComputeLoopVertexB(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
                        (int*)_tables[V_ITa].ptr + _tableOffsets[V_ITa][level-1],
                        (int*)_tables[V_IT].ptr + _tableOffsets[V_IT][level-1],
                        (float*)_tables[V_W].ptr + _tableOffsets[V_W][level-1],
@@ -222,7 +222,7 @@ OsdPoskiKernelDispatcher::ApplyLoopVertexVerticesKernelB( FarMesh<OsdVertex> * m
 void
 OsdPoskiKernelDispatcher::ApplyLoopVertexVerticesKernelA( FarMesh<OsdVertex> * mesh, int offset, bool pass, int level, int start, int end, void * data) const {
 
-    computeVertexA(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
+    poskiComputeVertexA(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
                    (int*)_tables[V_ITa].ptr + _tableOffsets[V_ITa][level-1],
                    (float*)_tables[V_W].ptr + _tableOffsets[V_W][level-1],
                    offset, start, end, pass);
@@ -234,11 +234,11 @@ OsdPoskiKernelDispatcher::ApplyVertexEdits(FarMesh<OsdVertex> *mesh, int offset,
         const VertexEditArrayInfo &info = _edits[i];
 
         if (info.operation == FarVertexEdit::Add) {
-            editVertexAdd(_vdesc, GetVertexBuffer(), info.primVarOffset, info.primVarWidth, info.numEdits[level-1],
+            poskiEditVertexAdd(_vdesc, GetVertexBuffer(), info.primVarOffset, info.primVarWidth, info.numEdits[level-1],
                           (int*)_editTables[i*2+0].ptr + info.offsetOffsets[level-1],
                           (float*)_editTables[i*2+1].ptr + info.valueOffsets[level-1]);
         } else if (info.operation == FarVertexEdit::Set) {
-            editVertexSet(_vdesc, GetVertexBuffer(), info.primVarOffset, info.primVarWidth, info.numEdits[level],
+            poskiEditVertexSet(_vdesc, GetVertexBuffer(), info.primVarOffset, info.primVarWidth, info.numEdits[level],
                           (int*)_editTables[i*2+0].ptr + info.offsetOffsets[level],
                           (float*)_editTables[i*2+1].ptr + info.valueOffsets[level]);
         }
