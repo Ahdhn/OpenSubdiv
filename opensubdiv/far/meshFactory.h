@@ -78,7 +78,7 @@ namespace OPENSUBDIV_VERSION {
 
 /// \brief Instantiates a FarMesh from an HbrMesh.
 ///
-/// FarMeshFactory requires a 2 steps process : 
+/// FarMeshFactory requires a 2 steps process :
 /// 1. Instantiate a FarMeshFactory object from an HbrMesh
 /// 2. Call "Create" to obtain the FarMesh instance
 ///
@@ -509,7 +509,7 @@ FarMeshFactory<T,U>::Create( FarDispatcher<U> * dispatch ) {
     } else
         assert(0);
     assert(result->_subdivisionTables);
-    
+
     result->_numCoarseVertices = (int)_vertVertsList[0].size();
 
     // Copy the data of the coarse vertices into the vertex buffer.
@@ -537,7 +537,7 @@ FarMeshFactory<T,U>::Create( FarDispatcher<U> * dispatch ) {
         result->_vertexEditTables = FarVertexEditTablesFactory<T,U>::Create( this, result, _maxlevel );
         assert(result->_vertexEditTables);
     }
-    
+
     return result;
 }
 
