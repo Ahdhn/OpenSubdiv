@@ -72,7 +72,7 @@ template <class U> class FarDispatcher;
 /// \brief Feature Adaptive Mesh class.
 ///
 /// FarMesh is a serialized instantiation of an HbrMesh. The HbrMesh contains
-/// all the topological data in a highly interconnected data structure for 
+/// all the topological data in a highly interconnected data structure for
 /// ease of access and modification. When instantiating a FarMesh, the factory
 /// analyzes this data structure and serializes the topology into a linear
 /// buffers that are ready for efficient parallel processing.
@@ -124,7 +124,7 @@ public:
     void Subdivide(int level=-1);
 
 private:
-    // Note : the vertex classes are renamed <X,Y> so as not to shadow the 
+    // Note : the vertex classes are renamed <X,Y> so as not to shadow the
     // declaration of the templated vertex class U.
     template <class X, class Y> friend class FarMeshFactory;
 
@@ -197,7 +197,7 @@ FarMesh<U>::Subdivide(int maxlevel) {
         maxlevel = std::min(maxlevel, _subdivisionTables->GetMaxLevel());
 
     for (int i=1; i<maxlevel; ++i) {
-        
+
         _subdivisionTables->Apply(i);
 
         if (_vertexEditTables)
