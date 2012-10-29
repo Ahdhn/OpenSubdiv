@@ -10,7 +10,7 @@
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
-void poskiComputeFace( const VertexDescriptor *vdesc, float * vertex, float * varying, const int *F_IT, const int *F_ITa, int offset, int start, int end) {
+void poskiComputeFace( const PoskiVertexDescriptor *vdesc, float * vertex, float * varying, const int *F_IT, const int *F_ITa, int offset, int start, int end) {
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -33,7 +33,7 @@ void poskiComputeFace( const VertexDescriptor *vdesc, float * vertex, float * va
     }
 }
 
-void poskiComputeEdge( const VertexDescriptor *vdesc, float *vertex, float *varying, const int *E_IT, const float *E_W, int offset, int start, int end) {
+void poskiComputeEdge( const PoskiVertexDescriptor *vdesc, float *vertex, float *varying, const int *E_IT, const float *E_W, int offset, int start, int end) {
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -64,7 +64,7 @@ void poskiComputeEdge( const VertexDescriptor *vdesc, float *vertex, float *vary
     }
 }
 
-void poskiComputeVertexA(const VertexDescriptor *vdesc, float *vertex, float *varying, const int *V_ITa, const float *V_W, int offset, int start, int end, int pass) {
+void poskiComputeVertexA(const PoskiVertexDescriptor *vdesc, float *vertex, float *varying, const int *V_ITa, const float *V_W, int offset, int start, int end, int pass) {
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -100,7 +100,7 @@ void poskiComputeVertexA(const VertexDescriptor *vdesc, float *vertex, float *va
     }
 }
 
-void poskiComputeVertexB(const VertexDescriptor *vdesc, float *vertex, float *varying, const int *V_ITa, const int *V_IT, const float *V_W, int offset, int start, int end) {
+void poskiComputeVertexB(const PoskiVertexDescriptor *vdesc, float *vertex, float *varying, const int *V_ITa, const int *V_IT, const float *V_W, int offset, int start, int end) {
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -127,7 +127,7 @@ void poskiComputeVertexB(const VertexDescriptor *vdesc, float *vertex, float *va
     }
 }
 
-void poskiComputeLoopVertexB(const VertexDescriptor *vdesc, float *vertex, float *varying, const int *V_ITa, const int *V_IT, const float *V_W, int offset, int start, int end) {
+void poskiComputeLoopVertexB(const PoskiVertexDescriptor *vdesc, float *vertex, float *varying, const int *V_ITa, const int *V_IT, const float *V_W, int offset, int start, int end) {
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -155,7 +155,7 @@ void poskiComputeLoopVertexB(const VertexDescriptor *vdesc, float *vertex, float
     }
 }
 
-void poskiComputeBilinearEdge(const VertexDescriptor *vdesc, float *vertex, float *varying, const int *E_IT, int offset, int start, int end) {
+void poskiComputeBilinearEdge(const PoskiVertexDescriptor *vdesc, float *vertex, float *varying, const int *E_IT, int offset, int start, int end) {
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -175,7 +175,7 @@ void poskiComputeBilinearEdge(const VertexDescriptor *vdesc, float *vertex, floa
     }
 }
 
-void poskiComputeBilinearVertex(const VertexDescriptor *vdesc, float *vertex, float *varying, const int *V_ITa, int offset, int start, int end) {
+void poskiComputeBilinearVertex(const PoskiVertexDescriptor *vdesc, float *vertex, float *varying, const int *V_ITa, int offset, int start, int end) {
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -191,7 +191,7 @@ void poskiComputeBilinearVertex(const VertexDescriptor *vdesc, float *vertex, fl
     }
 }
 
-void poskiEditVertexAdd(const VertexDescriptor *vdesc, float *vertex, int primVarOffset, int primVarWidth, int vertexCount, const int *editIndices, const float *editValues) {
+void poskiEditVertexAdd(const PoskiVertexDescriptor *vdesc, float *vertex, int primVarOffset, int primVarWidth, int vertexCount, const int *editIndices, const float *editValues) {
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -201,7 +201,7 @@ void poskiEditVertexAdd(const VertexDescriptor *vdesc, float *vertex, int primVa
     }
 }
 
-void poskiEditVertexSet(const VertexDescriptor *vdesc, float *vertex, int primVarOffset, int primVarWidth, int vertexCount, const int *editIndices, const float *editValues) {
+void poskiEditVertexSet(const PoskiVertexDescriptor *vdesc, float *vertex, int primVarOffset, int primVarWidth, int vertexCount, const int *editIndices, const float *editValues) {
 
 #ifdef _OPENMP
 #pragma omp parallel for

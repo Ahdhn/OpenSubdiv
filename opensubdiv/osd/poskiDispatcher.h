@@ -9,7 +9,7 @@
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
-struct VertexDescriptor;
+struct PoskiVertexDescriptor;
 
 class OsdPoskiKernelDispatcher : public OsdKernelDispatcher
 {
@@ -84,7 +84,7 @@ protected:
     OsdCpuVertexBuffer *_currentVertexBuffer,
                        *_currentVaryingBuffer;
 
-    VertexDescriptor *_vdesc;
+    PoskiVertexDescriptor *_vdesc;
 
     int _numOmpThreads;
     std::vector<Table> _tables;
