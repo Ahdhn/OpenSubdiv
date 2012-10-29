@@ -63,6 +63,13 @@ OsdPoskiKernelDispatcher::OnKernelLaunch() {
 #ifdef OPENSUBDIV_HAS_OPENMP
     omp_set_num_threads(_numOmpThreads);
 #endif
+
+    /* allocate sparse matrix */
+}
+
+void
+OsdPoskiKernelDispatcher::OnKernelFinish() {
+    /* apply sparse matrix to point vector */
 }
 
 void

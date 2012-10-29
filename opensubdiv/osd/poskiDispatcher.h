@@ -52,7 +52,7 @@ public:
 
     virtual void OnKernelLaunch();
 
-    virtual void OnKernelFinish() {}
+    virtual void OnKernelFinish();
 
     virtual OsdVertexBuffer *InitializeVertexBuffer(int numElements, int numVertices);
 
