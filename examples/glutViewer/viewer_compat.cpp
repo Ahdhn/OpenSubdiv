@@ -361,7 +361,7 @@ updateGeom() {
         g_positions[i*3+0] = p[0]*ct + p[1]*st;
         g_positions[i*3+1] = -p[0]*st + p[1]*ct;
         g_positions[i*3+2] = p[2];
-        
+
         p += 3;
     }
 
@@ -373,7 +373,7 @@ updateGeom() {
         vertex.push_back(n[0]);
         vertex.push_back(n[1]);
         vertex.push_back(n[2]);
-        
+
         p += 3;
         n += 3;
     }
@@ -645,7 +645,7 @@ display() {
         glDrawElements(primType, g_numIndices, GL_UNSIGNED_INT, NULL);
     }
     glDisable(GL_LIGHTING);
-    
+
     if (g_wire == 0 || g_wire == 2) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         if (g_wire == 2) {
@@ -663,7 +663,7 @@ display() {
 
     if (g_drawNormals)
         drawNormals();
-    
+
     if (g_drawCoarseMesh)
         drawCoarseMesh(g_drawCoarseMesh);
 
@@ -676,7 +676,7 @@ display() {
         drawString(10, 90, "GPU TIME = %.3f ms", g_gpuTime);
         drawString(10, 110, "SUBDIVISION = %s", g_scheme==kBilinear ? "BILINEAR" : (g_scheme == kLoop ? "LOOP" : "CATMARK"));
         drawString(10, 130, "AVG VERT/MS = %4.f", g_vertPerMillisec);
-        
+
         drawString(10, g_height-30, "w:   toggle wireframe");
         drawString(10, g_height-50, "e:   display normal vector");
         drawString(10, g_height-70, "m:   toggle vertex deforming");
