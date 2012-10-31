@@ -14,7 +14,7 @@ struct OskiVertexDescriptor;
 class OsdOskiKernelDispatcher : public OsdKernelDispatcher
 {
 public:
-    OsdOskiKernelDispatcher(int levels, int numOmpThreads=1);
+    OsdOskiKernelDispatcher(int levels);
 
     virtual ~OsdOskiKernelDispatcher();
 
@@ -90,7 +90,6 @@ protected:
 
     OskiVertexDescriptor *_vdesc;
 
-    int _numOmpThreads;
     std::vector<Table> _tables;
     std::vector<Table> _editTables;
 };

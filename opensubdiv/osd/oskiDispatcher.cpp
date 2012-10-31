@@ -6,10 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef OPENSUBDIV_HAS_OPENMP
-    #include <omp.h>
-#endif
-
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
@@ -30,8 +26,8 @@ OsdOskiKernelDispatcher::Table::Copy( int size, const void *table ) {
     }
 }
 
-OsdOskiKernelDispatcher::OsdOskiKernelDispatcher( int levels, int numOmpThreads )
-    : OsdKernelDispatcher(levels), _currentVertexBuffer(NULL), _currentVaryingBuffer(NULL), _vdesc(NULL), _numOmpThreads(numOmpThreads) {
+OsdOskiKernelDispatcher::OsdOskiKernelDispatcher( int levels )
+    : OsdKernelDispatcher(levels), _currentVertexBuffer(NULL), _currentVaryingBuffer(NULL), _vdesc(NULL) {
     _tables.resize(TABLE_MAX);
 }
 
@@ -46,13 +42,6 @@ Create(int levels) {
     return new OsdOskiKernelDispatcher(levels);
 }
 
-#ifdef OPENSUBDIV_HAS_OPENMP
-static OsdOskiKernelDispatcher::OsdKernelDispatcher *
-CreateOmp(int levels) {
-    return new OsdOskiKernelDispatcher(levels, omp_get_num_procs());
-}
-#endif
-
 void
 OsdOskiKernelDispatcher::Register() {
     Factory::GetInstance().Register(Create, kOSKI);
@@ -60,10 +49,6 @@ OsdOskiKernelDispatcher::Register() {
 
 void
 OsdOskiKernelDispatcher::OnKernelLaunch() {
-#ifdef OPENSUBDIV_HAS_OPENMP
-    omp_set_num_threads(_numOmpThreads);
-#endif
-
     /* allocate sparse matrix */
 }
 

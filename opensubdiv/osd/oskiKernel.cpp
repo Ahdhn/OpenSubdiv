@@ -3,18 +3,11 @@
 #include "../version.h"
 #include "../osd/oskiKernel.h"
 
-#ifdef OPENSUBDIV_HAS_OPENMP
-    #include <omp.h>
-#endif
-
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
 void oskiComputeFace( const OskiVertexDescriptor *vdesc, float * vertex, float * varying, const int *F_IT, const int *F_ITa, int offset, int start, int end) {
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
     for (int i = start; i < end; i++) {
         int h = F_ITa[2*i];
         int n = F_ITa[2*i+1];
@@ -35,9 +28,6 @@ void oskiComputeFace( const OskiVertexDescriptor *vdesc, float * vertex, float *
 
 void oskiComputeEdge( const OskiVertexDescriptor *vdesc, float *vertex, float *varying, const int *E_IT, const float *E_W, int offset, int start, int end) {
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
     for (int i = start; i < end; i++) {
         int eidx0 = E_IT[4*i+0];
         int eidx1 = E_IT[4*i+1];
@@ -66,9 +56,6 @@ void oskiComputeEdge( const OskiVertexDescriptor *vdesc, float *vertex, float *v
 
 void oskiComputeVertexA(const OskiVertexDescriptor *vdesc, float *vertex, float *varying, const int *V_ITa, const float *V_W, int offset, int start, int end, int pass) {
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
     for (int i = start; i < end; i++) {
         int n     = V_ITa[5*i+1];
         int p     = V_ITa[5*i+2];
@@ -102,9 +89,6 @@ void oskiComputeVertexA(const OskiVertexDescriptor *vdesc, float *vertex, float 
 
 void oskiComputeVertexB(const OskiVertexDescriptor *vdesc, float *vertex, float *varying, const int *V_ITa, const int *V_IT, const float *V_W, int offset, int start, int end) {
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
     for (int i = start; i < end; i++) {
         int h = V_ITa[5*i];
         int n = V_ITa[5*i+1];
@@ -129,9 +113,6 @@ void oskiComputeVertexB(const OskiVertexDescriptor *vdesc, float *vertex, float 
 
 void oskiComputeLoopVertexB(const OskiVertexDescriptor *vdesc, float *vertex, float *varying, const int *V_ITa, const int *V_IT, const float *V_W, int offset, int start, int end) {
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
     for (int i = start; i < end; i++) {
         int h = V_ITa[5*i];
         int n = V_ITa[5*i+1];
@@ -157,9 +138,6 @@ void oskiComputeLoopVertexB(const OskiVertexDescriptor *vdesc, float *vertex, fl
 
 void oskiComputeBilinearEdge(const OskiVertexDescriptor *vdesc, float *vertex, float *varying, const int *E_IT, int offset, int start, int end) {
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
     for (int i = start; i < end; i++) {
         int eidx0 = E_IT[2*i+0];
         int eidx1 = E_IT[2*i+1];
@@ -177,9 +155,6 @@ void oskiComputeBilinearEdge(const OskiVertexDescriptor *vdesc, float *vertex, f
 
 void oskiComputeBilinearVertex(const OskiVertexDescriptor *vdesc, float *vertex, float *varying, const int *V_ITa, int offset, int start, int end) {
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
     for (int i = start; i < end; i++) {
         int p = V_ITa[i];
 
@@ -193,9 +168,6 @@ void oskiComputeBilinearVertex(const OskiVertexDescriptor *vdesc, float *vertex,
 
 void oskiEditVertexAdd(const OskiVertexDescriptor *vdesc, float *vertex, int primVarOffset, int primVarWidth, int vertexCount, const int *editIndices, const float *editValues) {
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
     for (int i = 0; i < vertexCount; i++) {
         vdesc->ApplyVertexEditAdd(vertex, primVarOffset, primVarWidth, editIndices[i], &editValues[i*primVarWidth]);
     }
@@ -203,9 +175,6 @@ void oskiEditVertexAdd(const OskiVertexDescriptor *vdesc, float *vertex, int pri
 
 void oskiEditVertexSet(const OskiVertexDescriptor *vdesc, float *vertex, int primVarOffset, int primVarWidth, int vertexCount, const int *editIndices, const float *editValues) {
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
     for (int i = 0; i < vertexCount; i++) {
         vdesc->ApplyVertexEditSet(vertex, primVarOffset, primVarWidth, editIndices[i], &editValues[i*primVarWidth]);
     }
