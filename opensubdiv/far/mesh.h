@@ -59,6 +59,7 @@
 
 #include <cassert>
 #include <vector>
+#include <iostream>
 
 #include "../version.h"
 #include "../far/subdivisionTables.h"
@@ -223,7 +224,21 @@ FarMesh<U>::SubdivideAdHoc(int maxlevel) {
 
 template <class U> void
 FarMesh<U>::SubdivideSpMV(int maxlevel) {
-    SubdivideAdHoc(maxlevel);
+
+    assert(_subdivisionTables);
+
+    if (_vertexEditTables != NULL) {
+        std::cerr << "Warning: SpMV strategy doesn't support vertex edits." << std::endl;
+        return;
+    }
+
+    if ( (maxlevel < 0) )
+        maxlevel=_subdivisionTables->GetMaxLevel();
+    else
+        maxlevel = std::min(maxlevel, _subdivisionTables->GetMaxLevel());
+
+    for (int i=1; i<maxlevel; ++i)
+        _subdivisionTables->Apply(i);
 }
 
 } // end namespace OPENSUBDIV_VERSION
