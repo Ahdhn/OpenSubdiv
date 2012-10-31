@@ -95,17 +95,17 @@ public:
 
     /// Return width of the variable
     int GetWidth() const { return _width; }
-    
+
     /// Get the numerical value of the edit
     const float* GetEdit() const { return _edit; }
 
 private:
     template <class U> friend class FarVertexEditTables;
-    
+
     FarVertexEdit(Operation op, int index, int width) :
         _op(op), _edit(0), _index(index), _width(width)
     { }
-    
+
     void SetEdit(float const * edit) { _edit=edit; }
 
     Operation     _op;
@@ -150,7 +150,7 @@ public:
 
         int GetPrimvarIndex() const { return _primvarIndex; }
 
-        int GetPrimvarWidth() const { return _primvarWidth; } 
+        int GetPrimvarWidth() const { return _primvarWidth; }
 
     private:
         template <class X, class Y> friend struct FarVertexEditTablesFactory;
