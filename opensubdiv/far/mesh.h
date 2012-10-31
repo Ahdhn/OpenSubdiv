@@ -196,15 +196,6 @@ FarMesh<U>::GetPtexCoordinates(int level) const {
 
 template <class U> void
 FarMesh<U>::Subdivide(int maxlevel, Strategy s) {
-    switch(s) {
-        case AdHoc: SubdivideAdHoc(maxlevel); break;
-        case SpMV:  SubdivideSpMV(maxlevel);  break;
-        default: assert(!"unknown subdivision strategy");
-    }
-}
-
-template <class U> void
-FarMesh<U>::SubdivideAdHoc(int maxlevel) {
 
     assert(_subdivisionTables);
 
@@ -213,7 +204,17 @@ FarMesh<U>::SubdivideAdHoc(int maxlevel) {
     else
         maxlevel = std::min(maxlevel, _subdivisionTables->GetMaxLevel());
 
-    for (int i=1; i<maxlevel; ++i) {
+    switch(s) {
+        case AdHoc: SubdivideAdHoc(maxlevel); break;
+        case SpMV:  SubdivideSpMV(maxlevel);  break;
+        default: assert(!"unknown subdivision strategy");
+    }
+}
+
+template <class U> void
+FarMesh<U>::SubdivideAdHoc(int level) {
+
+    for (int i=1; i<level; ++i) {
 
         _subdivisionTables->Apply(i);
 
@@ -223,21 +224,14 @@ FarMesh<U>::SubdivideAdHoc(int maxlevel) {
 }
 
 template <class U> void
-FarMesh<U>::SubdivideSpMV(int maxlevel) {
-
-    assert(_subdivisionTables);
+FarMesh<U>::SubdivideSpMV(int level) {
 
     if (_vertexEditTables != NULL) {
         std::cerr << "Warning: SpMV strategy doesn't support vertex edits." << std::endl;
         return;
     }
 
-    if ( (maxlevel < 0) )
-        maxlevel=_subdivisionTables->GetMaxLevel();
-    else
-        maxlevel = std::min(maxlevel, _subdivisionTables->GetMaxLevel());
-
-    for (int i=1; i<maxlevel; ++i)
+    for (int i=1; i<level; ++i)
         _subdivisionTables->Apply(i);
 }
 

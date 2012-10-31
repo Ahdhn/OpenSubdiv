@@ -37,20 +37,6 @@ struct PoskiVertexDescriptor {
             varying[d++] += varying[s++] * weight;
     }
 
-    void ApplyVertexEditAdd(float *vertex, int primVarOffset, int primVarWidth, int editIndex, const float *editValues) const {
-        int d = editIndex * numVertexElements + primVarOffset;
-        for (int i = 0; i < primVarWidth; ++i) {
-            vertex[d++] += editValues[i];
-        }
-    }
-
-    void ApplyVertexEditSet(float *vertex, int primVarOffset, int primVarWidth, int editIndex, const float *editValues) const {
-        int d = editIndex * numVertexElements + primVarOffset;
-        for (int i = 0; i < primVarWidth; ++i) {
-            vertex[d++] = editValues[i];
-        }
-    }
-
     int numVertexElements;
     int numVaryingElements;
 };

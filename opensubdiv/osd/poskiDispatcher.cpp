@@ -124,8 +124,9 @@ OsdPoskiKernelDispatcher::BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuf
     else
         _currentVaryingBuffer = NULL;
 
-    _vdesc = new PoskiVertexDescriptor(_currentVertexBuffer ? _currentVertexBuffer->GetNumElements() : 0,
-                                  _currentVaryingBuffer ? _currentVaryingBuffer->GetNumElements() : 0);
+    _vdesc = new PoskiVertexDescriptor(
+            _currentVertexBuffer  ? _currentVertexBuffer->GetNumElements()  : 0,
+            _currentVaryingBuffer ? _currentVaryingBuffer->GetNumElements() : 0);
 }
 
 void
