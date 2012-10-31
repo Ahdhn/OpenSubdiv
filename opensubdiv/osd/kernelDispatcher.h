@@ -82,7 +82,8 @@ public:
                       kCUDA = 2,
                       kGLSL = 3,
                       kCL = 4,
-                      kPOSKI = 5,
+                      kOSKI = 5,
+                      kPOSKI = 6,
                       kMAX };
 
 
@@ -176,6 +177,7 @@ protected:
 
     protected:
         friend class OsdCpuKernelDispatcher;
+        friend class OsdOskiKernelDispatcher;
         friend class OsdPoskiKernelDispatcher;
         friend class OsdGlslKernelDispatcher;
         friend class OsdCudaKernelDispatcher;

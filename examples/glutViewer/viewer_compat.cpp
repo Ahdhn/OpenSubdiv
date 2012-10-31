@@ -81,6 +81,10 @@
     #include <osd/clDispatcher.h>
 #endif
 
+#ifdef OPENSUBDIV_HAS_OSKI
+    #include <osd/oskiDispatcher.h>
+#endif
+
 #ifdef OPENSUBDIV_HAS_POSKI
     #include <osd/poskiDispatcher.h>
 #endif
@@ -441,6 +445,8 @@ const char *getKernelName(int kernel) {
         return "GLSL";
     else if (kernel == OpenSubdiv::OsdKernelDispatcher::kCL)
         return "OpenCL";
+    else if (kernel == OpenSubdiv::OsdKernelDispatcher::kOSKI)
+        return "OSKI";
     else if (kernel == OpenSubdiv::OsdKernelDispatcher::kPOSKI)
         return "pOSKI";
     return "Unknown";
@@ -884,6 +890,10 @@ int main(int argc, char ** argv) {
 
 #if OPENSUBDIV_HAS_OPENCL
     OpenSubdiv::OsdClKernelDispatcher::Register();
+#endif
+
+#if OPENSUBDIV_HAS_OSKI
+    OpenSubdiv::OsdOskiKernelDispatcher::Register();
 #endif
 
 #if OPENSUBDIV_HAS_POSKI

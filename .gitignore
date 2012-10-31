@@ -4,3 +4,6 @@
 
 # build directory
 build
+
+# vim swap files
+*.swp

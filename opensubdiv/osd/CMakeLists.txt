@@ -60,7 +60,6 @@
 include_directories(
     ${OPENGL_INCLUDE_DIR}
     ${GLEW_INCLUDE_DIR}
-    ${POSKI_INCLUDE_DIR}
     ${PROJECT_SOURCE_DIR}/opensubdiv
 )
 
@@ -69,8 +68,6 @@ include_directories(
 set(SOURCE_FILES
     cpuDispatcher.cpp
     cpuKernel.cpp
-    poskiDispatcher.cpp
-    poskiKernel.cpp
     elementArrayBuffer.cpp
     kernelDispatcher.cpp
     mesh.cpp
@@ -92,8 +89,6 @@ set(PRIVATE_HEADER_FILES
 set(PUBLIC_HEADER_FILES
     cpuDispatcher.h
     cpuKernel.h
-    poskiDispatcher.h
-    poskiKernel.h
     elementArrayBuffer.h
     kernelDispatcher.h
     mesh.h
@@ -184,6 +179,24 @@ if ( OPENCL_FOUND )
 endif()
 
 #-------------------------------------------------------------------------------
+# OSKI code & dependencies
+if ( OSKI_FOUND )
+    list(APPEND SOURCE_FILES
+        oskiDispatcher.cpp
+    )
+    list(APPEND PUBLIC_HEADER_FILES
+        oskiDispatcher.h
+    )
+    list(APPEND KERNEL_FILES
+        oskiKernel.cpp
+    )
+    list(APPEND PLATFORM_LIBRARIES
+        ${OSKI_LIBRARIES}
+    )
+    include_directories( ${OSKI_INCLUDE_PATH} )
+endif()
+
+#-------------------------------------------------------------------------------
 # pOSKI code & dependencies
 if ( POSKI_FOUND )
     list(APPEND SOURCE_FILES
@@ -198,6 +211,7 @@ if ( POSKI_FOUND )
     list(APPEND PLATFORM_LIBRARIES
         ${POSKI_LIBRARIES}
     )
+    include_directories( ${POSKI_INCLUDE_PATH} )
 endif()
 
 #-------------------------------------------------------------------------------
