@@ -6,15 +6,15 @@
 # POSKI_LIBRARIES
 #
 
-find_path( POSKI_INCLUDE_DIR oski/oski.h
+find_path( POSKI_INCLUDE_DIR poski/poski.h
     ${POSKI_LOCATION}/include
     $ENV{POSKI_LOCATION}/include
     DOC "The directory where poski.h resides")
 
-find_library( POSKI_poski_LIBRARY oski
+find_library( POSKI_poski_LIBRARY poski
     PATHS
-    ${POSKI_LOCATION}/lib/oski
-    $ENV{POSKI_LOCATION}/lib/oski
+    ${POSKI_LOCATION}/lib/poski
+    $ENV{POSKI_LOCATION}/lib/poski
     DOC "The pOSKI library")
 
 set( POSKI_FOUND "NO" )
