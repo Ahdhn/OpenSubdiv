@@ -129,10 +129,14 @@ public:
     /// Apply the subdivision tables to compute the positions of the vertices up
     /// to 'level'
     void Subdivide(int level=-1, Strategy s = AdHoc);
+
+private:
+
+    /// Apply the subdivision tables to compute the positions of the vertices up
+    /// to 'level' using the specific strategy
     void SubdivideAdHoc(int level=-1);
     void SubdivideSpMV(int level=-1);
 
-private:
     // Note : the vertex classes are renamed <X,Y> so as not to shadow the
     // declaration of the templated vertex class U.
     template <class X, class Y> friend class FarMeshFactory;
