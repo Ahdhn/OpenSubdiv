@@ -119,9 +119,17 @@ public:
     /// Returns the total number of vertices in the mesh across across all depths
     int GetNumVertices() const { return (int)(_vertices.size()); }
 
+    /// Computational strategy
+    enum Strategy {
+        AdHoc  = 0,
+        SpMV   = 1,
+    };
+
     /// Apply the subdivision tables to compute the positions of the vertices up
     /// to 'level'
-    void Subdivide(int level=-1);
+    void Subdivide(int level=-1, Strategy s = AdHoc);
+    void SubdivideAdHoc(int level=-1);
+    void SubdivideSpMV(int level=-1);
 
 private:
     // Note : the vertex classes are renamed <X,Y> so as not to shadow the
@@ -185,9 +193,17 @@ FarMesh<U>::GetPtexCoordinates(int level) const {
     return _ptexcoordinates[0];
 }
 
+template <class U> void
+FarMesh<U>::Subdivide(int maxlevel, Strategy s) {
+    switch(s) {
+        case AdHoc: SubdivideAdHoc(maxlevel); break;
+        case SpMV:  SubdivideSpMV(maxlevel);  break;
+        default: assert(!"unknown subdivision strategy");
+    }
+}
 
 template <class U> void
-FarMesh<U>::Subdivide(int maxlevel) {
+FarMesh<U>::SubdivideAdHoc(int maxlevel) {
 
     assert(_subdivisionTables);
 
@@ -203,6 +219,11 @@ FarMesh<U>::Subdivide(int maxlevel) {
         if (_vertexEditTables)
             _vertexEditTables->Apply(i);
     }
+}
+
+template <class U> void
+FarMesh<U>::SubdivideSpMV(int maxlevel) {
+    SubdivideAdHoc(maxlevel);
 }
 
 } // end namespace OPENSUBDIV_VERSION

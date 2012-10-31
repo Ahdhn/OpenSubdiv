@@ -107,6 +107,10 @@ public:
 
     virtual void Synchronize() = 0;
 
+    virtual FarMesh<OsdVertex>::Strategy GetStrategy() {
+        return FarMesh<OsdVertex>::AdHoc;
+    }
+
     template<class T> void UpdateTable(int tableIndex, const T & table) {
 
         CopyTable(tableIndex, table.GetMemoryUsed(), table[0]);

@@ -62,6 +62,10 @@ public:
 
     virtual void Synchronize();
 
+    virtual FarMesh<OsdVertex>::Strategy GetStrategy() {
+        return FarMesh<OsdVertex>::SpMV;
+    }
+
     static void Register();
 
 protected:
