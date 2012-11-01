@@ -175,6 +175,18 @@ else()
         "please refer to the FindOSKI.cmake in ${PROJECT_SOURCE_DIR}/cmake.")
 endif()
 
+if(OSKI_FOUND OR POSKI_FOUND)
+    find_package( Boost )
+    if(Boost_FOUND)
+        include_directories(${Boost_INCLUDE_DIRS})
+    else()
+    message(FATAL_ERROR
+        "SpMV kernels (OSKI, pOSKI) require Boost. Specify Boost location with "
+        "   -DBOOST_ROOT=/path/to/boost")
+    endif()
+endif()
+
+
 if(CUDA_FOUND)
     add_definitions(
         -DOPENSUBDIV_HAS_CUDA
