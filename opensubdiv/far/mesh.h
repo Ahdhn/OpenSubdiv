@@ -227,6 +227,7 @@ FarMesh<U>::SubdivideAdHoc(int level) {
     }
 }
 
+#include <cstdio>
 template <class U> void
 FarMesh<U>::SubdivideSpMV(int level) {
 
@@ -235,8 +236,10 @@ FarMesh<U>::SubdivideSpMV(int level) {
         return;
     }
 
-    for (int i=1; i<level; ++i)
-        _subdivisionTables->Apply(i);
+    for (int i=1; i<level; ++i) {
+        printf("-- Level %d --\n", i);
+        _subdivisionTables->ApplySpMV(i);
+    }
 }
 
 } // end namespace OPENSUBDIV_VERSION

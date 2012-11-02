@@ -83,6 +83,7 @@ public:
 
     /// Compute the positions of refined vertices using the specified kernels
     virtual void Apply( int level, void * data=0 ) const;
+    virtual void ApplySpMV( int level, void * data=0 ) const;
 
     /// Face-vertices indexing table accessor
     FarTable<unsigned int> const & Get_F_IT( ) const { return _F_IT; }
@@ -135,6 +136,7 @@ FarCatmarkSubdivisionTables<U>::GetMemoryUsed() const {
         _F_IT.GetMemoryUsed();
 }
 
+#include <cstdio>
 template <class U> void
 FarCatmarkSubdivisionTables<U>::Apply( int level, void * clientdata ) const {
 
@@ -160,6 +162,44 @@ FarCatmarkSubdivisionTables<U>::Apply( int level, void * clientdata ) const {
         dispatch->ApplyCatmarkVertexVerticesKernelA(this->_mesh, offset, false, level, batch->kernelA1.first, batch->kernelA1.second, clientdata);
     if (batch->kernelA2.first < batch->kernelA2.second)
         dispatch->ApplyCatmarkVertexVerticesKernelA(this->_mesh, offset, true, level, batch->kernelA2.first, batch->kernelA2.second, clientdata);
+}
+
+#include <cstdio>
+template <class U> void
+FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const {
+
+    assert(this->_mesh and level>0);
+
+    typename FarSubdivisionTables<U>::VertexKernelBatch const * batch = & (this->_batches[level-1]);
+
+    FarDispatcher<U> const * dispatch = this->_mesh->GetDispatcher();
+    assert(dispatch);
+
+    int offset = this->GetFirstVertexOffset(level);
+    if (batch->kernelF>0) {
+        printf("-- level %d, %d face vertices --\n", level, batch->kernelF);
+        dispatch->ApplyCatmarkFaceVerticesKernel(this->_mesh, offset, level, 0, batch->kernelF, clientdata);
+    }
+
+    offset += this->GetNumFaceVertices(level);
+    if (batch->kernelE>0) {
+        printf("-- level %d, %d edge vertices --\n", level, batch->kernelE);
+        dispatch->ApplyCatmarkEdgeVerticesKernel(this->_mesh, offset, level, 0, batch->kernelE, clientdata);
+    }
+
+    offset += this->GetNumEdgeVertices(level);
+    if (batch->kernelB.first < batch->kernelB.second) {
+        printf("-- level %d, %d vertex vertices B --\n", level, batch->kernelB.second - batch->kernelB.first);
+        dispatch->ApplyCatmarkVertexVerticesKernelB(this->_mesh, offset, level, batch->kernelB.first, batch->kernelB.second, clientdata);
+    }
+    if (batch->kernelA1.first < batch->kernelA1.second) {
+        printf("-- level %d, %d vertex vertices A --\n", level, batch->kernelA1.second-batch->kernelA1.first);
+        dispatch->ApplyCatmarkVertexVerticesKernelA(this->_mesh, offset, false, level, batch->kernelA1.first, batch->kernelA1.second, clientdata);
+    }
+    if (batch->kernelA2.first < batch->kernelA2.second) {
+        printf("-- level %d, %d vertex vertices A --\n", level, batch->kernelA2.second-batch->kernelA2.first);
+        dispatch->ApplyCatmarkVertexVerticesKernelA(this->_mesh, offset, true, level, batch->kernelA2.first, batch->kernelA2.second, clientdata);
+    }
 }
 
 //
