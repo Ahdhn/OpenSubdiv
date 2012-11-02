@@ -57,6 +57,9 @@
 #ifndef FAR_DISPATCHER_H
 #define FAR_DISPATCHER_H
 
+#include <boost/numeric/ublas/matrix_sparse.hpp>
+#include <boost/numeric/ublas/io.hpp>
+
 #include "../version.h"
 
 #include "../far/mesh.h"
@@ -64,6 +67,9 @@
 #include "../far/catmarkSubdivisionTables.h"
 #include "../far/loopSubdivisionTables.h"
 #include "../far/vertexEditTables.h"
+
+using boost::numeric::ublas::compressed_matrix;
+using boost::numeric::ublas::coordinate_matrix;
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
@@ -120,6 +126,10 @@ protected:
 
 
     virtual void ApplyVertexEdits(FarMesh<U> *mesh, int offset, int level, void * clientdata) const;
+
+public:
+    coordinate_matrix<float> S;
+    compressed_matrix<float> M;
 
 private:
     static FarDispatcher _DefaultDispatcher;

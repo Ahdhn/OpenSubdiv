@@ -60,9 +60,15 @@
 #include <cassert>
 #include <vector>
 
+#include <boost/numeric/ublas/matrix_sparse.hpp>
+#include <boost/numeric/ublas/io.hpp>
+
 #include "../version.h"
 
 #include "../far/subdivisionTables.h"
+
+using boost::numeric::ublas::coordinate_matrix;
+using boost::numeric::ublas::compressed_matrix;
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
@@ -172,7 +178,7 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
 
     typename FarSubdivisionTables<U>::VertexKernelBatch const * batch = & (this->_batches[level-1]);
 
-    FarDispatcher<U> const * dispatch = this->_mesh->GetDispatcher();
+    FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
     assert(dispatch);
 
 
@@ -182,40 +188,49 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
     int nPrevVerts = this->GetNumVertices(level-1);
     int nVerts     = this->GetNumVertices(level);
 
+    int i = nPrevVerts+batch->kernelF,
+        j = nPrevVerts;
+    dispatch->S = coordinate_matrix<float>(i,j);
+
     if (batch->kernelF>0) {
         printf("-- level %d, %d face vertices --\n", level, batch->kernelF);
         printf("spmv: v[%d] = M0(%d-by-%d) * v(%d-by-%d) @ v[%d]\n",
                 prevOffset,                              // dest idx
-                nPrevVerts+batch->kernelF, nPrevVerts,   // operator dimensions
+                i,j,                                     // operator dimensions
                 nPrevVerts, 1,                           // source vector dimensions
                 prevOffset);                             // source idx
         dispatch->ApplyCatmarkFaceVerticesKernel(this->_mesh, offset, level, 0, batch->kernelF, clientdata);
     }
+    compressed_matrix<float> M0(dispatch->S);
+    std::cout << M0 << std::endl;
+
+    i = nVerts;
+    j = nPrevVerts+batch->kernelF;
+    dispatch->S = coordinate_matrix<float>(i,j);
 
     offset += this->GetNumFaceVertices(level);
     if (batch->kernelE>0) {
         printf("-- level %d, %d edge vertices --\n", level, batch->kernelE);
         printf("spmv: v[%d] = M1(%d-by-%d) * v(%d-by-%d) @ v[%d]\n",
                 offset,                                  // dest idx
-                nVerts, nPrevVerts+batch->kernelF,       // operator dimensions
+                i, j,                                    // operator dimensions
                 nPrevVerts+batch->kernelF, 1,            // source vector dimensions
                 prevOffset);                             // source idx
         dispatch->ApplyCatmarkEdgeVerticesKernel(this->_mesh, offset, level, 0, batch->kernelE, clientdata);
     }
 
     offset += this->GetNumEdgeVertices(level);
-    if (batch->kernelB.first < batch->kernelB.second) {
-        printf("-- level %d, %d vertex vertices B --\n", level, batch->kernelB.second - batch->kernelB.first);
+    if (batch->kernelB.first < batch->kernelB.second)
         dispatch->ApplyCatmarkVertexVerticesKernelB(this->_mesh, offset, level, batch->kernelB.first, batch->kernelB.second, clientdata);
-    }
-    if (batch->kernelA1.first < batch->kernelA1.second) {
-        printf("-- level %d, %d vertex vertices A --\n", level, batch->kernelA1.second-batch->kernelA1.first);
+    if (batch->kernelA1.first < batch->kernelA1.second)
         dispatch->ApplyCatmarkVertexVerticesKernelA(this->_mesh, offset, false, level, batch->kernelA1.first, batch->kernelA1.second, clientdata);
-    }
-    if (batch->kernelA2.first < batch->kernelA2.second) {
-        printf("-- level %d, %d vertex vertices A --\n", level, batch->kernelA2.second-batch->kernelA2.first);
+    if (batch->kernelA2.first < batch->kernelA2.second)
         dispatch->ApplyCatmarkVertexVerticesKernelA(this->_mesh, offset, true, level, batch->kernelA2.first, batch->kernelA2.second, clientdata);
-    }
+
+    compressed_matrix<float> M1(dispatch->S);
+    std::cout << M1 << std::endl;
+
+    // dispatch->M = spmv(M,M1,M0)
 }
 
 //

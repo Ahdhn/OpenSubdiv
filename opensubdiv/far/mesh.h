@@ -87,7 +87,7 @@ public:
     FarSubdivisionTables<U> const * GetSubdivision() const { return _subdivisionTables; }
 
     /// Returns the compute dispatcher
-    FarDispatcher<U> const * GetDispatcher() const { return _dispatcher; }
+    FarDispatcher<U> * GetDispatcher() { return _dispatcher; }
 
     enum PatchType {
         k_BilinearTriangles,

@@ -109,8 +109,9 @@ OsdOskiKernelDispatcher::BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuff
     else
         _currentVaryingBuffer = NULL;
 
-    _vdesc = new OskiVertexDescriptor(_currentVertexBuffer ? _currentVertexBuffer->GetNumElements() : 0,
-                                  _currentVaryingBuffer ? _currentVaryingBuffer->GetNumElements() : 0);
+    _vdesc = new OskiVertexDescriptor(this,
+            _currentVertexBuffer ? _currentVertexBuffer->GetNumElements() : 0,
+            _currentVaryingBuffer ? _currentVaryingBuffer->GetNumElements() : 0);
 }
 
 void

@@ -2,6 +2,7 @@
 #define OSD_OSKI_KERNEL_H
 
 #include "../version.h"
+#include "osd/oskiDispatcher.h"
 
 #include <oski/oski.h>
 
@@ -10,8 +11,8 @@ namespace OPENSUBDIV_VERSION {
 
 struct OskiVertexDescriptor {
 
-    OskiVertexDescriptor(int numVertexElem, int numVaryingElem)
-        : numVertexElements(numVertexElem), numVaryingElements(numVaryingElem) { }
+    OskiVertexDescriptor(OsdKernelDispatcher* dispatcher, int numVertexElem, int numVaryingElem)
+        : _dispatcher(dispatcher),  numVertexElements(numVertexElem), numVaryingElements(numVaryingElem) { }
 
     void Clear(float *vertex, float *varying, int index) const {
         if (vertex) {
@@ -26,11 +27,17 @@ struct OskiVertexDescriptor {
     }
 
     void AddWithWeight(float *vertex, int dstIndex, int srcIndex, float weight) const {
-        //printf("oski AddWithWeight array[%d] 0x%x [%d] <- %f * [%d]\n", numVertexElements, vertex, dstIndex, weight, srcIndex);
+#if 0
+        printf("oski AddWithWeight array[%d] 0x%x [%d] <- %f * [%d]\n", numVertexElements, vertex, dstIndex, weight, srcIndex);
         int d = dstIndex * numVertexElements;
         int s = srcIndex * numVertexElements;
         for (int i = 0; i < numVertexElements; ++i)
             vertex[d++] += vertex[s++] * weight;
+#else
+        int s = srcIndex * numVertexElements;
+        for (int i = 0; i < numVertexElements; ++i)
+            _dispatcher->S(dstIndex,srcIndex+i) = weight;
+#endif
     }
 
     void AddVaryingWithWeight(float *varying, int dstIndex, int srcIndex, float weight) const {
@@ -57,6 +64,7 @@ struct OskiVertexDescriptor {
 
     int numVertexElements;
     int numVaryingElements;
+    OsdKernelDispatcher* _dispatcher;
 };
 
 extern "C" {

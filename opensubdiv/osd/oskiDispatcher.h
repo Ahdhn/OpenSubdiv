@@ -6,6 +6,12 @@
 
 #include <oski/oski.h>
 
+#include <boost/numeric/ublas/matrix_sparse.hpp>
+#include <boost/numeric/ublas/io.hpp>
+
+using boost::numeric::ublas::compressed_matrix;
+using boost::numeric::ublas::coordinate_matrix;
+
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
@@ -67,6 +73,9 @@ public:
     }
 
     static void Register();
+
+    coordinate_matrix<float> S;
+    compressed_matrix<float> M;
 
 protected:
 

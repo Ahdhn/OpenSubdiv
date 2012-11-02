@@ -31,7 +31,7 @@ OsdPoskiKernelDispatcher::Table::Copy( int size, const void *table ) {
 }
 
 OsdPoskiKernelDispatcher::OsdPoskiKernelDispatcher( int levels, int numOmpThreads )
-    : OsdKernelDispatcher(levels), _currentVertexBuffer(NULL), _currentVaryingBuffer(NULL), _vdesc(NULL), _numOmpThreads(numOmpThreads) {
+    : OsdKernelDispatcher(levels), _currentVertexBuffer(NULL), _currentVaryingBuffer(NULL), _vdesc(NULL), _numOmpThreads(numOmpThreads), M(NULL) {
     _tables.resize(TABLE_MAX);
 }
 
