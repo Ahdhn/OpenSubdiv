@@ -29,7 +29,7 @@ OsdOskiKernelDispatcher::Table::Copy( int size, const void *table ) {
 }
 
 OsdOskiKernelDispatcher::OsdOskiKernelDispatcher( int levels )
-    : OsdKernelDispatcher(levels), _currentVertexBuffer(NULL), _currentVaryingBuffer(NULL), _vdesc(NULL) {
+    : OsdKernelDispatcher(levels), _currentVertexBuffer(NULL), _currentVaryingBuffer(NULL), _vdesc(NULL), S(NULL), M(NULL) {
     _tables.resize(TABLE_MAX);
 }
 
@@ -119,9 +119,8 @@ OsdOskiKernelDispatcher::BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuff
 void
 OsdOskiKernelDispatcher::StageMatrix(int i, int j)
 {
-    assert(_currentVertexBuffer);
-    int nelem = _currentVertexBuffer->GetNumElements();
-    S = new coordinate_matrix<float>(i,j*nelem);
+    if (S != NULL) delete S;
+    S = new coordinate_matrix<float>(i,j);
 }
 
 void
@@ -133,14 +132,29 @@ OsdOskiKernelDispatcher::StageElem(int i, int j, float value)
 void
 OsdOskiKernelDispatcher::PushMatrix()
 {
-    compressed_matrix<float> *A = M;
-    compressed_matrix<float> B(*S);
-    compressed_matrix<float> *C = new compressed_matrix<float>;
+    compressed_matrix<float> *A = new compressed_matrix<float>(*S);
+    compressed_matrix<float> *B = M;
 
-    axpy_prod(*A, B, *C, true);
+    if (M != NULL) {
+        compressed_matrix<float> *C =
+            new compressed_matrix<float>(A->size1(), B->size2());
+        printf("saxpy mul %d-%d * %d-%d\n",
+                A->size1(), A->size2(),
+                B->size1(), B->size2());
+        std::cout << "S: " << *S << std::endl;
+        std::cout << "M: " << *M << std::endl;
+        axpy_prod(*A, *B, *C, true);
+        M = C;
+        delete A;
+    } else {
+        printf("saxpy set %d-%d\n", A->size1(), A->size2());
+        M = A;
+    }
 
+    std::cout << "M: " << *M << std::endl;
+    assert(M);
     delete S;
-    M = C;
+    S = NULL;
 }
 
 void

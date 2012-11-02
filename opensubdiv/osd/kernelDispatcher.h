@@ -146,6 +146,9 @@ public:
     virtual void PushMatrix() { };
     virtual void GetMatrix() { };
 
+    virtual int GetElemsPerVertex() const { return -2; }
+    virtual int GetElemsPerVarying() const { return -2; }
+
 protected:
 
     class Factory {

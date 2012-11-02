@@ -188,33 +188,38 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
     int nPrevVerts = this->GetNumVertices(level-1);
     int nVerts     = this->GetNumVertices(level);
 
-    int i = nPrevVerts+batch->kernelF,
-        j = nPrevVerts;
-    dispatch->StageMatrix(i,j);
+    int nElemsPerVert = dispatch->GetElemsPerVertex();
+    int nElemsPerVary = dispatch->GetElemsPerVarying();
+
+    int iop = nPrevVerts+batch->kernelF,
+        jop = nPrevVerts,
+        iv  = nPrevVerts,
+        jv  = nElemsPerVert;
+    dispatch->StageMatrix(iop, jop);
 
     if (batch->kernelF>0) {
-        printf("-- level %d, %d face vertices --\n", level, batch->kernelF);
         printf("spmv: v[%d] = M0(%d-by-%d) * v(%d-by-%d) @ v[%d]\n",
-                prevOffset,                              // dest idx
-                i,j,                                     // operator dimensions
-                nPrevVerts, 1,                           // source vector dimensions
-                prevOffset);                             // source idx
+                prevOffset,       // dest idx
+                iop, jop,         // operator dimensions
+                iv, jv,           // source vector dimensions
+                prevOffset);      // source idx
         dispatch->ApplyCatmarkFaceVerticesKernel(this->_mesh, offset, level, 0, batch->kernelF, clientdata);
     }
     dispatch->PushMatrix();
 
-    i = nVerts;
-    j = nPrevVerts+batch->kernelF;
-    dispatch->StageMatrix(i,j);
+    iop = nVerts,
+    jop = nPrevVerts+batch->kernelF,
+    iv  = nPrevVerts+batch->kernelF,
+    jv  = nElemsPerVert;
+    dispatch->StageMatrix(iop,jop);
 
     offset += this->GetNumFaceVertices(level);
     if (batch->kernelE>0) {
-        printf("-- level %d, %d edge vertices --\n", level, batch->kernelE);
         printf("spmv: v[%d] = M1(%d-by-%d) * v(%d-by-%d) @ v[%d]\n",
-                offset,                                  // dest idx
-                i, j,                                    // operator dimensions
-                nPrevVerts+batch->kernelF, 1,            // source vector dimensions
-                prevOffset);                             // source idx
+                offset,        // dest idx
+                iop, jop,      // operator dimensions
+                iv, jv,        // source v dimensions
+                prevOffset);   // source idx
         dispatch->ApplyCatmarkEdgeVerticesKernel(this->_mesh, offset, level, 0, batch->kernelE, clientdata);
     }
 

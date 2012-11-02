@@ -133,6 +133,9 @@ public:
     virtual void PushMatrix() { };
     virtual void GetMatrix() { };
 
+    virtual int GetElemsPerVertex() const { return -1; }
+    virtual int GetElemsPerVarying() const { return -1; }
+
     coordinate_matrix<float>* S;
     compressed_matrix<float>* M;
 private:

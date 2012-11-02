@@ -100,6 +100,12 @@ protected:
 
     float *GetVaryingBuffer() const { return _currentVaryingBuffer ? _currentVaryingBuffer->GetCpuBuffer() : NULL; }
 
+    virtual int GetElemsPerVertex() const { return _currentVertexBuffer ? _currentVertexBuffer->GetNumElements() : NULL; }
+
+    virtual int GetElemsPerVarying() const { return _currentVaryingBuffer ? _currentVaryingBuffer->GetNumElements() : NULL; }
+
+
+
     OsdCpuVertexBuffer *_currentVertexBuffer,
                        *_currentVaryingBuffer;
 

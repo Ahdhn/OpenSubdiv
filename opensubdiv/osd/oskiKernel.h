@@ -35,8 +35,9 @@ struct OskiVertexDescriptor {
             vertex[d++] += vertex[s++] * weight;
 #else
         int s = srcIndex * numVertexElements;
-        for (int i = 0; i < numVertexElements; ++i)
-            _dispatcher->StageElem(dstIndex,s+i,weight);
+        //for (int i = 0; i < numVertexElements; ++i)
+            //_dispatcher->StageElem(dstIndex,s+i,weight);
+        _dispatcher->StageElem(dstIndex,srcIndex,weight);
 #endif
     }
 
