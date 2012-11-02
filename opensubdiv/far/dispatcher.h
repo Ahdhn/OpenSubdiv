@@ -128,9 +128,13 @@ protected:
     virtual void ApplyVertexEdits(FarMesh<U> *mesh, int offset, int level, void * clientdata) const;
 
 public:
-    coordinate_matrix<float> S;
-    compressed_matrix<float> M;
+    virtual void StageMatrix(int i, int j) { };
+    virtual void StageElem(int i, int j, float value) { };
+    virtual void PushMatrix() { };
+    virtual void GetMatrix() { };
 
+    coordinate_matrix<float>* S;
+    compressed_matrix<float>* M;
 private:
     static FarDispatcher _DefaultDispatcher;
 };

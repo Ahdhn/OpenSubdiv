@@ -6,6 +6,7 @@
 
 #include <oski/oski.h>
 
+#include <boost/numeric/ublas/operation.hpp>
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 #include <boost/numeric/ublas/io.hpp>
 
@@ -74,10 +75,15 @@ public:
 
     static void Register();
 
-    coordinate_matrix<float> S;
-    compressed_matrix<float> M;
+    virtual void StageMatrix(int i, int j);
+    virtual void StageElem(int i, int j, float value);
+    virtual void PushMatrix();
+    virtual void GetMatrix();
 
 protected:
+
+    coordinate_matrix<float>* S;
+    compressed_matrix<float>* M;
 
     // XXX: until far refactoring finishes, use this.
     struct Table {

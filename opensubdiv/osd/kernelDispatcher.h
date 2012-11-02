@@ -141,6 +141,11 @@ public:
            F_ITa,
            TABLE_MAX };
 
+    virtual void StageMatrix(int i, int j) { };
+    virtual void StageElem(int i, int j, float value) { };
+    virtual void PushMatrix() { };
+    virtual void GetMatrix() { };
+
 protected:
 
     class Factory {

@@ -190,7 +190,7 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
 
     int i = nPrevVerts+batch->kernelF,
         j = nPrevVerts;
-    dispatch->S = coordinate_matrix<float>(i,j);
+    dispatch->StageMatrix(i,j);
 
     if (batch->kernelF>0) {
         printf("-- level %d, %d face vertices --\n", level, batch->kernelF);
@@ -201,12 +201,11 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
                 prevOffset);                             // source idx
         dispatch->ApplyCatmarkFaceVerticesKernel(this->_mesh, offset, level, 0, batch->kernelF, clientdata);
     }
-    compressed_matrix<float> M0(dispatch->S);
-    std::cout << M0 << std::endl;
+    dispatch->PushMatrix();
 
     i = nVerts;
     j = nPrevVerts+batch->kernelF;
-    dispatch->S = coordinate_matrix<float>(i,j);
+    dispatch->StageMatrix(i,j);
 
     offset += this->GetNumFaceVertices(level);
     if (batch->kernelE>0) {
@@ -227,8 +226,7 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
     if (batch->kernelA2.first < batch->kernelA2.second)
         dispatch->ApplyCatmarkVertexVerticesKernelA(this->_mesh, offset, true, level, batch->kernelA2.first, batch->kernelA2.second, clientdata);
 
-    compressed_matrix<float> M1(dispatch->S);
-    std::cout << M1 << std::endl;
+    dispatch->PushMatrix();
 
     // dispatch->M = spmv(M,M1,M0)
 }

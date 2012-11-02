@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+using boost::numeric::ublas::axpy_prod;
+
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
@@ -112,6 +114,38 @@ OsdOskiKernelDispatcher::BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuff
     _vdesc = new OskiVertexDescriptor(this,
             _currentVertexBuffer ? _currentVertexBuffer->GetNumElements() : 0,
             _currentVaryingBuffer ? _currentVaryingBuffer->GetNumElements() : 0);
+}
+
+void
+OsdOskiKernelDispatcher::StageMatrix(int i, int j)
+{
+    assert(_currentVertexBuffer);
+    int nelem = _currentVertexBuffer->GetNumElements();
+    S = new coordinate_matrix<float>(i,j*nelem);
+}
+
+void
+OsdOskiKernelDispatcher::StageElem(int i, int j, float value)
+{
+    (*S)(i,j) = value;
+}
+
+void
+OsdOskiKernelDispatcher::PushMatrix()
+{
+    compressed_matrix<float> *A = M;
+    compressed_matrix<float> B(*S);
+    compressed_matrix<float> *C = new compressed_matrix<float>;
+
+    axpy_prod(*A, B, *C, true);
+
+    delete S;
+    M = C;
+}
+
+void
+OsdOskiKernelDispatcher::GetMatrix()
+{
 }
 
 void
