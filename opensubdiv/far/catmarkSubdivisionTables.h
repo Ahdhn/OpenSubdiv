@@ -175,15 +175,31 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
     FarDispatcher<U> const * dispatch = this->_mesh->GetDispatcher();
     assert(dispatch);
 
-    int offset = this->GetFirstVertexOffset(level);
+
+    int prevOffset = this->GetFirstVertexOffset(level-1);
+    int offset     = this->GetFirstVertexOffset(level);
+    int nextOffset = this->GetFirstVertexOffset(level+1);
+    int nPrevVerts = this->GetNumVertices(level-1);
+    int nVerts     = this->GetNumVertices(level);
+
     if (batch->kernelF>0) {
         printf("-- level %d, %d face vertices --\n", level, batch->kernelF);
+        printf("spmv: v[%d] = M0(%d-by-%d) * v(%d-by-%d) @ v[%d]\n",
+                prevOffset,                              // dest idx
+                nPrevVerts+batch->kernelF, nPrevVerts,   // operator dimensions
+                nPrevVerts, 1,                           // source vector dimensions
+                prevOffset);                             // source idx
         dispatch->ApplyCatmarkFaceVerticesKernel(this->_mesh, offset, level, 0, batch->kernelF, clientdata);
     }
 
     offset += this->GetNumFaceVertices(level);
     if (batch->kernelE>0) {
         printf("-- level %d, %d edge vertices --\n", level, batch->kernelE);
+        printf("spmv: v[%d] = M1(%d-by-%d) * v(%d-by-%d) @ v[%d]\n",
+                offset,                                  // dest idx
+                nVerts, nPrevVerts+batch->kernelF,       // operator dimensions
+                nPrevVerts+batch->kernelF, 1,            // source vector dimensions
+                prevOffset);                             // source idx
         dispatch->ApplyCatmarkEdgeVerticesKernel(this->_mesh, offset, level, 0, batch->kernelE, clientdata);
     }
 
