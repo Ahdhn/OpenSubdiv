@@ -132,34 +132,57 @@ OsdOskiKernelDispatcher::StageElem(int i, int j, float value)
 void
 OsdOskiKernelDispatcher::PushMatrix()
 {
-    compressed_matrix<float> *A = new compressed_matrix<float>(*S);
-    compressed_matrix<float> *B = M;
-
     if (M != NULL) {
+        compressed_matrix<float> A(*S);
+        compressed_matrix<float> *B = M;
         compressed_matrix<float> *C =
-            new compressed_matrix<float>(A->size1(), B->size2());
+            new compressed_matrix<float>(A.size1(), B->size2());
         printf("saxpy mul %d-%d * %d-%d\n",
-                A->size1(), A->size2(),
-                B->size1(), B->size2());
-        std::cout << "S: " << *S << std::endl;
-        std::cout << "M: " << *M << std::endl;
-        axpy_prod(*A, *B, *C, true);
+                (int) A.size1(), (int) A.size2(),
+                (int) B->size1(), (int) B->size2());
+        axpy_prod(A, *B, *C, true);
         M = C;
-        delete A;
+        delete B;
     } else {
-        printf("saxpy set %d-%d\n", A->size1(), A->size2());
-        M = A;
+        printf("saxpy set %d-%d\n", (int)S->size1(), (int)S->size2());
+        M = new compressed_matrix<float>(*S);
     }
 
-    std::cout << "M: " << *M << std::endl;
     assert(M);
     delete S;
     S = NULL;
 }
 
 void
-OsdOskiKernelDispatcher::GetMatrix()
+OsdOskiKernelDispatcher::ApplyM(int nFineVerts, int offset)
 {
+    int numElems = _currentVertexBuffer->GetNumElements();
+    float* V_in = _currentVertexBuffer->GetCpuBuffer();
+    float* V_out = _currentVertexBuffer->GetCpuBuffer() + offset * numElems;
+    int alpha = 1.0,
+        beta = 0.0;
+
+    oski_matrix_t A_tunable;
+    oski_vecview_t x_view, y_view;
+
+    oski_Init();
+
+    x_view = oski_CreateVecView( V_in, numElems, STRIDE_UNIT );
+    y_view = oski_CreateVecView( V_out, numElems, STRIDE_UNIT );
+
+    A_tunable = oski_CreateMatCSR(
+            (long int*) &M->index1_data()[0], // row ptrs
+            (long int*) &M->index2_data()[0], // idx ptrs
+            &M->value_data()[0],  // values
+            M->size1(),       // num rows
+            M->size2(),       // num cols
+            SHARE_INPUTMAT,   // both use and oski share array
+            1,                // number of args to follow
+            INDEX_ZERO_BASED  // zero based indexing
+           );
+
+    oski_MatMult( A_tunable, OP_NORMAL, alpha, x_view, beta, y_view );
+
 }
 
 void

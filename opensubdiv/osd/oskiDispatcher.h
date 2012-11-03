@@ -4,7 +4,9 @@
 #include "../version.h"
 #include "../osd/kernelDispatcher.h"
 
-#include <oski/oski.h>
+extern "C" {
+    #include <oski/oski_Tls.h>
+}
 
 #include <boost/numeric/ublas/operation.hpp>
 #include <boost/numeric/ublas/matrix_sparse.hpp>
@@ -78,7 +80,7 @@ public:
     virtual void StageMatrix(int i, int j);
     virtual void StageElem(int i, int j, float value);
     virtual void PushMatrix();
-    virtual void GetMatrix();
+    virtual void ApplyM(int nFineVerts, int offset);
 
 protected:
 

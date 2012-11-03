@@ -4,7 +4,7 @@
 #include "../version.h"
 #include "osd/oskiDispatcher.h"
 
-#include <oski/oski.h>
+#include <oski/oski_Tls.h>
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
