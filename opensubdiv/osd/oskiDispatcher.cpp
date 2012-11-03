@@ -7,6 +7,7 @@
 #include <string.h>
 
 using boost::numeric::ublas::axpy_prod;
+using boost::numeric::ublas::matrix;
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
@@ -160,11 +161,12 @@ OsdOskiKernelDispatcher::ApplyM(int offset)
 {
     assert(M != NULL);
 
-    int nCoarseVerts = M->size1();
-    int nFineVerts = M->size2();
+    int nFineVerts = M->size1();
+    int nCoarseVerts = M->size2();
     int numElems = _currentVertexBuffer->GetNumElements();
     float* V_in = _currentVertexBuffer->GetCpuBuffer();
     float* V_out = _currentVertexBuffer->GetCpuBuffer() + offset * numElems;
+    printf("V_out is 0x%x in applyM\n", V_out);
 
 #if 0
     int alpha = 1.0,
@@ -193,7 +195,23 @@ OsdOskiKernelDispatcher::ApplyM(int offset)
 
     oski_MatMult( A_tunable, OP_NORMAL, alpha, x_view, beta, y_view );
 #else
+    matrix<float> v_fine(nFineVerts, numElems);
+    matrix<float> v_coarse(nCoarseVerts, numElems);
 
+    for(int i = 0; i < v_coarse.size1(); i++)
+        for(int j = 0; j < v_coarse.size2(); j++)
+            v_coarse(i,j) = V_in[i*numElems+j];
+
+    printf("v(%d-%d) = M(%d-%d) * v(%d-%d)\n",
+            (int) v_fine.size1(), (int) v_fine.size2(),
+            (int) M->size1(), (int) M->size2(),
+            (int) v_coarse.size1(), (int) v_coarse.size2());
+
+    axpy_prod(*M, v_coarse, v_fine, true);
+
+    for(int i = 0; i < v_fine.size1(); i++)
+        for(int j = 0; j < v_fine.size2(); j++)
+            V_out[i*numElems+j] = v_fine(i,j);
 #endif
 }
 
