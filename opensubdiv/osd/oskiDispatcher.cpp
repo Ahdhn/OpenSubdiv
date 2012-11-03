@@ -156,13 +156,17 @@ OsdOskiKernelDispatcher::PushMatrix()
 }
 
 void
-OsdOskiKernelDispatcher::ApplyM(int nFineVerts, int offset)
+OsdOskiKernelDispatcher::ApplyM(int offset)
 {
     assert(M != NULL);
 
+    int nCoarseVerts = M->size1();
+    int nFineVerts = M->size2();
     int numElems = _currentVertexBuffer->GetNumElements();
     float* V_in = _currentVertexBuffer->GetCpuBuffer();
     float* V_out = _currentVertexBuffer->GetCpuBuffer() + offset * numElems;
+
+#if 0
     int alpha = 1.0,
         beta = 0.0;
 
@@ -188,6 +192,9 @@ OsdOskiKernelDispatcher::ApplyM(int nFineVerts, int offset)
            );
 
     oski_MatMult( A_tunable, OP_NORMAL, alpha, x_view, beta, y_view );
+#else
+
+#endif
 }
 
 void

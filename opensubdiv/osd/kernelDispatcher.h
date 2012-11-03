@@ -144,7 +144,7 @@ public:
     virtual void StageMatrix(int i, int j) { };
     virtual void StageElem(int i, int j, float value) { };
     virtual void PushMatrix() { };
-    virtual void ApplyM(int nFineVerts, int offset) { };
+    virtual void ApplyM(int offset) { };
 
     virtual int GetElemsPerVertex() const { return -2; }
     virtual int GetElemsPerVarying() const { return -2; }

@@ -254,9 +254,7 @@ FarMesh<U>::SubdivideSpMV(int level) {
     assert(_dispatcher->M != NULL);
 
     int offset = _subdivisionTables->GetFirstVertexOffset(level);
-    int nFineVerts = _subdivisionTables->GetNumVertices(level-1);
-    assert(_dispatcher->M != NULL);
-    _dispatcher->ApplyM(nFineVerts, offset);
+    _dispatcher->ApplyM(offset);
 }
 
 } // end namespace OPENSUBDIV_VERSION
