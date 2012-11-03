@@ -29,8 +29,10 @@ OsdOskiKernelDispatcher::Table::Copy( int size, const void *table ) {
 }
 
 OsdOskiKernelDispatcher::OsdOskiKernelDispatcher( int levels )
-    : OsdKernelDispatcher(levels), _currentVertexBuffer(NULL), _currentVaryingBuffer(NULL), _vdesc(NULL), S(NULL), M(NULL) {
+    : OsdKernelDispatcher(levels), _currentVertexBuffer(NULL), _currentVaryingBuffer(NULL), _vdesc(NULL) {
     _tables.resize(TABLE_MAX);
+    M = NULL;
+    S = NULL;
 }
 
 OsdOskiKernelDispatcher::~OsdOskiKernelDispatcher() {
@@ -156,6 +158,8 @@ OsdOskiKernelDispatcher::PushMatrix()
 void
 OsdOskiKernelDispatcher::ApplyM(int nFineVerts, int offset)
 {
+    assert(M != NULL);
+
     int numElems = _currentVertexBuffer->GetNumElements();
     float* V_in = _currentVertexBuffer->GetCpuBuffer();
     float* V_out = _currentVertexBuffer->GetCpuBuffer() + offset * numElems;
@@ -170,19 +174,20 @@ OsdOskiKernelDispatcher::ApplyM(int nFineVerts, int offset)
     x_view = oski_CreateVecView( V_in, numElems, STRIDE_UNIT );
     y_view = oski_CreateVecView( V_out, numElems, STRIDE_UNIT );
 
+    int i = M->size1();
+    int j = M->size2();
     A_tunable = oski_CreateMatCSR(
             (long int*) &M->index1_data()[0], // row ptrs
             (long int*) &M->index2_data()[0], // idx ptrs
             &M->value_data()[0],  // values
-            M->size1(),       // num rows
-            M->size2(),       // num cols
+            i,                    // num rows
+            j,                    // num cols
             SHARE_INPUTMAT,   // both use and oski share array
             1,                // number of args to follow
             INDEX_ZERO_BASED  // zero based indexing
            );
 
     oski_MatMult( A_tunable, OP_NORMAL, alpha, x_view, beta, y_view );
-
 }
 
 void

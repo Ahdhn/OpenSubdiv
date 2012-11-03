@@ -138,6 +138,7 @@ public:
 
     coordinate_matrix<float>* S;
     compressed_matrix<float>* M;
+
 private:
     static FarDispatcher _DefaultDispatcher;
 };

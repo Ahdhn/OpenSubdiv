@@ -84,9 +84,6 @@ public:
 
 protected:
 
-    coordinate_matrix<float>* S;
-    compressed_matrix<float>* M;
-
     // XXX: until far refactoring finishes, use this.
     struct Table {
         Table() : ptr(NULL) { }

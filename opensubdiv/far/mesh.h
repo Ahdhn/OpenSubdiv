@@ -241,16 +241,22 @@ FarMesh<U>::SubdivideSpMV(int level) {
             printf("-- Level %d --\n", i);
             _subdivisionTables->ApplySpMV(i);
         }
+#if 0
         printf("Subdivision matrix is %d-by-%d with %d nonzeroes (%f%%)\n",
                 (int) _dispatcher->M->size1(),
                 (int) _dispatcher->M->size2(),
                 (int) _dispatcher->M->value_data().size(),
-                (double) _dispatcher->M->value_data().size() / (double) (_dispatcher->M->size1() * _dispatcher->M->size2()));
-    } else {
-        int offset = _subdivisionTables->GetFirstVertexOffset(level);
-        int nFineVerts = _subdivisionTables->GetNumVertices(level);
-        _dispatcher->ApplyM(nFineVerts, offset);
+                (double) _dispatcher->M->value_data().size() / (double)
+                   (_dispatcher->M->size1() *
+                    _dispatcher->M->size2()));
+#endif
     }
+    assert(_dispatcher->M != NULL);
+
+    int offset = _subdivisionTables->GetFirstVertexOffset(level);
+    int nFineVerts = _subdivisionTables->GetNumVertices(level-1);
+    assert(_dispatcher->M != NULL);
+    _dispatcher->ApplyM(nFineVerts, offset);
 }
 
 } // end namespace OPENSUBDIV_VERSION
