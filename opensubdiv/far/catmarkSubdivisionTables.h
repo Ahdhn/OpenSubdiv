@@ -181,8 +181,8 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
     FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
     assert(dispatch);
 
-    int prevOffset = this->GetFirstVertexOffset(level-1);
-    int offset     = 0; //this->GetFirstVertexOffset(level);
+    int prevOffset = this->GetFirstVertexOffset(std::max(level-1,0));
+    int offset     = this->GetFirstVertexOffset(level);
     int nextOffset = this->GetFirstVertexOffset(level+1);
     int nPrevVerts = this->GetNumVertices(level-1);
     int nVerts     = this->GetNumVertices(level);
@@ -194,9 +194,15 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
     iop = nPrevVerts+batch->kernelF,
     jop = iv = nPrevVerts,
     jv  = nElemsPerVert;
+    offset = nPrevVerts;
 
     dispatch->StageMatrix(iop, jop);
     {
+        // put identity in upper part
+        for (int i = 0; i < nPrevVerts; i++)
+            (*(dispatch->S))(i,i) = 1.0;
+
+        printf("render F %d\n", batch->kernelF);
         if (batch->kernelF>0) {
             printf("spmv: v[%d] = M0(%d-by-%d) * v(%d-by-%d) @ v[%d]\n",
                     prevOffset,       // dest idx
@@ -214,10 +220,14 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
 
     dispatch->StageMatrix(iop,jop);
     {
-        offset += this->GetNumFaceVertices(level);
+        // put identity in upper part
+        for (offset = 0; offset < batch->kernelF; offset++)
+            (*(dispatch->S))(offset, offset) = 1.0;
+
+        printf("render E %d\n", batch->kernelE);
         if (batch->kernelE>0) {
             printf("spmv: v[%d] = M1(%d-by-%d) * v(%d-by-%d) @ v[%d]\n",
-                    offset,        // dest idx
+                    this->GetFirstVertexOffset(level), // dest idx
                     iop, jop,      // operator dimensions
                     iv, jv,        // source v dimensions
                     prevOffset);   // source idx
@@ -225,12 +235,15 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
         }
 
         offset += this->GetNumEdgeVertices(level);
+        printf("render B %d\n", batch->kernelB.second - batch->kernelB.first);
         if (batch->kernelB.first < batch->kernelB.second)
             dispatch->ApplyCatmarkVertexVerticesKernelB
                 (this->_mesh, offset, level, batch->kernelB.first, batch->kernelB.second, clientdata);
+        printf("render A1 %d\n", batch->kernelA1.second - batch->kernelA1.first);
         if (batch->kernelA1.first < batch->kernelA1.second)
             dispatch->ApplyCatmarkVertexVerticesKernelA
                 (this->_mesh, offset, false, level, batch->kernelA1.first, batch->kernelA1.second, clientdata);
+        printf("render A2 %d\n", batch->kernelA2.second - batch->kernelA2.first);
         if (batch->kernelA2.first < batch->kernelA2.second)
             dispatch->ApplyCatmarkVertexVerticesKernelA
                 (this->_mesh, offset, true, level, batch->kernelA2.first, batch->kernelA2.second, clientdata);

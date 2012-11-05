@@ -140,14 +140,18 @@ OsdOskiKernelDispatcher::PushMatrix()
         compressed_matrix<float> *B = M;
         compressed_matrix<float> *C =
             new compressed_matrix<float>(A.size1(), B->size2());
+        std::cout << "pushing S: " << A << std::endl;
+#if 0
         printf("saxpy mul %d-%d * %d-%d\n",
                 (int) A.size1(), (int) A.size2(),
                 (int) B->size1(), (int) B->size2());
+#endif
         axpy_prod(A, *B, *C, true);
         M = C;
         delete B;
     } else {
-        printf("saxpy set %d-%d\n", (int)S->size1(), (int)S->size2());
+        std::cout << "setting S: " << *S << std::endl;
+        //printf("saxpy set %d-%d\n", (int)S->size1(), (int)S->size2());
         M = new compressed_matrix<float>(*S);
     }
 
@@ -166,7 +170,6 @@ OsdOskiKernelDispatcher::ApplyM(int offset)
     int numElems = _currentVertexBuffer->GetNumElements();
     float* V_in = _currentVertexBuffer->GetCpuBuffer();
     float* V_out = _currentVertexBuffer->GetCpuBuffer() + offset * numElems;
-    printf("V_out is 0x%x in applyM\n", V_out);
 
 #if 0
     int alpha = 1.0,
@@ -202,10 +205,12 @@ OsdOskiKernelDispatcher::ApplyM(int offset)
         for(int j = 0; j < v_coarse.size2(); j++)
             v_coarse(i,j) = V_in[i*numElems+j];
 
+#if 0
     printf("v(%d-%d) = M(%d-%d) * v(%d-%d)\n",
             (int) v_fine.size1(), (int) v_fine.size2(),
             (int) M->size1(), (int) M->size2(),
             (int) v_coarse.size1(), (int) v_coarse.size2());
+#endif
 
     axpy_prod(*M, v_coarse, v_fine, true);
 
