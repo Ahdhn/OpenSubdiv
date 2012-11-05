@@ -7,7 +7,7 @@
 #include <string.h>
 
 using boost::numeric::ublas::axpy_prod;
-using boost::numeric::ublas::matrix;
+using boost::numeric::ublas::vector;
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
@@ -199,11 +199,11 @@ OsdOskiKernelDispatcher::ApplyM(int offset)
 
     oski_MatMult( A_tunable, OP_NORMAL, alpha, x_view, beta, y_view );
 #else
-    matrix<float> v_fine(nFineVertElems,1);
-    matrix<float> v_coarse(nCoarseVertElems,1);
+    vector<float> v_fine(nFineVertElems);
+    vector<float> v_coarse(nCoarseVertElems);
 
-    for(int i = 0; i < v_coarse.size1(); i++)
-        v_coarse(i,0) = V_in[i];
+    for(int i = 0; i < v_coarse.size(); i++)
+        v_coarse(i) = V_in[i];
 
 #if 0
     printf("v(%d-%d) = M(%d-%d) * v(%d-%d)\n",
@@ -214,8 +214,8 @@ OsdOskiKernelDispatcher::ApplyM(int offset)
 
     axpy_prod(*M, v_coarse, v_fine, true);
 
-    for(int i = 0; i < v_fine.size1(); i++)
-        V_out[i] = v_fine(i,0);
+    for(int i = 0; i < v_fine.size(); i++)
+        V_out[i] = v_fine(i);
 #endif
 }
 
