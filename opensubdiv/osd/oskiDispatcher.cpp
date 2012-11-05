@@ -140,18 +140,19 @@ OsdOskiKernelDispatcher::PushMatrix()
         compressed_matrix<float> *B = M;
         compressed_matrix<float> *C =
             new compressed_matrix<float>(A.size1(), B->size2());
-        std::cout << "pushing S: " << A << std::endl;
 #if 0
+        std::cout << "pushing S: " << A << std::endl;
+#endif
         printf("saxpy mul %d-%d * %d-%d\n",
                 (int) A.size1(), (int) A.size2(),
                 (int) B->size1(), (int) B->size2());
-#endif
         axpy_prod(A, *B, *C, true);
         M = C;
         delete B;
+        std::cout << "M: " << *M << std::endl;
     } else {
-        std::cout << "setting S: " << *S << std::endl;
-        //printf("saxpy set %d-%d\n", (int)S->size1(), (int)S->size2());
+        //std::cout << "setting S: " << *S << std::endl;
+        printf("saxpy set %d-%d\n", (int)S->size1(), (int)S->size2());
         M = new compressed_matrix<float>(*S);
     }
 
@@ -165,8 +166,8 @@ OsdOskiKernelDispatcher::ApplyM(int offset)
 {
     assert(M != NULL);
 
-    int nFineVerts = M->size1();
-    int nCoarseVerts = M->size2();
+    int nFineVertElems = M->size1();
+    int nCoarseVertElems = M->size2();
     int numElems = _currentVertexBuffer->GetNumElements();
     float* V_in = _currentVertexBuffer->GetCpuBuffer();
     float* V_out = _currentVertexBuffer->GetCpuBuffer() + offset * numElems;
@@ -198,12 +199,11 @@ OsdOskiKernelDispatcher::ApplyM(int offset)
 
     oski_MatMult( A_tunable, OP_NORMAL, alpha, x_view, beta, y_view );
 #else
-    matrix<float> v_fine(nFineVerts, numElems);
-    matrix<float> v_coarse(nCoarseVerts, numElems);
+    matrix<float> v_fine(nFineVertElems,1);
+    matrix<float> v_coarse(nCoarseVertElems,1);
 
     for(int i = 0; i < v_coarse.size1(); i++)
-        for(int j = 0; j < v_coarse.size2(); j++)
-            v_coarse(i,j) = V_in[i*numElems+j];
+        v_coarse(i,0) = V_in[i];
 
 #if 0
     printf("v(%d-%d) = M(%d-%d) * v(%d-%d)\n",
@@ -215,8 +215,7 @@ OsdOskiKernelDispatcher::ApplyM(int offset)
     axpy_prod(*M, v_coarse, v_fine, true);
 
     for(int i = 0; i < v_fine.size1(); i++)
-        for(int j = 0; j < v_fine.size2(); j++)
-            V_out[i*numElems+j] = v_fine(i,j);
+        V_out[i] = v_fine(i,0);
 #endif
 }
 

@@ -182,7 +182,7 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
     assert(dispatch);
 
     int prevOffset = this->GetFirstVertexOffset(std::max(level-1,0));
-    int offset     = this->GetFirstVertexOffset(level);
+    int offset     = 0; //this->GetFirstVertexOffset(level);
     int nextOffset = this->GetFirstVertexOffset(level+1);
     int nPrevVerts = this->GetNumVertices(level-1);
     int nVerts     = this->GetNumVertices(level);
@@ -191,18 +191,18 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
     int nElemsPerVary = dispatch->GetElemsPerVarying();
 
     int iop, jop, iv, jv;
-    iop = nPrevVerts+batch->kernelF,
-    jop = iv = nPrevVerts,
-    jv  = nElemsPerVert;
-    offset = nPrevVerts;
+    iop = (nPrevVerts+batch->kernelF) * nElemsPerVert,
+    jop = iv = nPrevVerts * nElemsPerVert,
+    jv  = 1;
 
     dispatch->StageMatrix(iop, jop);
     {
         // put identity in upper part
-        for (int i = 0; i < nPrevVerts; i++)
-            (*(dispatch->S))(i,i) = 1.0;
+        for (offset = 0; offset < nPrevVerts; offset++)
+            for (int i = 0; i < nElemsPerVert; i++)
+                (*(dispatch->S))(offset*nElemsPerVert+i,
+                                 offset*nElemsPerVert+i) = 1.0;
 
-        printf("render F %d\n", batch->kernelF);
         if (batch->kernelF>0) {
             printf("spmv: v[%d] = M0(%d-by-%d) * v(%d-by-%d) @ v[%d]\n",
                     prevOffset,       // dest idx
@@ -212,19 +212,22 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
             dispatch->ApplyCatmarkFaceVerticesKernel(this->_mesh, offset, level, 0, batch->kernelF, clientdata);
         }
     }
+    std::cout << "S0: " << *(dispatch->S) << std::endl;
     dispatch->PushMatrix();
 
-    iop = nVerts,
-    jop = iv = nPrevVerts+batch->kernelF,
-    jv  = nElemsPerVert;
+    iop = nVerts*nElemsPerVert,
+    jop = iv = (nPrevVerts+batch->kernelF) * nElemsPerVert,
+    jv  = 1;
 
     dispatch->StageMatrix(iop,jop);
     {
         // put identity in upper part
         for (offset = 0; offset < batch->kernelF; offset++)
-            (*(dispatch->S))(offset, offset) = 1.0;
+            for (int i = 0; i < nElemsPerVert; i++)
+                (*(dispatch->S))(offset*nElemsPerVert+i,
+                  (offset+nPrevVerts)*nElemsPerVert+i)
+                    = 1.0;
 
-        printf("render E %d\n", batch->kernelE);
         if (batch->kernelE>0) {
             printf("spmv: v[%d] = M1(%d-by-%d) * v(%d-by-%d) @ v[%d]\n",
                     this->GetFirstVertexOffset(level), // dest idx
@@ -235,19 +238,17 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
         }
 
         offset += this->GetNumEdgeVertices(level);
-        printf("render B %d\n", batch->kernelB.second - batch->kernelB.first);
         if (batch->kernelB.first < batch->kernelB.second)
             dispatch->ApplyCatmarkVertexVerticesKernelB
                 (this->_mesh, offset, level, batch->kernelB.first, batch->kernelB.second, clientdata);
-        printf("render A1 %d\n", batch->kernelA1.second - batch->kernelA1.first);
         if (batch->kernelA1.first < batch->kernelA1.second)
             dispatch->ApplyCatmarkVertexVerticesKernelA
                 (this->_mesh, offset, false, level, batch->kernelA1.first, batch->kernelA1.second, clientdata);
-        printf("render A2 %d\n", batch->kernelA2.second - batch->kernelA2.first);
         if (batch->kernelA2.first < batch->kernelA2.second)
             dispatch->ApplyCatmarkVertexVerticesKernelA
                 (this->_mesh, offset, true, level, batch->kernelA2.first, batch->kernelA2.second, clientdata);
     }
+    std::cout << "S1: " << *(dispatch->S) << std::endl;
     dispatch->PushMatrix();
 }
 
