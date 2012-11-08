@@ -10,10 +10,10 @@ extern "C" {
 
 #include <boost/numeric/ublas/operation.hpp>
 #include <boost/numeric/ublas/matrix_sparse.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/io.hpp>
 
-using boost::numeric::ublas::compressed_matrix;
-using boost::numeric::ublas::coordinate_matrix;
+using namespace boost::numeric::ublas;
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {

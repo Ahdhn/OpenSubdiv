@@ -68,8 +68,7 @@
 #include "../far/loopSubdivisionTables.h"
 #include "../far/vertexEditTables.h"
 
-using boost::numeric::ublas::compressed_matrix;
-using boost::numeric::ublas::coordinate_matrix;
+using namespace boost::numeric::ublas;
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {

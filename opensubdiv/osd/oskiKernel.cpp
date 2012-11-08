@@ -6,7 +6,7 @@
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
-void oskiComputeFace( const OskiVertexDescriptor *vdesc, float * vertex, float * varying, const int *F_IT, const int *F_ITa, int offset, int start, int end) {
+void oskiComputeFace( const OskiVertexDescriptor *vdesc, float * vertex, float * varying, const int *F_IT, const int *F_ITa, int dstOffset, int start, int end) {
 
     for (int i = start; i < end; i++) {
         int h = F_ITa[2*i];
@@ -15,18 +15,21 @@ void oskiComputeFace( const OskiVertexDescriptor *vdesc, float * vertex, float *
         float weight = 1.0f/n;
 
         // XXX: should use local vertex struct variable instead of accumulating directly into global memory.
-        int dstIndex = offset + i;
+        int dstIndex = dstOffset + i;
         vdesc->Clear(vertex, varying, dstIndex);
 
+        printf("face %d has %d inputs\n", dstIndex, n);
         for (int j=0; j<n; ++j) {
             int index = F_IT[h+j];
+            printf(" %d", index);
             vdesc->AddWithWeight(vertex, dstIndex, index, weight);
             vdesc->AddVaryingWithWeight(varying, dstIndex, index, weight);
         }
+        printf("\n");
     }
 }
 
-void oskiComputeEdge( const OskiVertexDescriptor *vdesc, float *vertex, float *varying, const int *E_IT, const float *E_W, int offset, int start, int end) {
+void oskiComputeEdge( const OskiVertexDescriptor *vdesc, float *vertex, float *varying, const int *E_IT, const float *E_W, int dstOffset, int start, int end) {
 
     for (int i = start; i < end; i++) {
         int eidx0 = E_IT[4*i+0];
@@ -36,7 +39,7 @@ void oskiComputeEdge( const OskiVertexDescriptor *vdesc, float *vertex, float *v
 
         float vertWeight = E_W[i*2+0];
 
-        int dstIndex = offset + i;
+        int dstIndex = dstOffset + i;
         vdesc->Clear(vertex, varying, dstIndex);
 
         vdesc->AddWithWeight(vertex, dstIndex, eidx0, vertWeight);
@@ -54,7 +57,7 @@ void oskiComputeEdge( const OskiVertexDescriptor *vdesc, float *vertex, float *v
     }
 }
 
-void oskiComputeVertexA(const OskiVertexDescriptor *vdesc, float *vertex, float *varying, const int *V_ITa, const float *V_W, int offset, int start, int end, int pass) {
+void oskiComputeVertexA(const OskiVertexDescriptor *vdesc, float *vertex, float *varying, const int *V_ITa, const float *V_W, int dstOffset, int start, int end, int pass) {
 
     for (int i = start; i < end; i++) {
         int n     = V_ITa[5*i+1];
@@ -70,7 +73,7 @@ void oskiComputeVertexA(const OskiVertexDescriptor *vdesc, float *vertex, float 
         if (weight>0.0f && weight<1.0f && n > 0)
             weight=1.0f-weight;
 
-        int dstIndex = offset + i;
+        int dstIndex = dstOffset + i;
         if(not pass)
             vdesc->Clear(vertex, varying, dstIndex);
 
@@ -87,7 +90,7 @@ void oskiComputeVertexA(const OskiVertexDescriptor *vdesc, float *vertex, float 
     }
 }
 
-void oskiComputeVertexB(const OskiVertexDescriptor *vdesc, float *vertex, float *varying, const int *V_ITa, const int *V_IT, const float *V_W, int offset, int start, int end) {
+void oskiComputeVertexB(const OskiVertexDescriptor *vdesc, float *vertex, float *varying, const int *V_ITa, const int *V_IT, const float *V_W, int dstOffset, int start, int end) {
 
     for (int i = start; i < end; i++) {
         int h = V_ITa[5*i];
@@ -98,7 +101,7 @@ void oskiComputeVertexB(const OskiVertexDescriptor *vdesc, float *vertex, float 
         float wp = 1.0f/float(n*n);
         float wv = (n-2.0f) * n * wp;
 
-        int dstIndex = offset + i;
+        int dstIndex = dstOffset + i;
         vdesc->Clear(vertex, varying, dstIndex);
 
         vdesc->AddWithWeight(vertex, dstIndex, p, weight * wv);
@@ -111,7 +114,7 @@ void oskiComputeVertexB(const OskiVertexDescriptor *vdesc, float *vertex, float 
     }
 }
 
-void oskiComputeLoopVertexB(const OskiVertexDescriptor *vdesc, float *vertex, float *varying, const int *V_ITa, const int *V_IT, const float *V_W, int offset, int start, int end) {
+void oskiComputeLoopVertexB(const OskiVertexDescriptor *vdesc, float *vertex, float *varying, const int *V_ITa, const int *V_IT, const float *V_W, int dstOffset, int start, int end) {
 
     for (int i = start; i < end; i++) {
         int h = V_ITa[5*i];
@@ -124,7 +127,7 @@ void oskiComputeLoopVertexB(const OskiVertexDescriptor *vdesc, float *vertex, fl
         beta = beta * beta;
         beta = (0.625f - beta) * wp;
 
-        int dstIndex = offset + i;
+        int dstIndex = dstOffset + i;
         vdesc->Clear(vertex, varying, dstIndex);
 
         vdesc->AddWithWeight(vertex, dstIndex, p, weight * (1.0f - (beta * n)));
@@ -136,13 +139,13 @@ void oskiComputeLoopVertexB(const OskiVertexDescriptor *vdesc, float *vertex, fl
     }
 }
 
-void oskiComputeBilinearEdge(const OskiVertexDescriptor *vdesc, float *vertex, float *varying, const int *E_IT, int offset, int start, int end) {
+void oskiComputeBilinearEdge(const OskiVertexDescriptor *vdesc, float *vertex, float *varying, const int *E_IT, int dstOffset, int start, int end) {
 
     for (int i = start; i < end; i++) {
         int eidx0 = E_IT[2*i+0];
         int eidx1 = E_IT[2*i+1];
 
-        int dstIndex = offset + i;
+        int dstIndex = dstOffset + i;
         vdesc->Clear(vertex, varying, dstIndex);
 
         vdesc->AddWithWeight(vertex, dstIndex, eidx0, 0.5f);
@@ -153,12 +156,12 @@ void oskiComputeBilinearEdge(const OskiVertexDescriptor *vdesc, float *vertex, f
     }
 }
 
-void oskiComputeBilinearVertex(const OskiVertexDescriptor *vdesc, float *vertex, float *varying, const int *V_ITa, int offset, int start, int end) {
+void oskiComputeBilinearVertex(const OskiVertexDescriptor *vdesc, float *vertex, float *varying, const int *V_ITa, int dstOffset, int start, int end) {
 
     for (int i = start; i < end; i++) {
         int p = V_ITa[i];
 
-        int dstIndex = offset + i;
+        int dstIndex = dstOffset + i;
         vdesc->Clear(vertex, varying, dstIndex);
 
         vdesc->AddWithWeight(vertex, dstIndex, p, 1.0f);

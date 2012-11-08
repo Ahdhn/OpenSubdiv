@@ -129,6 +129,11 @@ OsdOskiKernelDispatcher::StageMatrix(int i, int j)
 void
 OsdOskiKernelDispatcher::StageElem(int i, int j, float value)
 {
+    assert(0 <= i);
+    assert(i < S->size1());
+    assert(0 <= j);
+    assert(j < S->size2());
+
     (*S)(i,j) = value;
 }
 
@@ -140,16 +145,24 @@ OsdOskiKernelDispatcher::PushMatrix()
         compressed_matrix<float> *B = M;
         compressed_matrix<float> *C =
             new compressed_matrix<float>(A.size1(), B->size2());
-#if 0
-        std::cout << "pushing S: " << A << std::endl;
-#endif
+        //std::cout << "pushing S: " << A << std::endl;
         printf("saxpy mul %d-%d * %d-%d\n",
                 (int) A.size1(), (int) A.size2(),
                 (int) B->size1(), (int) B->size2());
         axpy_prod(A, *B, *C, true);
         M = C;
         delete B;
-        std::cout << "M: " << *M << std::endl;
+
+        using namespace std;
+        for (int i = 0; i < M->size1(); i++) {
+            cout << "row " << i << ": ";
+            for (int j = 0; j < M->size2(); j++) {
+                if ((*M)(i,j) != 0.0)
+                    cout << (*M)(i,j) << "[" << j << "] ";
+            }
+            cout << endl;
+        }
+        //std::cout << "M: " << *M << std::endl;
     } else {
         //std::cout << "setting S: " << *S << std::endl;
         printf("saxpy set %d-%d\n", (int)S->size1(), (int)S->size2());

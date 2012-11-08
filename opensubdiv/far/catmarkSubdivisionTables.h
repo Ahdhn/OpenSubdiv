@@ -60,15 +60,18 @@
 #include <cassert>
 #include <vector>
 
+#include <boost/numeric/ublas/matrix_proxy.hpp>
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 #include <boost/numeric/ublas/io.hpp>
+#include <boost/foreach.hpp>
 
 #include "../version.h"
 
 #include "../far/subdivisionTables.h"
 
-using boost::numeric::ublas::coordinate_matrix;
-using boost::numeric::ublas::compressed_matrix;
+#define foreach BOOST_FOREACH
+
+using namespace boost::numeric::ublas;
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
@@ -183,7 +186,6 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
 
     int prevOffset = this->GetFirstVertexOffset(std::max(level-1,0));
     int offset     = 0; //this->GetFirstVertexOffset(level);
-    int nextOffset = this->GetFirstVertexOffset(level+1);
     int nPrevVerts = this->GetNumVertices(level-1);
     int nVerts     = this->GetNumVertices(level);
 
@@ -204,7 +206,7 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
                                  offset*nElemsPerVert+i) = 1.0;
 
         if (batch->kernelF>0) {
-            printf("spmv: v[%d] = M0(%d-by-%d) * v(%d-by-%d) @ v[%d]\n",
+            printf("spmv: v[%d] = S0(%d-by-%d) * v(%d-by-%d) @ v[%d]\n",
                     prevOffset,       // dest idx
                     iop, jop,         // operator dimensions
                     iv, jv,           // source vector dimensions
@@ -212,7 +214,18 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
             dispatch->ApplyCatmarkFaceVerticesKernel(this->_mesh, offset, level, 0, batch->kernelF, clientdata);
         }
     }
-    std::cout << "S0: " << *(dispatch->S) << std::endl;
+
+    compressed_matrix<float> S(*(dispatch->S));
+    using namespace std;
+    for (int i = 0; i < S.size1(); i++) {
+        cout << "row " << i << ": ";
+        for (int j = 0; j < S.size2(); j++) {
+            if (S(i,j) != 0.0)
+                cout << S(i,j) << "[" << j << "] ";
+        }
+        cout << endl;
+    }
+
     dispatch->PushMatrix();
 
     iop = nVerts*nElemsPerVert,
@@ -229,7 +242,7 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
                     = 1.0;
 
         if (batch->kernelE>0) {
-            printf("spmv: v[%d] = M1(%d-by-%d) * v(%d-by-%d) @ v[%d]\n",
+            printf("spmv: v[%d] = S1(%d-by-%d) * v(%d-by-%d) @ v[%d]\n",
                     this->GetFirstVertexOffset(level), // dest idx
                     iop, jop,      // operator dimensions
                     iv, jv,        // source v dimensions
@@ -247,8 +260,19 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
         if (batch->kernelA2.first < batch->kernelA2.second)
             dispatch->ApplyCatmarkVertexVerticesKernelA
                 (this->_mesh, offset, true, level, batch->kernelA2.first, batch->kernelA2.second, clientdata);
+
+        compressed_matrix<float> S(*(dispatch->S));
+        using namespace std;
+        for (int i = 0; i < S.size1(); i++) {
+            cout << "row " << i << ": ";
+            for (int j = 0; j < S.size2(); j++) {
+                if (S(i,j) != 0.0)
+                    cout << S(i,j) << "[" << j << "] ";
+            }
+            cout << endl;
+        }
     }
-    std::cout << "S1: " << *(dispatch->S) << std::endl;
+    //std::cout << "S1: " << *(dispatch->S) << std::endl;
     dispatch->PushMatrix();
 }
 
