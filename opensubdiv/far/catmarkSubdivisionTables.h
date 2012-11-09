@@ -190,7 +190,6 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
     int nVerts     = this->GetNumVertices(level);
 
     int nElemsPerVert = dispatch->GetElemsPerVertex();
-    int nElemsPerVary = dispatch->GetElemsPerVarying();
 
     int iop, jop, iv, jv;
     iop = (nPrevVerts+batch->kernelF) * nElemsPerVert,

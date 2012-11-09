@@ -455,7 +455,7 @@ void applyTags( OpenSubdiv::HbrMesh<T> * mesh, shape const * sh ) {
                     continue;
                 }
 
-                if (t->name=="vertexedit" && opname=="value" || opname=="sharpness") {
+                if ((t->name=="vertexedit" && opname=="value") || opname=="sharpness") {
                     nops++;
 
                     // only varname="P" is supported here for now.

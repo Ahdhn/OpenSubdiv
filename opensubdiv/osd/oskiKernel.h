@@ -14,7 +14,7 @@ namespace OPENSUBDIV_VERSION {
 struct OskiVertexDescriptor {
 
     OskiVertexDescriptor(OsdKernelDispatcher* dispatcher, int numVertexElem, int numVaryingElem)
-        : _dispatcher(dispatcher),  numVertexElements(numVertexElem), numVaryingElements(numVaryingElem) { }
+        : numVertexElements(numVertexElem), numVaryingElements(numVaryingElem), _dispatcher(dispatcher) { }
 
     void Clear(float *vertex, float *varying, int index) const { }
 

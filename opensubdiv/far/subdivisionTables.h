@@ -152,7 +152,7 @@ public:
     /// subdivision scheme.
     virtual int GetNumTables() const { return 5; }
 
-protected:
+public:
     template <class X, class Y> friend class FarMeshFactory;
 
     FarSubdivisionTables<U>( FarMesh<U> * mesh, int maxlevel );

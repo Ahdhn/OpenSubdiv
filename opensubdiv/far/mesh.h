@@ -141,7 +141,7 @@ private:
     // declaration of the templated vertex class U.
     template <class X, class Y> friend class FarMeshFactory;
 
-    FarMesh() : _subdivisionTables(0), _dispatcher(0), _vertexEditTables(0) { }
+    FarMesh() : _subdivisionTables(0), _vertexEditTables(0), _dispatcher(0) { }
 
     // non-copyable, so these are not implemented:
     FarMesh(FarMesh<U> const &);

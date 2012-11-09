@@ -359,7 +359,6 @@ updateGeom() {
 
     float r = sin(g_frame*0.001f) * g_moveScale;
     for (int i = 0; i < nverts; ++i) {
-        float move = 0.05f*cosf(p[0]*20+g_frame*0.01f);
         float ct = cos(p[2] * r);
         float st = sin(p[2] * r);
         g_positions[i*3+0] = p[0]*ct + p[1]*st;
