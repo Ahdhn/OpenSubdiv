@@ -112,6 +112,9 @@ protected:
 
     std::vector<Table> _tables;
     std::vector<Table> _editTables;
+
+    oski_matrix_t A_tunable;
+    oski_vecview_t x_view, y_view;
 };
 
 } // end namespace OPENSUBDIV_VERSION
