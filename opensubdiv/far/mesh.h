@@ -241,13 +241,15 @@ FarMesh<U>::SubdivideSpMV(int level) {
         for (int i=1; i<level; ++i)
             _subdivisionTables->ApplySpMV(i);
 
-        printf("Subdivision matrix is %d-by-%d with %d nonzeroes (%f%%)\n",
+        printf("Subdivision matrix is %d-by-%d with %d nonzeroes (%f%%) %2.fKB\n",
                 (int) _dispatcher->M->size1(),
                 (int) _dispatcher->M->size2(),
                 (int) _dispatcher->M->value_data().size(),
                 100.0 * _dispatcher->M->value_data().size() /
                    (_dispatcher->M->size1() *
-                    _dispatcher->M->size2()));
+                    _dispatcher->M->size2()),
+                ((float) (_dispatcher->M->size1() + _dispatcher->M->size2() + _dispatcher->M->size1()) * sizeof(float)) / 1024.0
+              );
     }
     assert(_dispatcher->M != NULL);
 
