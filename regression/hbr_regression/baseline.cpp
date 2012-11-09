@@ -221,7 +221,7 @@ static void usage(char const * appname) {
     printf("    Valid shapes :\n");
     for (int i=0; i<(int)g_shapes.size(); ++i)
         printf("        %d : %s\n", i, g_shapes[i].name.c_str());
-    printf("        %d : all shapes\n", g_shapes.size());
+    printf("        %d : all shapes\n", (int) g_shapes.size());
 }
 
 int g_shapeindex=-1;
@@ -241,7 +241,7 @@ static void parseArgs(int argc, char ** argv) {
             if (i<(argc-1))
                 g_shapeindex =  atoi( argv[++i] );
             if ( g_shapeindex<0 or g_shapeindex>(int)g_shapes.size()) {
-                printf("-shape : index must be within [%d %d]\n", 0, g_shapes.size());
+                printf("-shape : index must be within [%d %d]\n", 0, (int) g_shapes.size());
                 exit(0);
             }
         } else if (not strcmp(argv[i],"-scheme")) {

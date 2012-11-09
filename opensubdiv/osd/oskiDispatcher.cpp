@@ -170,7 +170,7 @@ OsdOskiKernelDispatcher::PushMatrix()
         delete B;
     } else {
         M = new compressed_matrix<float>(*S);
-        printf("PushMatrix set %d-%d\n", M->size1(), M->size2());
+        printf("PushMatrix set %d-%d\n", (int) M->size1(), (int) M->size2());
     }
 
     assert(M);
