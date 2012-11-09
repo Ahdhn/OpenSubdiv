@@ -144,34 +144,11 @@ OsdOskiKernelDispatcher::PushMatrix()
     if (M != NULL) {
         compressed_matrix<float> A(*S);
         compressed_matrix<float> *B = M;
-        compressed_matrix<float> *C =
-            new compressed_matrix<float>(A.size1(), B->size2());
-        //std::cout << "pushing S: " << A << std::endl;
-        printf("saxpy mul %d-%d * %d-%d\n",
-                (int) A.size1(), (int) A.size2(),
-                (int) B->size1(), (int) B->size2());
+        compressed_matrix<float> *C = new compressed_matrix<float>(A.size1(), B->size2());
         axpy_prod(A, *B, *C, true);
         M = C;
         delete B;
-
-        using namespace std;
-        for (int i = 0; i < M->size1(); i++) {
-            float sum = 0.0;
-            for (int j = 0; j < M->size2(); j++)
-                sum += (*M)(i,j);
-            if (fabs(sum-1.0) > FLT_EPSILON) {
-                cout << "row " << i << ": ";
-                for (int j = 0; j < M->size2(); j++) {
-                    if ((*M)(i,j) != 0.0)
-                        cout << (*M)(i,j) << "[" << j << "] ";
-                }
-                cout << endl;
-            }
-        }
-        //std::cout << "M: " << *M << std::endl;
     } else {
-        //std::cout << "setting S: " << *S << std::endl;
-        printf("saxpy set %d-%d\n", (int)S->size1(), (int)S->size2());
         M = new compressed_matrix<float>(*S);
     }
 

@@ -59,7 +59,6 @@
 
 #include <cassert>
 #include <vector>
-#include <cfloat>
 
 #include <boost/numeric/ublas/matrix_proxy.hpp>
 #include <boost/numeric/ublas/matrix_sparse.hpp>
@@ -186,7 +185,7 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
     assert(dispatch);
 
     int prevOffset = this->GetFirstVertexOffset(std::max(level-1,0));
-    int offset     = 0; //this->GetFirstVertexOffset(level);
+    int offset     = 0;
     int nPrevVerts = this->GetNumVertices(level-1);
     int nVerts     = this->GetNumVertices(level);
 
@@ -208,32 +207,16 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
                                  offset*nElemsPerVert+i) = 1.0;
 
         if (batch->kernelF>0) {
+#if 0
             printf("spmv: v[%d] = S0(%d-by-%d) * v(%d-by-%d) @ v[%d]\n",
                     prevOffset,       // dest idx
                     iop, jop,         // operator dimensions
                     iv, jv,           // source vector dimensions
                     prevOffset);      // source idx
+#endif
             dispatch->ApplyCatmarkFaceVerticesKernel(this->_mesh, offset, level, 0, batch->kernelF, clientdata);
         }
     }
-
-    compressed_matrix<float> S(*(dispatch->S));
-    using namespace std;
-    for (int i = 0; i < S.size1(); i++) {
-        float sum = 0.0;
-        for (int j = 0; j < S.size2(); j++)
-            sum += S(i,j);
-        if (fabs(sum - 1.0) > FLT_EPSILON) {
-            cout << "row A " << i << ": ";
-            for (int j = 0; j < S.size2(); j++) {
-                sum += S(i,j);
-                if (S(i,j) != 0.0)
-                    cout << S(i,j) << "[" << j << "] ";
-            }
-            cout << endl;
-        }
-    }
-
     dispatch->PushMatrix();
 
     iop = nVerts*nElemsPerVert,
@@ -250,11 +233,13 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
                     = 1.0;
 
         if (batch->kernelE>0) {
+#if 0
             printf("spmv: v[%d] = S1(%d-by-%d) * v(%d-by-%d) @ v[%d]\n",
                     this->GetFirstVertexOffset(level), // dest idx
                     iop, jop,      // operator dimensions
                     iv, jv,        // source v dimensions
                     prevOffset);   // source idx
+#endif
             dispatch->ApplyCatmarkEdgeVerticesKernel(this->_mesh, offset, level, 0, batch->kernelE, clientdata);
         }
 
@@ -268,25 +253,7 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
         if (batch->kernelA2.first < batch->kernelA2.second)
             dispatch->ApplyCatmarkVertexVerticesKernelA
                 (this->_mesh, offset, true, level, batch->kernelA2.first, batch->kernelA2.second, clientdata);
-
-        compressed_matrix<float> S(*(dispatch->S));
-        using namespace std;
-        for (int i = 0; i < S.size1(); i++) {
-            float sum = 0.0;
-            for (int j = 0; j < S.size2(); j++)
-                sum += S(i,j);
-            if (fabs(sum - 1.0) > FLT_EPSILON) {
-                cout << "row B " << i << ": ";
-                for (int j = 0; j < S.size2(); j++) {
-                    sum += S(i,j);
-                    if (S(i,j) != 0.0)
-                        cout << S(i,j) << "[" << j << "] ";
-                }
-                cout << endl;
-            }
-        }
     }
-    //std::cout << "S1: " << *(dispatch->S) << std::endl;
     dispatch->PushMatrix();
 }
 
