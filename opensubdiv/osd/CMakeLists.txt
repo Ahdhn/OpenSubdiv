@@ -191,7 +191,7 @@ if ( OSKI_FOUND )
         oskiKernel.cpp
     )
     list(APPEND PLATFORM_LIBRARIES
-        "-L/Users/mbdriscoll/opt/oski-1.0.1ls/lib/oski -loski -loskilt -loski_Tls -loski_mat_CSR_Tls -loski_mat_CSC_Tls -loski_mat_BCSR_Tls -loski_mat_MBCSR_Tls -loski_mat_GCSR_Tls -loski_mat_CB_Tls -loski_mat_VBR_Tls -loski_mat_DENSE_Tls -loski_heur_regprof_Tls -loski_heur_symmrb_Tls -loski_heur_mregblock_Tls"
+        "-L/Users/mbdriscoll/opt/oski-1.0.1/lib/oski -loski -loskilt -loski_Tis -loski_mat_CSR_Tis -loski_mat_CSC_Tis -loski_mat_BCSR_Tis -loski_mat_MBCSR_Tis -loski_mat_GCSR_Tis -loski_mat_CB_Tis -loski_mat_VBR_Tis -loski_mat_DENSE_Tis -loski_heur_regprof_Tis -loski_heur_symmrb_Tis -loski_heur_mregblock_Tis"
         ${OSKI_LIBRARY}
     )
     include_directories( ${OSKI_INCLUDE_DIR} )

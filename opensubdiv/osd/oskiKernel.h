@@ -4,7 +4,7 @@
 #include "../version.h"
 #include "osd/oskiDispatcher.h"
 
-#include <oski/oski_Tls.h>
+#include <oski/oski_Tis.h>
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
@@ -14,19 +14,7 @@ struct OskiVertexDescriptor {
     OskiVertexDescriptor(OsdKernelDispatcher* dispatcher, int numVertexElem, int numVaryingElem)
         : _dispatcher(dispatcher),  numVertexElements(numVertexElem), numVaryingElements(numVaryingElem) { }
 
-    void Clear(float *vertex, float *varying, int index) const {
-#if 0
-        if (vertex) {
-            for (int i = 0; i < numVertexElements; ++i)
-                vertex[index*numVertexElements+i] = 0.0f;
-        }
-
-        if (varying) {
-            for (int i = 0; i < numVaryingElements; ++i)
-                varying[index*numVaryingElements+i] = 0.0f;
-        }
-#endif
-    }
+    void Clear(float *vertex, float *varying, int index) const { }
 
     void AddWithWeight(float *vertex, int dstIndex, int srcIndex, float weight) const {
         //printf("oski AddWithWeight array[%d] 0x%x [%d] <- %f * [%d]\n", numVertexElements, vertex, dstIndex, weight, srcIndex);

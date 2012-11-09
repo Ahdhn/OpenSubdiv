@@ -168,7 +168,7 @@ OsdOskiKernelDispatcher::ApplyM(int offset)
     float* V_in = _currentVertexBuffer->GetCpuBuffer();
     float* V_out = _currentVertexBuffer->GetCpuBuffer() + offset * numElems;
 
-#if 0
+#if 1
     int alpha = 1.0,
         beta = 0.0;
 
@@ -177,23 +177,21 @@ OsdOskiKernelDispatcher::ApplyM(int offset)
 
     oski_Init();
 
-    x_view = oski_CreateVecView( V_in, numElems, STRIDE_UNIT );
-    y_view = oski_CreateVecView( V_out, numElems, STRIDE_UNIT );
+    x_view = oski_CreateVecView( V_in, nCoarseVertElems, STRIDE_UNIT );
+    y_view = oski_CreateVecView( V_out, nFineVertElems, STRIDE_UNIT );
 
-    int i = M->size1();
-    int j = M->size2();
     A_tunable = oski_CreateMatCSR(
-            (long int*) &M->index1_data()[0], // row ptrs
-            (long int*) &M->index2_data()[0], // idx ptrs
+            (int*) &M->index1_data()[0], // row ptrs
+            (int*) &M->index2_data()[0], // idx ptrs
             &M->value_data()[0],  // values
-            i,                    // num rows
-            j,                    // num cols
+            M->size1(),           // num rows
+            M->size2(),           // num cols
             SHARE_INPUTMAT,   // both use and oski share array
             1,                // number of args to follow
             INDEX_ZERO_BASED  // zero based indexing
            );
 
-    oski_MatMult( A_tunable, OP_NORMAL, alpha, x_view, beta, y_view );
+    //oski_MatMult( A_tunable, OP_NORMAL, alpha, x_view, beta, y_view );
 #else
     vector<float> v_fine(nFineVertElems);
     vector<float> v_coarse(nCoarseVertElems);

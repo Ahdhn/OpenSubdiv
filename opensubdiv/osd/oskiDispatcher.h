@@ -5,7 +5,7 @@
 #include "../osd/kernelDispatcher.h"
 
 extern "C" {
-    #include <oski/oski_Tls.h>
+    #include <oski/oski_Tis.h>
 }
 
 #include <boost/numeric/ublas/operation.hpp>
