@@ -4,6 +4,7 @@
 
 # build directory
 build
+build_xcode
 
 # vim swap files
 *.swp
