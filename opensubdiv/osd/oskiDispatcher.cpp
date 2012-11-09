@@ -6,9 +6,13 @@
 #include <float.h>
 #include <stdlib.h>
 #include <string.h>
+#include <iostream>
 
-using boost::numeric::ublas::axpy_prod;
-using boost::numeric::ublas::vector;
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
+
+using namespace std;
+using namespace boost::numeric::ublas;
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
@@ -55,12 +59,10 @@ OsdOskiKernelDispatcher::Register() {
 
 void
 OsdOskiKernelDispatcher::OnKernelLaunch() {
-    /* allocate sparse matrix */
 }
 
 void
 OsdOskiKernelDispatcher::OnKernelFinish() {
-    /* apply sparse matrix to point vector */
 }
 
 void
@@ -168,7 +170,6 @@ OsdOskiKernelDispatcher::ApplyM(int offset)
     float* V_in = _currentVertexBuffer->GetCpuBuffer();
     float* V_out = _currentVertexBuffer->GetCpuBuffer() + offset * numElems;
 
-#if 1
     int alpha = 1.0,
         beta = 0.0;
 
@@ -180,37 +181,22 @@ OsdOskiKernelDispatcher::ApplyM(int offset)
     x_view = oski_CreateVecView( V_in, nCoarseVertElems, STRIDE_UNIT );
     y_view = oski_CreateVecView( V_out, nFineVertElems, STRIDE_UNIT );
 
+    std::vector<int> rowIndx(M->index1_data().begin(), M->index1_data().end());
+    std::vector<int> colIndx(M->index2_data().begin(), M->index2_data().end());
+    std::vector<float>  vals(M->value_data().begin(),  M->value_data().end());
+
     A_tunable = oski_CreateMatCSR(
-            (int*) &M->index1_data()[0], // row ptrs
-            (int*) &M->index2_data()[0], // idx ptrs
-            &M->value_data()[0],  // values
-            M->size1(),           // num rows
-            M->size2(),           // num cols
+            &rowIndx[0],      // row ptrs
+            &colIndx[0],      // idx ptrs
+            &vals[0],         // values
+            M->size1(),       // num rows
+            M->size2(),       // num cols
             SHARE_INPUTMAT,   // both use and oski share array
             1,                // number of args to follow
             INDEX_ZERO_BASED  // zero based indexing
-           );
+    );
 
-    //oski_MatMult( A_tunable, OP_NORMAL, alpha, x_view, beta, y_view );
-#else
-    vector<float> v_fine(nFineVertElems);
-    vector<float> v_coarse(nCoarseVertElems);
-
-    for(int i = 0; i < v_coarse.size(); i++)
-        v_coarse(i) = V_in[i];
-
-#if 0
-    printf("v(%d-%d) = M(%d-%d) * v(%d-%d)\n",
-            (int) v_fine.size1(), (int) v_fine.size2(),
-            (int) M->size1(), (int) M->size2(),
-            (int) v_coarse.size1(), (int) v_coarse.size2());
-#endif
-
-    axpy_prod(*M, v_coarse, v_fine, true);
-
-    for(int i = 0; i < v_fine.size(); i++)
-        V_out[i] = v_fine(i);
-#endif
+    oski_MatMult( A_tunable, OP_NORMAL, alpha, x_view, beta, y_view );
 }
 
 void
