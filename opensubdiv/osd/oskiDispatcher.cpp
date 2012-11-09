@@ -59,10 +59,12 @@ OsdOskiKernelDispatcher::Register() {
 
 void
 OsdOskiKernelDispatcher::OnKernelLaunch() {
+    oski_Init();
 }
 
 void
 OsdOskiKernelDispatcher::OnKernelFinish() {
+    oski_Close();
 }
 
 void
@@ -175,8 +177,6 @@ OsdOskiKernelDispatcher::ApplyM(int offset)
 
     oski_matrix_t A_tunable;
     oski_vecview_t x_view, y_view;
-
-    oski_Init();
 
     x_view = oski_CreateVecView( V_in, nCoarseVertElems, STRIDE_UNIT );
     y_view = oski_CreateVecView( V_out, nFineVertElems, STRIDE_UNIT );
