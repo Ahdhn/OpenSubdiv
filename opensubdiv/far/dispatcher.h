@@ -60,6 +60,7 @@
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 #include <boost/numeric/ublas/io.hpp>
 
+#include <stdio.h>
 #include "../version.h"
 
 #include "../far/mesh.h"
@@ -131,12 +132,17 @@ public:
     virtual void StageElem(int i, int j, float value) { };
     virtual void PushMatrix() { };
     virtual void ApplyM(int offset) { };
+    void SetSrcOffset(int srcOffset) {
+        this->srcOffset = srcOffset;
+        printf("set src offset to %d\n", srcOffset);
+    };
 
     virtual int GetElemsPerVertex() const { return -1; }
     virtual int GetElemsPerVarying() const { return -1; }
 
     coordinate_matrix<float>* S;
     compressed_matrix<float>* M;
+    int srcOffset;
 
 private:
     static FarDispatcher _DefaultDispatcher;

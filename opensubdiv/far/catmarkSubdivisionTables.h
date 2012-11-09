@@ -59,6 +59,7 @@
 
 #include <cassert>
 #include <vector>
+#include <cfloat>
 
 #include <boost/numeric/ublas/matrix_proxy.hpp>
 #include <boost/numeric/ublas/matrix_sparse.hpp>
@@ -197,6 +198,7 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
     jop = iv = nPrevVerts * nElemsPerVert,
     jv  = 1;
 
+    dispatch->SetSrcOffset(prevOffset);
     dispatch->StageMatrix(iop, jop);
     {
         // put identity in upper part
@@ -218,12 +220,18 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
     compressed_matrix<float> S(*(dispatch->S));
     using namespace std;
     for (int i = 0; i < S.size1(); i++) {
-        cout << "row " << i << ": ";
-        for (int j = 0; j < S.size2(); j++) {
-            if (S(i,j) != 0.0)
-                cout << S(i,j) << "[" << j << "] ";
+        float sum = 0.0;
+        for (int j = 0; j < S.size2(); j++)
+            sum += S(i,j);
+        if (fabs(sum - 1.0) > FLT_EPSILON) {
+            cout << "row A " << i << ": ";
+            for (int j = 0; j < S.size2(); j++) {
+                sum += S(i,j);
+                if (S(i,j) != 0.0)
+                    cout << S(i,j) << "[" << j << "] ";
+            }
+            cout << endl;
         }
-        cout << endl;
     }
 
     dispatch->PushMatrix();
@@ -264,12 +272,18 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
         compressed_matrix<float> S(*(dispatch->S));
         using namespace std;
         for (int i = 0; i < S.size1(); i++) {
-            cout << "row " << i << ": ";
-            for (int j = 0; j < S.size2(); j++) {
-                if (S(i,j) != 0.0)
-                    cout << S(i,j) << "[" << j << "] ";
+            float sum = 0.0;
+            for (int j = 0; j < S.size2(); j++)
+                sum += S(i,j);
+            if (fabs(sum - 1.0) > FLT_EPSILON) {
+                cout << "row B " << i << ": ";
+                for (int j = 0; j < S.size2(); j++) {
+                    sum += S(i,j);
+                    if (S(i,j) != 0.0)
+                        cout << S(i,j) << "[" << j << "] ";
+                }
+                cout << endl;
             }
-            cout << endl;
         }
     }
     //std::cout << "S1: " << *(dispatch->S) << std::endl;

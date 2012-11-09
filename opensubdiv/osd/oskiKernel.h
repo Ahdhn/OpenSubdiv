@@ -30,8 +30,9 @@ struct OskiVertexDescriptor {
 
     void AddWithWeight(float *vertex, int dstIndex, int srcIndex, float weight) const {
         //printf("oski AddWithWeight array[%d] 0x%x [%d] <- %f * [%d]\n", numVertexElements, vertex, dstIndex, weight, srcIndex);
+        int srcOffset = _dispatcher->srcOffset;
         int d = dstIndex * numVertexElements;
-        int s = srcIndex * numVertexElements;
+        int s = (srcIndex-srcOffset) * numVertexElements;
         for (int i = 0; i < numVertexElements; ++i)
             _dispatcher->StageElem(d+i,s+i,weight);
     }

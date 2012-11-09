@@ -3,6 +3,7 @@
 #include "../osd/oskiDispatcher.h"
 #include "../osd/oskiKernel.h"
 
+#include <float.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -155,12 +156,17 @@ OsdOskiKernelDispatcher::PushMatrix()
 
         using namespace std;
         for (int i = 0; i < M->size1(); i++) {
-            cout << "row " << i << ": ";
-            for (int j = 0; j < M->size2(); j++) {
-                if ((*M)(i,j) != 0.0)
-                    cout << (*M)(i,j) << "[" << j << "] ";
+            float sum = 0.0;
+            for (int j = 0; j < M->size2(); j++)
+                sum += (*M)(i,j);
+            if (fabs(sum-1.0) > FLT_EPSILON) {
+                cout << "row " << i << ": ";
+                for (int j = 0; j < M->size2(); j++) {
+                    if ((*M)(i,j) != 0.0)
+                        cout << (*M)(i,j) << "[" << j << "] ";
+                }
+                cout << endl;
             }
-            cout << endl;
         }
         //std::cout << "M: " << *M << std::endl;
     } else {

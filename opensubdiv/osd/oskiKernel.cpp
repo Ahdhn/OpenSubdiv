@@ -18,14 +18,11 @@ void oskiComputeFace( const OskiVertexDescriptor *vdesc, float * vertex, float *
         int dstIndex = dstOffset + i;
         vdesc->Clear(vertex, varying, dstIndex);
 
-        printf("face %d has %d inputs\n", dstIndex, n);
         for (int j=0; j<n; ++j) {
             int index = F_IT[h+j];
-            printf(" %d", index);
             vdesc->AddWithWeight(vertex, dstIndex, index, weight);
             vdesc->AddVaryingWithWeight(varying, dstIndex, index, weight);
         }
-        printf("\n");
     }
 }
 
