@@ -183,6 +183,8 @@ void
 OsdOskiKernelDispatcher::ApplyM(int offset)
 {
     if (A_tunable == NULL) {
+        assert(M != NULL);
+
         int numElems = _currentVertexBuffer->GetNumElements();
         float* V_in = _currentVertexBuffer->GetCpuBuffer();
         float* V_out = _currentVertexBuffer->GetCpuBuffer() + offset * numElems;
