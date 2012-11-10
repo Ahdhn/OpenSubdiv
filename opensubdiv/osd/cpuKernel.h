@@ -61,12 +61,12 @@
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
-struct VertexDescriptor {
-
+class VertexDescriptor {
+public:
     VertexDescriptor(int numVertexElem, int numVaryingElem)
         : numVertexElements(numVertexElem), numVaryingElements(numVaryingElem) { }
 
-    void Clear(float *vertex, float *varying, int index) const {
+    virtual void Clear(float *vertex, float *varying, int index) const {
         if (vertex) {
             for (int i = 0; i < numVertexElements; ++i)
                 vertex[index*numVertexElements+i] = 0.0f;
@@ -77,27 +77,27 @@ struct VertexDescriptor {
                 varying[index*numVaryingElements+i] = 0.0f;
         }
     }
-    void AddWithWeight(float *vertex, int dstIndex, int srcIndex, float weight) const {
+    virtual void AddWithWeight(float *vertex, int dstIndex, int srcIndex, float weight) const {
         int d = dstIndex * numVertexElements;
         int s = srcIndex * numVertexElements;
         for (int i = 0; i < numVertexElements; ++i)
             vertex[d++] += vertex[s++] * weight;
     }
-    void AddVaryingWithWeight(float *varying, int dstIndex, int srcIndex, float weight) const {
+    virtual void AddVaryingWithWeight(float *varying, int dstIndex, int srcIndex, float weight) const {
         int d = dstIndex * numVaryingElements;
         int s = srcIndex * numVaryingElements;
         for (int i = 0; i < numVaryingElements; ++i)
             varying[d++] += varying[s++] * weight;
     }
 
-    void ApplyVertexEditAdd(float *vertex, int primVarOffset, int primVarWidth, int editIndex, const float *editValues) const {
+    virtual void ApplyVertexEditAdd(float *vertex, int primVarOffset, int primVarWidth, int editIndex, const float *editValues) const {
         int d = editIndex * numVertexElements + primVarOffset;
         for (int i = 0; i < primVarWidth; ++i) {
             vertex[d++] += editValues[i];
         }
     }
 
-    void ApplyVertexEditSet(float *vertex, int primVarOffset, int primVarWidth, int editIndex, const float *editValues) const {
+    virtual void ApplyVertexEditSet(float *vertex, int primVarOffset, int primVarWidth, int editIndex, const float *editValues) const {
         int d = editIndex * numVertexElements + primVarOffset;
         for (int i = 0; i < primVarWidth; ++i) {
             vertex[d++] = editValues[i];
