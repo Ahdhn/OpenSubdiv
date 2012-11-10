@@ -20,7 +20,8 @@ public:
     virtual void Clear(float *vertex, float *varying, int index) const { }
 
     virtual void AddWithWeight(float *vertex, int dstIndex, int srcIndex, float weight) const {
-        //printf("oski AddWithWeight array[%d] 0x%x [%d] <- %f * [%d]\n", numVertexElements, vertex, dstIndex, weight, srcIndex);
+        //printf("oski AddWithWeight array[%d] 0x%x [%d] <- %f * [%d]\n",
+        //  numVertexElements, vertex, dstIndex, weight, srcIndex);
         int srcOffset = _dispatcher->srcOffset;
         int d = dstIndex * numVertexElements;
         int s = (srcIndex-srcOffset) * numVertexElements;
@@ -31,7 +32,8 @@ public:
     virtual void AddVaryingWithWeight(float *varying, int dstIndex, int srcIndex, float weight) const {
         assert(numVaryingElements == 0);
 #if 0
-        printf("oski AddVaryingWithWeight array[%d] 0x%x [%d] <- %f * [%d]\n", numVaryingElements, varying, dstIndex, weight, srcIndex);
+        printf("oski AddVaryingWithWeight array[%d] 0x%x [%d] <- %f * [%d]\n",
+                numVaryingElements, varying, dstIndex, weight, srcIndex);
         int d = dstIndex * numVaryingElements;
         int s = srcIndex * numVaryingElements;
         for (int i = 0; i < numVaryingElements; ++i)

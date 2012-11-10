@@ -10,19 +10,6 @@
 #include <iostream>
 #include <sys/time.h>
 
-#include <boost/foreach.hpp>
-#define foreach BOOST_FOREACH
-
-#define TIMEBLOCK(name, body)                                          \
-        timeval name ## start, name ## end;                            \
-        gettimeofday(&name ## start, NULL);                            \
-        { body }                                                       \
-        gettimeofday(&name ## end, NULL);                              \
-        double name ## duration =                                      \
-            (name ## end.tv_sec - name ## start.tv_sec) * 1000.0 +     \
-            (name ## end.tv_usec - name ## start.tv_usec) / 1000.0;    \
-        printf("%s took %f milliseconds.\n", #name, name ## duration);
-
 using namespace std;
 using namespace boost::numeric::ublas;
 
@@ -80,13 +67,15 @@ OsdOskiKernelDispatcher::StageMatrix(int i, int j)
     S = new coordinate_matrix<float>(i,j);
 }
 
-void
+inline void
 OsdOskiKernelDispatcher::StageElem(int i, int j, float value)
 {
+#ifdef DEBUG
     assert(0 <= i);
     assert(i < S->size1());
     assert(0 <= j);
     assert(j < S->size2());
+#endif
 
     (*S)(i,j) = value;
 }
@@ -145,7 +134,7 @@ OsdOskiKernelDispatcher::ApplyM(int offset)
         oski_SetHint( A_tunable, HINT_NO_BLOCKS, ARGS_NONE );
         oski_TuneMat( A_tunable );
 
-        WriteM();
+        //WriteM();
     }
 
     oski_MatMult( A_tunable, OP_NORMAL, 1.0, x_view, 0.0, y_view );
