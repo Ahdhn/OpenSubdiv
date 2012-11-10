@@ -60,6 +60,12 @@ OsdOskiKernelDispatcher::Register() {
     Factory::GetInstance().Register(Create, kOSKI);
 }
 
+int
+OsdOskiKernelDispatcher::CopyNVerts(int nVerts, int index, int dstOffset) {
+    for (int i = 0; i < nVerts; i++)
+        _vdesc->AddWithWeight(NULL, index+i+dstOffset, index+i, 1.0);
+}
+
 void
 OsdOskiKernelDispatcher::StageMatrix(int i, int j)
 {

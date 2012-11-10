@@ -140,6 +140,7 @@ public:
     virtual void PushMatrix() { };
     virtual void ApplyM(int offset) { };
     void SetSrcOffset(int srcOffset) { this->srcOffset = srcOffset; };
+    virtual int CopyNVerts(int nVerts, int index = 0, int offset = 0) { };
 
     virtual int GetElemsPerVertex() const { return -1; }
     virtual int GetElemsPerVarying() const { return -1; }

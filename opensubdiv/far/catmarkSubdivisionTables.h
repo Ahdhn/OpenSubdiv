@@ -61,9 +61,15 @@
 #include <cmath>
 #include <vector>
 
+#include <boost/numeric/ublas/matrix_proxy.hpp>
+#include <boost/numeric/ublas/matrix_sparse.hpp>
+#include <boost/numeric/ublas/io.hpp>
+
 #include "../version.h"
 
 #include "../far/subdivisionTables.h"
+
+using namespace boost::numeric::ublas;
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
@@ -192,10 +198,13 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
     dispatch->StageMatrix(iop, jop);
     {
         // put identity in upper part
+#if 0
         for (offset = 0; offset < nPrevVerts; offset++)
             for (int i = 0; i < nElemsPerVert; i++)
-                (*(dispatch->S))(offset*nElemsPerVert+i,
-                                 offset*nElemsPerVert+i) = 1.0;
+                (*(dispatch->S))(offset*nElemsPerVert+i, offset*nElemsPerVert+i) = 1.0;
+#else
+        dispatch->CopyNVerts(nPrevVerts);
+#endif
 
         if (batch->kernelF>0) {
 #if 0
@@ -218,11 +227,13 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
     dispatch->StageMatrix(iop,jop);
     {
         // put identity in upper part
+#if 0
         for (offset = 0; offset < batch->kernelF; offset++)
             for (int i = 0; i < nElemsPerVert; i++)
-                (*(dispatch->S))(offset*nElemsPerVert+i,
-                  (offset+nPrevVerts)*nElemsPerVert+i)
-                    = 1.0;
+                (*(dispatch->S))(offset*nElemsPerVert+i, (offset+nPrevVerts)*nElemsPerVert+i) = 1.0;
+#else
+        dispatch->CopyNVerts(batch->kernelF, 0, nPrevVerts);
+#endif
 
         if (batch->kernelE>0) {
 #if 0
