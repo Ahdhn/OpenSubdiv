@@ -61,9 +61,10 @@ OsdOskiKernelDispatcher::Register() {
 }
 
 int
-OsdOskiKernelDispatcher::CopyNVerts(int nVerts, int index, int dstOffset) {
+OsdOskiKernelDispatcher::CopyNVerts(int nVerts, int dstIndex, int srcIndex) {
     for (int i = 0; i < nVerts; i++)
-        _vdesc->AddWithWeight(NULL, index+i+dstOffset, index+i, 1.0);
+        _vdesc->AddWithWeight(NULL, dstIndex+i, srcIndex+i, 1.0);
+    return nVerts;
 }
 
 void

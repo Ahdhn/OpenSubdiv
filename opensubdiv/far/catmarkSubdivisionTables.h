@@ -197,14 +197,7 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
     dispatch->SetSrcOffset(prevOffset);
     dispatch->StageMatrix(iop, jop);
     {
-        // put identity in upper part
-#if 0
-        for (offset = 0; offset < nPrevVerts; offset++)
-            for (int i = 0; i < nElemsPerVert; i++)
-                (*(dispatch->S))(offset*nElemsPerVert+i, offset*nElemsPerVert+i) = 1.0;
-#else
-        dispatch->CopyNVerts(nPrevVerts);
-#endif
+        offset = dispatch->CopyNVerts(nPrevVerts, 0, prevOffset);
 
         if (batch->kernelF>0) {
 #if 0
@@ -226,14 +219,7 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
 
     dispatch->StageMatrix(iop,jop);
     {
-        // put identity in upper part
-#if 0
-        for (offset = 0; offset < batch->kernelF; offset++)
-            for (int i = 0; i < nElemsPerVert; i++)
-                (*(dispatch->S))(offset*nElemsPerVert+i, (offset+nPrevVerts)*nElemsPerVert+i) = 1.0;
-#else
-        dispatch->CopyNVerts(batch->kernelF, 0, nPrevVerts);
-#endif
+        offset = dispatch->CopyNVerts(batch->kernelF, 0, nPrevVerts+prevOffset);
 
         if (batch->kernelE>0) {
 #if 0

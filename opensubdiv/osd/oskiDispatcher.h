@@ -34,7 +34,7 @@ public:
     static void Register();
     virtual void BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying);
 
-    virtual int CopyNVerts(int nVerts, int index = 0, int offset = 0);
+    virtual int CopyNVerts(int nVerts, int dstIndex, int srcIndex);
     virtual void StageMatrix(int i, int j);
     virtual void StageElem(int i, int j, float value);
     virtual void PushMatrix();
