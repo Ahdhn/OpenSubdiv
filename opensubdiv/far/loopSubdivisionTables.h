@@ -154,7 +154,7 @@ FarLoopSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const
     int nElemsPerVert = dispatch->GetElemsPerVertex();
 
     int iop, jop;
-    iop = (nPrevVerts+batch->kernelF) * nElemsPerVert,
+    iop = (nPrevVerts+batch->kernelE) * nElemsPerVert,
     jop = nPrevVerts * nElemsPerVert,
 
     dispatch->SetSrcOffset(prevOffset);
@@ -172,7 +172,7 @@ FarLoopSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const
     dispatch->PushMatrix();
 
     iop = nVerts*nElemsPerVert,
-    jop = (nPrevVerts+batch->kernelF) * nElemsPerVert,
+    jop = (nPrevVerts+batch->kernelE) * nElemsPerVert,
 
     dispatch->StageMatrix(iop,jop);
     {
