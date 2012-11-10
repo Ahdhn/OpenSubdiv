@@ -131,11 +131,6 @@ FarBilinearSubdivisionTables<U>::GetMemoryUsed() const {
 }
 
 template <class U> void
-FarBilinearSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const {
-    Apply(level, clientdata);
-}
-
-template <class U> void
 FarBilinearSubdivisionTables<U>::Apply( int level, void * clientdata ) const {
 
     assert(this->_mesh and level>0);
@@ -156,6 +151,73 @@ FarBilinearSubdivisionTables<U>::Apply( int level, void * clientdata ) const {
     offset += this->GetNumEdgeVertices(level);
     if (batch->kernelB.first < batch->kernelB.second)
         dispatch->ApplyBilinearVertexVerticesKernel(this->_mesh, offset, level, batch->kernelB.first, batch->kernelB.second, clientdata);
+}
+
+template <class U> void
+FarBilinearSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const {
+
+    assert(this->_mesh and level>0);
+
+    typename FarSubdivisionTables<U>::VertexKernelBatch const * batch = & (this->_batches[level-1]);
+
+    FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
+    assert(dispatch);
+
+    int prevOffset = this->GetFirstVertexOffset(std::max(level-1,0));
+    int offset     = 0;
+    int nPrevVerts = this->GetNumVertices(level-1);
+    int nVerts     = this->GetNumVertices(level);
+
+    int nElemsPerVert = dispatch->GetElemsPerVertex();
+    int iop, jop, iv, jv;
+
+    dispatch->SetSrcOffset(prevOffset);
+
+    if (batch->kernelF>0) {
+        iop = (nPrevVerts+batch->kernelF) * nElemsPerVert;
+        jop = nPrevVerts * nElemsPerVert,
+
+        dispatch->StageMatrix(iop, jop);
+        {
+            dispatch->ApplyBilinearFaceVerticesKernel(this->_mesh, offset, level, 0, batch->kernelF, clientdata);
+        }
+        dispatch->PushMatrix();
+    }
+
+    if (batch->kernelE>0) {
+        iop = (nPrevVerts+batch->kernelF+batch->kernelE) * nElemsPerVert;
+        jop = (nPrevVerts+batch->kernelF) * nElemsPerVert,
+
+        dispatch->StageMatrix(iop,jop);
+        {
+            // put identity in upper part
+            for (offset = 0; offset < batch->kernelF; offset++)
+                for (int i = 0; i < nElemsPerVert; i++)
+                    (*(dispatch->S))(offset*nElemsPerVert+i,
+                                    (offset+nPrevVerts)*nElemsPerVert+i) = 1.0;
+
+            dispatch->ApplyBilinearEdgeVerticesKernel(this->_mesh, offset, level, 0, batch->kernelE, clientdata);
+        }
+        dispatch->PushMatrix();
+    }
+
+    if (batch->kernelB.first < batch->kernelB.second) {
+        iop = nVerts*nElemsPerVert;
+        jop = (nPrevVerts+batch->kernelF+batch->kernelE) * nElemsPerVert,
+
+        dispatch->StageMatrix(iop,jop);
+        {
+            // put identity in upper part
+            for (offset = 0; offset < batch->kernelF+batch->kernelE; offset++)
+                for (int i = 0; i < nElemsPerVert; i++)
+                    (*(dispatch->S))(offset*nElemsPerVert+i,
+                            (offset+nPrevVerts)*nElemsPerVert+i)
+                        = 1.0;
+
+            dispatch->ApplyBilinearVertexVerticesKernel(this->_mesh, offset, level, batch->kernelB.first, batch->kernelB.second, clientdata);
+        }
+        dispatch->PushMatrix();
+    }
 }
 
 //

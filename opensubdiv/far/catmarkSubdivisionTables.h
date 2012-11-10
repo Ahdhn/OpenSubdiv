@@ -61,15 +61,9 @@
 #include <cmath>
 #include <vector>
 
-#include <boost/numeric/ublas/matrix_proxy.hpp>
-#include <boost/numeric/ublas/matrix_sparse.hpp>
-#include <boost/numeric/ublas/io.hpp>
-
 #include "../version.h"
 
 #include "../far/subdivisionTables.h"
-
-using namespace boost::numeric::ublas;
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
@@ -210,6 +204,7 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
                     iop, jop,         // operator dimensions
                     iv, jv,           // source vector dimensions
                     prevOffset);      // source idx
+
 #endif
             dispatch->ApplyCatmarkFaceVerticesKernel(this->_mesh, offset, level, 0, batch->kernelF, clientdata);
         }
