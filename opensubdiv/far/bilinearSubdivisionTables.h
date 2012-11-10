@@ -173,51 +173,21 @@ FarBilinearSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const
 
     dispatch->SetSrcOffset(prevOffset);
 
-    if (batch->kernelF>0) {
-        iop = (nPrevVerts+batch->kernelF) * nElemsPerVert;
-        jop = nPrevVerts * nElemsPerVert,
+    iop = nVerts*nElemsPerVert;
+    jop = nPrevVerts * nElemsPerVert,
 
-        dispatch->StageMatrix(iop, jop);
-        {
+    dispatch->StageMatrix(iop, jop);
+    {
+        if (batch->kernelF>0)
             dispatch->ApplyBilinearFaceVerticesKernel(this->_mesh, offset, level, 0, batch->kernelF, clientdata);
-        }
-        dispatch->PushMatrix();
-    }
-
-    if (batch->kernelE>0) {
-        iop = (nPrevVerts+batch->kernelF+batch->kernelE) * nElemsPerVert;
-        jop = (nPrevVerts+batch->kernelF) * nElemsPerVert,
-
-        dispatch->StageMatrix(iop,jop);
-        {
-            // put identity in upper part
-            for (offset = 0; offset < batch->kernelF; offset++)
-                for (int i = 0; i < nElemsPerVert; i++)
-                    (*(dispatch->S))(offset*nElemsPerVert+i,
-                                    (offset+nPrevVerts)*nElemsPerVert+i) = 1.0;
-
+        offset += this->GetNumFaceVertices(level);
+        if (batch->kernelE>0)
             dispatch->ApplyBilinearEdgeVerticesKernel(this->_mesh, offset, level, 0, batch->kernelE, clientdata);
-        }
-        dispatch->PushMatrix();
-    }
-
-    if (batch->kernelB.first < batch->kernelB.second) {
-        iop = nVerts*nElemsPerVert;
-        jop = (nPrevVerts+batch->kernelF+batch->kernelE) * nElemsPerVert,
-
-        dispatch->StageMatrix(iop,jop);
-        {
-            // put identity in upper part
-            for (offset = 0; offset < batch->kernelF+batch->kernelE; offset++)
-                for (int i = 0; i < nElemsPerVert; i++)
-                    (*(dispatch->S))(offset*nElemsPerVert+i,
-                            (offset+nPrevVerts)*nElemsPerVert+i)
-                        = 1.0;
-
+        offset += this->GetNumEdgeVertices(level);
+        if (batch->kernelB.first < batch->kernelB.second)
             dispatch->ApplyBilinearVertexVerticesKernel(this->_mesh, offset, level, batch->kernelB.first, batch->kernelB.second, clientdata);
-        }
-        dispatch->PushMatrix();
     }
+    dispatch->PushMatrix();
 }
 
 //
