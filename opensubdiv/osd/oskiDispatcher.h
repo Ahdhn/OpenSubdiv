@@ -6,6 +6,7 @@
 
 extern "C" {
     #include <oski/oski_Tis.h>
+    #include "mmio.h"
 }
 
 #include <boost/numeric/ublas/operation.hpp>
@@ -83,6 +84,8 @@ public:
     virtual void ApplyM(int offset);
 
 protected:
+
+    void WriteM();
 
     // XXX: until far refactoring finishes, use this.
     struct Table {

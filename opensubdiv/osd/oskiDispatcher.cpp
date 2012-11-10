@@ -5,6 +5,7 @@
 
 #include <float.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <iostream>
 #include <sys/time.h>
@@ -208,9 +209,44 @@ OsdOskiKernelDispatcher::ApplyM(int offset)
                 1.0, x_view, 0.0, y_view, ALWAYS_TUNE_AGGRESSIVELY );
         oski_SetHint( A_tunable, HINT_NO_BLOCKS, ARGS_NONE );
         oski_TuneMat( A_tunable );
+
+        WriteM();
     }
 
     oski_MatMult( A_tunable, OP_NORMAL, 1.0, x_view, 0.0, y_view );
+}
+
+void
+OsdOskiKernelDispatcher::WriteM()
+{
+    MM_typecode matcode;
+
+    std::vector<int> rows(M->index1_data().begin(), M->index1_data().end());
+    std::vector<int> cols(M->index2_data().begin(), M->index2_data().end());
+    std::vector<float>  vals(M->value_data().begin(),  M->value_data().end());
+
+    int *I = &rows[0];
+    int *J = &cols[0];
+    float *val = &vals[0];
+    int Mlen = (int) M->size1();
+    int Nlen = (int) M->size2();
+    int nz = vals.size();
+
+    FILE* ofile = fopen("subdiv_matrix.mm", "w");
+    assert(ofile != NULL);
+
+    mm_initialize_typecode(&matcode);
+    mm_set_matrix(&matcode);
+    mm_set_coordinate(&matcode);
+    mm_set_real(&matcode);
+
+    mm_write_banner(ofile, matcode);
+    mm_write_mtx_crd_size(ofile, Mlen, Nlen, nz);
+
+    for (int i=0; i<nz; i++)
+        fprintf(ofile, "%d %d %10.3g\n", I[i]+1, J[i]+1, val[i]);
+
+    fclose(ofile);
 }
 
 void

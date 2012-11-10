@@ -183,9 +183,11 @@ endif()
 if ( OSKI_FOUND )
     list(APPEND SOURCE_FILES
         oskiDispatcher.cpp
+        mmio.c
     )
     list(APPEND PUBLIC_HEADER_FILES
         oskiDispatcher.h
+        mmio.h
     )
     list(APPEND KERNEL_FILES
         oskiKernel.cpp
