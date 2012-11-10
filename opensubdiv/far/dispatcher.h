@@ -73,6 +73,14 @@ using namespace boost::numeric::ublas;
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
+typedef compressed_matrix<
+    float,
+    basic_row_major<int,int>,
+    0,
+    unbounded_array<int>,
+    unbounded_array<float>
+> csr_matrix;
+
 /// \brief Subdivision process encapsulation layer.
 ///
 /// The Compute dispatcher allows client code to customize parts or the entire
@@ -137,7 +145,7 @@ public:
     virtual int GetElemsPerVarying() const { return -1; }
 
     coordinate_matrix<float>* S;
-    compressed_matrix<float>* M;
+    csr_matrix *M;
     int srcOffset;
 
 private:

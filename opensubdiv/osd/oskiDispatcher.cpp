@@ -159,9 +159,9 @@ void
 OsdOskiKernelDispatcher::PushMatrix()
 {
     if (M != NULL) {
-        compressed_matrix<float> A(*S);
-        compressed_matrix<float> *B = M;
-        compressed_matrix<float> *C = new compressed_matrix<float>(A.size1(), B->size2());
+        csr_matrix A(*S);
+        csr_matrix *B = M;
+        csr_matrix *C = new csr_matrix(A.size1(), B->size2());
         printf("PushMatrix mul %d-%d = %d-%d * %d-%d\n",
                 (int) C->size1(), (int) C->size2(),
                 (int) A.size1(), (int) A.size2(),
@@ -170,7 +170,7 @@ OsdOskiKernelDispatcher::PushMatrix()
         M = C;
         delete B;
     } else {
-        M = new compressed_matrix<float>(*S);
+        M = new csr_matrix(*S);
         printf("PushMatrix set %d-%d\n", (int) M->size1(), (int) M->size2());
     }
 
@@ -192,19 +192,15 @@ OsdOskiKernelDispatcher::ApplyM(int offset)
         x_view = oski_CreateVecView( V_in, M->size2(), STRIDE_UNIT );
         y_view = oski_CreateVecView( V_out, M->size1(), STRIDE_UNIT );
 
-        std::vector<int> rowIndx(M->index1_data().begin(), M->index1_data().end());
-        std::vector<int> colIndx(M->index2_data().begin(), M->index2_data().end());
-        std::vector<float>  vals(M->value_data().begin(),  M->value_data().end());
-
         A_tunable = oski_CreateMatCSR(
-                &rowIndx[0],        // row ptrs
-                &colIndx[0],        // idx ptrs
-                &vals[0],           // values
-                M->size1(),         // num rows
-                M->size2(),         // num cols
-                COPY_INPUTMAT,      // both use and oski share array
-                1,                  // number of args to follow
-                INDEX_ZERO_BASED    // zero based indexing
+                &M->index1_data()[0], // row ptrs
+                &M->index2_data()[0], // idx ptrs
+                &M->value_data()[0],  // values
+                M->size1(),           // num rows
+                M->size2(),           // num cols
+                COPY_INPUTMAT,        // both use and oski share array
+                1,                    // number of args to follow
+                INDEX_ZERO_BASED      // zero based indexing
                 );
 
         oski_SetHintMatMult( A_tunable, OP_NORMAL,
@@ -223,16 +219,12 @@ OsdOskiKernelDispatcher::WriteM()
 {
     MM_typecode matcode;
 
-    std::vector<int> rows(M->index1_data().begin(), M->index1_data().end());
-    std::vector<int> cols(M->index2_data().begin(), M->index2_data().end());
-    std::vector<float>  vals(M->value_data().begin(),  M->value_data().end());
-
-    int *I = &rows[0];
-    int *J = &cols[0];
-    float *val = &vals[0];
+    int *I = &M->index1_data()[0];
+    int *J = &M->index2_data()[0];
+    float *val = &M->value_data()[0];
     int Mlen = (int) M->size1() / 6;
     int Nlen = (int) M->size2() / 6;
-    int nz = vals.size();
+    int nz = M->value_data().size();
 
     FILE* ofile = fopen("subdiv_matrix.mm", "w");
     assert(ofile != NULL);
