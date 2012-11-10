@@ -13,8 +13,8 @@ find_path( POSKI_INCLUDE_DIR poski/poski.h
 
 find_library( POSKI_poski_LIBRARY poski
     PATHS
-    ${POSKI_LOCATION}/lib/poski
-    $ENV{POSKI_LOCATION}/lib/poski
+    ${POSKI_LOCATION}/lib
+    $ENV{POSKI_LOCATION}/lib
     DOC "The pOSKI library")
 
 set( POSKI_FOUND "NO" )
