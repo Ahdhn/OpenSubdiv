@@ -61,9 +61,16 @@
 #include <cmath>
 #include <vector>
 
+#include <boost/numeric/ublas/matrix_proxy.hpp>
+#include <boost/numeric/ublas/matrix_sparse.hpp>
+#include <boost/numeric/ublas/io.hpp>
+#include <boost/foreach.hpp>
+
 #include "../version.h"
 
 #include "../far/subdivisionTables.h"
+
+using namespace boost::numeric::ublas;
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
@@ -109,12 +116,6 @@ FarLoopSubdivisionTables<U>::FarLoopSubdivisionTables( FarMesh<U> * mesh, int ma
 { }
 
 template <class U> void
-FarLoopSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const
-{
-    Apply(level, clientdata);
-}
-
-template <class U> void
 FarLoopSubdivisionTables<U>::Apply( int level, void * clientdata ) const
 {
     assert(this->_mesh and level>0);
@@ -124,17 +125,79 @@ FarLoopSubdivisionTables<U>::Apply( int level, void * clientdata ) const
     FarDispatcher<U> const * dispatch = this->_mesh->GetDispatcher();
     assert(dispatch);
 
+    printf(" -- STARTING LEVEL %d --  \n", level);
     int offset = this->GetFirstVertexOffset(level);
     if (batch->kernelE>0)
         dispatch->ApplyLoopEdgeVerticesKernel(this->_mesh, offset, level, 0, batch->kernelE, clientdata);
 
+    printf(" -- done with E --\n");
     offset += this->GetNumEdgeVertices(level);
     if (batch->kernelB.first < batch->kernelB.second)
         dispatch->ApplyLoopVertexVerticesKernelB(this->_mesh, offset, level, batch->kernelB.first, batch->kernelB.second, clientdata);
+    printf(" -- done with B --\n");
     if (batch->kernelA1.first < batch->kernelA1.second)
         dispatch->ApplyLoopVertexVerticesKernelA(this->_mesh, offset, false, level, batch->kernelA1.first, batch->kernelA1.second, clientdata);
+    printf(" -- done with A1 --\n");
     if (batch->kernelA2.first < batch->kernelA2.second)
         dispatch->ApplyLoopVertexVerticesKernelA(this->_mesh, offset, true, level, batch->kernelA2.first, batch->kernelA2.second, clientdata);
+    printf(" -- done with A2 --\n");
+}
+
+template <class U> void
+FarLoopSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const
+{
+    assert(this->_mesh and level>0);
+
+    typename FarSubdivisionTables<U>::VertexKernelBatch const * batch = & (this->_batches[level-1]);
+
+    FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
+    assert(dispatch);
+
+    int prevOffset = this->GetFirstVertexOffset(std::max(level-1,0));
+    int offset     = 0;
+    int nPrevVerts = this->GetNumVertices(level-1);
+    int nVerts     = this->GetNumVertices(level);
+
+    int nElemsPerVert = dispatch->GetElemsPerVertex();
+
+    int iop, jop;
+    iop = (nPrevVerts+batch->kernelF) * nElemsPerVert,
+    jop = nPrevVerts * nElemsPerVert,
+
+    dispatch->SetSrcOffset(prevOffset);
+    dispatch->StageMatrix(iop, jop);
+    {
+        // put identity in upper part
+        for (offset = 0; offset < nPrevVerts; offset++)
+            for (int i = 0; i < nElemsPerVert; i++)
+                (*(dispatch->S))(offset*nElemsPerVert+i,
+                                 offset*nElemsPerVert+i) = 1.0;
+
+        if (batch->kernelE>0)
+            dispatch->ApplyLoopEdgeVerticesKernel(this->_mesh, offset, level, 0, batch->kernelE, clientdata);
+    }
+    dispatch->PushMatrix();
+
+    iop = nVerts*nElemsPerVert,
+    jop = (nPrevVerts+batch->kernelF) * nElemsPerVert,
+
+    dispatch->StageMatrix(iop,jop);
+    {
+        // put identity in upper part
+        for (offset = 0; offset < batch->kernelE; offset++)
+            for (int i = 0; i < nElemsPerVert; i++)
+                (*(dispatch->S))(offset*nElemsPerVert+i,
+                  (offset+nPrevVerts)*nElemsPerVert+i)
+                    = 1.0;
+
+        if (batch->kernelB.first < batch->kernelB.second)
+            dispatch->ApplyLoopVertexVerticesKernelB(this->_mesh, offset, level, batch->kernelB.first, batch->kernelB.second, clientdata);
+        if (batch->kernelA1.first < batch->kernelA1.second)
+            dispatch->ApplyLoopVertexVerticesKernelA(this->_mesh, offset, false, level, batch->kernelA1.first, batch->kernelA1.second, clientdata);
+        if (batch->kernelA2.first < batch->kernelA2.second)
+            dispatch->ApplyLoopVertexVerticesKernelA(this->_mesh, offset, true, level, batch->kernelA2.first, batch->kernelA2.second, clientdata);
+    }
+    dispatch->PushMatrix();
 }
 
 //

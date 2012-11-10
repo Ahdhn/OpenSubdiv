@@ -58,18 +58,16 @@
 #define FAR_CATMARK_SUBDIVISION_TABLES_H
 
 #include <cassert>
+#include <cmath>
 #include <vector>
 
 #include <boost/numeric/ublas/matrix_proxy.hpp>
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 #include <boost/numeric/ublas/io.hpp>
-#include <boost/foreach.hpp>
 
 #include "../version.h"
 
 #include "../far/subdivisionTables.h"
-
-#define foreach BOOST_FOREACH
 
 using namespace boost::numeric::ublas;
 
