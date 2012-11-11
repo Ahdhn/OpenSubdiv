@@ -134,7 +134,7 @@ OsdOskiKernelDispatcher::ApplyM(int offset)
                 COPY_INPUTMAT,        // both use and oski share array
                 1,                    // number of args to follow
                 INDEX_ZERO_BASED      // zero based indexing
-                );
+        );
 
         oski_SetHintMatMult( A_tunable, OP_NORMAL,
                 1.0, x_view, 0.0, y_view, ALWAYS_TUNE_AGGRESSIVELY );
