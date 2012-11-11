@@ -99,7 +99,7 @@ set(CMAKE_SUPPRESS_REGENERATION TRUE)
 # Check for dependencies
 find_package(OpenMP)
 find_package(OpenGL)
-#find_package(OpenCL)
+find_package(OpenCL)
 find_package(OSKI)
 find_package(CUDA)
 find_package(GLUT)
