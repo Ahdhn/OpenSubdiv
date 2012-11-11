@@ -199,24 +199,6 @@ if ( OSKI_FOUND )
 endif()
 
 #-------------------------------------------------------------------------------
-# pOSKI code & dependencies
-if ( POSKI_FOUND )
-    list(APPEND SOURCE_FILES
-        poskiDispatcher.cpp
-    )
-    list(APPEND PUBLIC_HEADER_FILES
-        poskiDispatcher.h
-    )
-    list(APPEND KERNEL_FILES
-        poskiKernel.cpp
-    )
-    list(APPEND PLATFORM_LIBRARIES
-        ${POSKI_LIBRARIES}
-    )
-    include_directories( ${POSKI_INCLUDE_PATH} )
-endif()
-
-#-------------------------------------------------------------------------------
 # CUDA code & dependencies
 if( CUDA_FOUND )
     list(APPEND SOURCE_FILES

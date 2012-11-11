@@ -101,7 +101,6 @@ find_package(OpenMP)
 find_package(OpenGL)
 #find_package(OpenCL)
 find_package(OSKI)
-find_package(pOSKI)
 find_package(CUDA)
 find_package(GLUT)
 find_package(PTex)
@@ -153,17 +152,6 @@ else()
         "please refer to the FindOpenCL.cmake in ${PROJECT_SOURCE_DIR}/cmake.")
 endif()
 
-if(POSKI_FOUND)
-    add_definitions(
-        -DOPENSUBDIV_HAS_POSKI
-    )
-else()
-    message(WARNING
-        "pOSKI was not found : support for pOSKI parallel compute kernels "
-        "will be disabled in Osd.  If you have pOSKI installed, "
-        "please refer to the FindPOSKI.cmake in ${PROJECT_SOURCE_DIR}/cmake.")
-endif()
-
 if(OSKI_FOUND)
     add_definitions(
         -DOPENSUBDIV_HAS_OSKI
@@ -175,13 +163,13 @@ else()
         "please refer to the FindOSKI.cmake in ${PROJECT_SOURCE_DIR}/cmake.")
 endif()
 
-if(OSKI_FOUND OR POSKI_FOUND)
+if(OSKI_FOUND)
     find_package( Boost )
     if(Boost_FOUND)
         include_directories(${Boost_INCLUDE_DIRS})
     else()
     message(FATAL_ERROR
-        "SpMV kernels (OSKI, pOSKI) require Boost. Specify Boost location with "
+        "SpMV kernels (OSKI) require Boost. Specify Boost location with "
         "   -DBOOST_ROOT=/path/to/boost")
     endif()
 endif()
