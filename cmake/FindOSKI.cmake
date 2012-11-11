@@ -6,6 +6,16 @@
 # OSKI_LIBRARIES
 #
 
+# We're going to want to read the shared variables from site-modules-shared.txt
+# and append them to the link line. This solution was suggested on:
+# http://www.cmake.org/pipermail/cmake/2003-March/003486.html
+SET(cat_prog cat)
+IF(WIN32)
+  IF(NOT UNIX)
+    SET(cat_prog type)
+  ENDIF(NOT UNIX)
+ENDIF(WIN32)
+
 find_path( OSKI_INCLUDE_DIR oski/oski.h
     ${OSKI_LOCATION}/include
     $ENV{OSKI_LOCATION}/include
@@ -21,9 +31,13 @@ set( OSKI_FOUND "NO" )
 
 if(OSKI_INCLUDE_DIR)
   if(OSKI_oski_LIBRARY)
-    set( OSKI_LIBRARIES
-      ${OSKI_oski_LIBRARY}
+    EXEC_PROGRAM(${cat_prog}
+        ARGS ${OSKI_LOCATION}/lib/oski/site-modules-shared.txt
+        OUTPUT_VARIABLE OSKI_LIBS_NEWLINES
     )
+    STRING(REGEX REPLACE "\n" " " OSKI_LIBRARIES "${OSKI_LIBS_NEWLINES}" )
+    unset(OSKI_LIBS_NEWLINES) # causes parsing problems with CMakeCache.txt otherwise
+
     set( OSKI_FOUND "YES" )
 
     set (OSKI_LIBRARY ${OSKI_LIBRARIES})
@@ -42,4 +56,3 @@ find_package_handle_standard_args(OSKI DEFAULT_MSG
 mark_as_advanced(
   OSKI_INCLUDE_DIR
 )
-
