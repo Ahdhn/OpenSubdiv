@@ -35,7 +35,7 @@ if(OSKI_INCLUDE_DIR)
         ARGS ${OSKI_LOCATION}/lib/oski/site-modules-shared.txt
         OUTPUT_VARIABLE OSKI_LIBS_NEWLINES
     )
-    STRING(REGEX REPLACE "\n" " " OSKI_LIBRARIES "${OSKI_LIBS_NEWLINES}" )
+    STRING(REGEX REPLACE "\n" " " OSKI_LIBRARIES "-L${OSKI_LOCATION}/lib/oski ${OSKI_LIBS_NEWLINES}" )
     unset(OSKI_LIBS_NEWLINES) # causes parsing problems with CMakeCache.txt otherwise
 
     set( OSKI_FOUND "YES" )
