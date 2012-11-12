@@ -49,7 +49,6 @@ public:
     virtual bool MatrixReady();
     virtual void PrintReport();
 
-    csr_matrix *M;
     coo_matrix *S;
 
 #if 0

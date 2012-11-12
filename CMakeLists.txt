@@ -173,8 +173,24 @@ if(OSKI_FOUND)
         "SpMV kernels (OSKI) require Boost. Specify Boost location with "
         "   -DBOOST_ROOT=/path/to/boost")
     endif()
+    add_definitions(
+        -DOPENSUBDIV_HAS_OSKI
+    )
 endif()
 
+if(MKL_FOUND)
+    find_package( Boost )
+    if(Boost_FOUND)
+        include_directories(${Boost_INCLUDE_DIRS})
+    else()
+    message(FATAL_ERROR
+        "SpMV kernels (OSKI, MKL) require Boost. Specify Boost location with "
+        "   -DBOOST_ROOT=/path/to/boost")
+    endif()
+    add_definitions(
+        -DOPENSUBDIV_HAS_MKL
+    )
+endif()
 
 if(CUDA_FOUND)
     add_definitions(

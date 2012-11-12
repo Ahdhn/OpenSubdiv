@@ -80,9 +80,9 @@ if ( OSKI_FOUND )
     include_directories( ${OSKI_INCLUDE_PATH} )
 endif()
 
-if ( POSKI_FOUND )
-    list(APPEND PLATFORM_LIBRARIES ${POSKI_LIBRARIES} )
-    include_directories( ${POSKI_INCLUDE_PATH} )
+if ( MKL_FOUND )
+    list(APPEND PLATFORM_LIBRARIES ${MKL_LIBRARIES} )
+    include_directories( ${MKL_INCLUDE_PATH} )
 endif()
 
 #-------------------------------------------------------------------------------
