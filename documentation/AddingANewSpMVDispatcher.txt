@@ -1,0 +1,19 @@
+1. copy oskiDispatcher.{cpp,h} to newly-named files, like mklDispatcher.cpp
+2. rename entities in your new files to match, like: OsdOskiKernelDispatcher -> OsdMklKernelDispatcher
+2. add source files to osd/CMakeLists.txt
+3. In kernelDispatcher.h:
+    a. add KernelType enum entry, like:  kMKL = 6,
+    b. add new dispatcher as friend class to OsdKernelDispatcher, around line 190.
+5. In examples/glutViewer/viewer_compat.cpp:
+    a. add call to Register around line 900:
+        #if OPENSUBDIV_HAS_MKL
+            OpenSubdiv::OsdMklKernelDispatcher::Register();
+        #endif
+    b. include dispatcher header file:
+        #ifdef OPENSUBDIV_HAS_OSKI
+            #include <osd/oskiDispatcher.h>
+        #endif
+    c. add entry in getKernelName around line 449:
+        else if (kernel == OpenSubdiv::OsdKernelDispatcher::kMKL)
+            return "MKL";
+6. Define macros cmake/Find____.cmake to set guards (OPENSUBDIV_HAS_MKL, etc.)
