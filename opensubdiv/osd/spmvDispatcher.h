@@ -7,8 +7,6 @@
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
-struct SpMVVertexDescriptor;
-
 class OsdSpMVKernelDispatcher : public OsdCpuKernelDispatcher
 {
 public:
