@@ -42,9 +42,9 @@ public:
     virtual void StageMatrix(int i, int j);
     virtual void StageElem(int i, int j, float value);
     virtual void PushMatrix();
-    virtual void ApplyM(int offset);
-    virtual void WriteM();
-    virtual bool MReady();
+    virtual void ApplyMatrix(int offset);
+    virtual void WriteMatrix();
+    virtual bool MatrixReady();
     virtual void PrintReport();
 
     csr_matrix *M;

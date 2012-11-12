@@ -79,7 +79,7 @@ OsdOskiKernelDispatcher::PushMatrix()
 }
 
 void
-OsdOskiKernelDispatcher::ApplyM(int offset)
+OsdOskiKernelDispatcher::ApplyMatrix(int offset)
 {
     if (A_tunable == NULL) {
         assert(M != NULL);
@@ -108,14 +108,14 @@ OsdOskiKernelDispatcher::ApplyM(int offset)
         oski_SetHint( A_tunable, HINT_NO_BLOCKS, ARGS_NONE );
         oski_TuneMat( A_tunable );
 
-        //WriteM();
+        //WriteMatrix();
     }
 
     oski_MatMult( A_tunable, OP_NORMAL, 1.0, x_view, 0.0, y_view );
 }
 
 void
-OsdOskiKernelDispatcher::WriteM()
+OsdOskiKernelDispatcher::WriteMatrix()
 {
     MM_typecode matcode;
 
@@ -146,7 +146,7 @@ OsdOskiKernelDispatcher::WriteM()
 }
 
 bool
-OsdOskiKernelDispatcher::MReady()
+OsdOskiKernelDispatcher::MatrixReady()
 {
     return (M != NULL);
 }

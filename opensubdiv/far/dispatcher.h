@@ -125,10 +125,10 @@ public:
     virtual void StageMatrix(int i, int j) { };
     virtual void StageElem(int i, int j, float value) { };
     virtual void PushMatrix() { };
-    virtual void ApplyM(int offset) { };
+    virtual void ApplyMatrix(int offset) { };
     void SetSrcOffset(int srcOffset) { this->srcOffset = srcOffset; };
     virtual int CopyNVerts(int nVerts, int dstIndex, int srcIndex) { };
-    virtual bool MReady() { return false; }
+    virtual bool MatrixReady() { return false; }
     virtual void PrintReport() { }
 
     virtual int GetElemsPerVertex() const { return -1; }

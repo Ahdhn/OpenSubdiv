@@ -28,9 +28,9 @@ public:
     virtual void StageMatrix(int i, int j) = 0;
     virtual void StageElem(int i, int j, float value) = 0;
     virtual void PushMatrix() = 0;
-    virtual void ApplyM(int offset) = 0;
-    virtual void WriteM() = 0;
-    virtual bool MReady() = 0;
+    virtual void ApplyMatrix(int offset) = 0;
+    virtual void WriteMatrix() = 0;
+    virtual bool MatrixReady() = 0;
     virtual void PrintReport() = 0;
 };
 

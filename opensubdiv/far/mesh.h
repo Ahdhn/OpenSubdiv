@@ -236,17 +236,17 @@ FarMesh<U>::SubdivideSpMV(int level) {
         return;
     }
 
-    if (not _dispatcher->MReady()) {
+    if (not _dispatcher->MatrixReady()) {
 
         for (int i=1; i<level; ++i)
             _subdivisionTables->ApplySpMV(i);
 
         _dispatcher->PrintReport();
     }
-    assert(_dispatcher->MReady());
+    assert(_dispatcher->MatrixReady());
 
     int offset = _subdivisionTables->GetFirstVertexOffset(level-1);
-    _dispatcher->ApplyM(offset);
+    _dispatcher->ApplyMatrix(offset);
 }
 
 } // end namespace OPENSUBDIV_VERSION

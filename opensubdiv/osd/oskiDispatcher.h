@@ -14,9 +14,7 @@ extern "C" {
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/io.hpp>
 
-using namespace boost::numeric::ublas;
-
-typedef compressed_matrix<
+typedef boost::numeric::ublas::compressed_matrix<
     float,
     basic_row_major<int,int>,
     0,
@@ -24,7 +22,7 @@ typedef compressed_matrix<
     unbounded_array<float>
 > csr_matrix;
 
-typedef coordinate_matrix<
+typedef boost::numeric::ublas::coordinate_matrix<
     float,
     basic_row_major<int,int>,
     0,
@@ -47,9 +45,9 @@ public:
     virtual void StageMatrix(int i, int j);
     virtual void StageElem(int i, int j, float value);
     virtual void PushMatrix();
-    virtual void ApplyM(int offset);
-    virtual void WriteM();
-    virtual bool MReady();
+    virtual void ApplyMatrix(int offset);
+    virtual void WriteMatrix();
+    virtual bool MatrixReady();
     virtual void PrintReport();
 
     csr_matrix *M;

@@ -2,12 +2,7 @@
 #include "../osd/mutex.h"
 #include "../osd/mklDispatcher.h"
 
-#include <float.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
-#include <iostream>
-#include <sys/time.h>
 
 using namespace std;
 using namespace boost::numeric::ublas;
@@ -50,17 +45,17 @@ OsdMklKernelDispatcher::PushMatrix()
 }
 
 void
-OsdMklKernelDispatcher::ApplyM(int offset)
+OsdMklKernelDispatcher::ApplyMatrix(int offset)
 {
 }
 
 void
-OsdMklKernelDispatcher::WriteM()
+OsdMklKernelDispatcher::WriteMatrix()
 {
 }
 
 bool
-OsdMklKernelDispatcher::MReady()
+OsdMklKernelDispatcher::MatrixReady()
 {
 }
 
