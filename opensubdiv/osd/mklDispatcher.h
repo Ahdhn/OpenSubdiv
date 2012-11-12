@@ -16,7 +16,7 @@ extern "C" {
 typedef boost::numeric::ublas::compressed_matrix<
     float,
     basic_row_major<int,int>,
-    0,
+    1,
     unbounded_array<int>,
     unbounded_array<float>
 > csr_matrix;
@@ -24,7 +24,7 @@ typedef boost::numeric::ublas::compressed_matrix<
 typedef boost::numeric::ublas::coordinate_matrix<
     float,
     basic_row_major<int,int>,
-    0,
+    1,
     unbounded_array<int>,
     unbounded_array<float>
 > coo_matrix;
@@ -50,11 +50,6 @@ public:
     virtual void PrintReport();
 
     coo_matrix *S;
-
-#if 0
-    oski_matrix_t A_tunable;
-    oski_vecview_t x_view, y_view;
-#endif
 };
 
 } // end namespace OPENSUBDIV_VERSION

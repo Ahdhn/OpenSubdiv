@@ -55,6 +55,9 @@ OsdMklKernelDispatcher::StageElem(int i, int j, float value)
 void
 OsdMklKernelDispatcher::PushMatrix()
 {
+    csr_matrix A(*S);
+
+    // mkl_scsrmultcsr
 
     delete S;
 }
@@ -66,6 +69,8 @@ OsdMklKernelDispatcher::ApplyMatrix(int offset)
     float* V_in = _currentVertexBuffer->GetCpuBuffer();
     float* V_out = _currentVertexBuffer->GetCpuBuffer()
                    + offset * numElems;
+
+    // mkl_scsrgemv
 }
 
 void
