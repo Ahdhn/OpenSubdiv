@@ -16,6 +16,23 @@ extern "C" {
 
 using namespace boost::numeric::ublas;
 
+typedef compressed_matrix<
+    float,
+    basic_row_major<int,int>,
+    0,
+    unbounded_array<int>,
+    unbounded_array<float>
+> csr_matrix;
+
+typedef coordinate_matrix<
+    float,
+    basic_row_major<int,int>,
+    0,
+    unbounded_array<int>,
+    unbounded_array<float>
+> coo_matrix;
+
+
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
@@ -38,6 +55,11 @@ public:
     virtual void PushMatrix();
     virtual void ApplyM(int offset);
     virtual void WriteM();
+    virtual bool MReady();
+    virtual void PrintReport();
+
+    csr_matrix *M;
+    coo_matrix *S;
 
     oski_matrix_t A_tunable;
     oski_vecview_t x_view, y_view;

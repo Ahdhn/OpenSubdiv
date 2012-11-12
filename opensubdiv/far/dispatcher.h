@@ -57,9 +57,6 @@
 #ifndef FAR_DISPATCHER_H
 #define FAR_DISPATCHER_H
 
-#include <boost/numeric/ublas/matrix_sparse.hpp>
-#include <boost/numeric/ublas/io.hpp>
-
 #include "../version.h"
 
 #include "../far/mesh.h"
@@ -68,18 +65,8 @@
 #include "../far/loopSubdivisionTables.h"
 #include "../far/vertexEditTables.h"
 
-using namespace boost::numeric::ublas;
-
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
-
-typedef compressed_matrix<
-    float,
-    basic_row_major<int,int>,
-    0,
-    unbounded_array<int>,
-    unbounded_array<float>
-> csr_matrix;
 
 /// \brief Subdivision process encapsulation layer.
 ///
@@ -141,12 +128,12 @@ public:
     virtual void ApplyM(int offset) { };
     void SetSrcOffset(int srcOffset) { this->srcOffset = srcOffset; };
     virtual int CopyNVerts(int nVerts, int dstIndex, int srcIndex) { };
+    virtual bool MReady() { return false; }
+    virtual void PrintReport() { }
 
     virtual int GetElemsPerVertex() const { return -1; }
     virtual int GetElemsPerVarying() const { return -1; }
 
-    coordinate_matrix<float>* S;
-    csr_matrix *M;
     int srcOffset;
 
 private:

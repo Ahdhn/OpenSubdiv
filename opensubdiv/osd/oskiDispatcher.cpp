@@ -1,7 +1,6 @@
 #include "../version.h"
 #include "../osd/mutex.h"
 #include "../osd/oskiDispatcher.h"
-#include "../osd/oskiKernel.h"
 
 #include <float.h>
 #include <stdlib.h>
@@ -17,10 +16,7 @@ namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
 OsdOskiKernelDispatcher::OsdOskiKernelDispatcher( int levels )
-    : OsdSpMVKernelDispatcher(levels), A_tunable(NULL) {
-    M = NULL;
-    S = NULL;
-
+    : OsdSpMVKernelDispatcher(levels), A_tunable(NULL), M(NULL), S(NULL) {
     oski_Init();
 }
 
@@ -42,7 +38,7 @@ void
 OsdOskiKernelDispatcher::StageMatrix(int i, int j)
 {
     if (S != NULL) delete S;
-    S = new coordinate_matrix<float>(i,j);
+    S = new coo_matrix(i,j);
 }
 
 inline void
@@ -147,6 +143,26 @@ OsdOskiKernelDispatcher::WriteM()
                 fprintf(ofile, "%d %d %10.3g\n", i/6+1, j/6+1, (float) (*M)(i,j));
 
     fclose(ofile);
+}
+
+bool
+OsdOskiKernelDispatcher::MReady()
+{
+    return (M != NULL);
+}
+
+void
+OsdOskiKernelDispatcher::PrintReport()
+{
+    printf("Subdivision matrix is %d-by-%d with %d nonzeroes (%f%%) %2.fKB\n",
+            (int) M->size1(),
+            (int) M->size2(),
+            (int) M->value_data().size(),
+            100.0 * M->value_data().size() /
+            (M->size1() *
+             M->size2()),
+            ((float) (M->size1() + M->size2() + M->size1()) * sizeof(float)) / 1024.0
+          );
 }
 
 } // end namespace OPENSUBDIV_VERSION

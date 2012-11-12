@@ -27,8 +27,9 @@ public:
     virtual void StageElem(int i, int j, float value);
     virtual void PushMatrix();
     virtual void ApplyM(int offset);
-
     virtual void WriteM();
+    virtual bool MReady();
+    virtual void PrintReport();
 
     virtual int GetElemsPerVertex() const { return _currentVertexBuffer ? _currentVertexBuffer->GetNumElements() : NULL; }
     virtual int GetElemsPerVarying() const { return _currentVaryingBuffer ? _currentVaryingBuffer->GetNumElements() : NULL; }

@@ -192,8 +192,7 @@ if ( OSKI_FOUND )
         mmio.h
     )
     list(APPEND KERNEL_FILES
-        spmvKernel.cpp
-        oskiKernel.cpp
+        spmvKernel.h
     )
     list(APPEND PLATFORM_LIBRARIES
         ${OSKI_LIBRARIES}

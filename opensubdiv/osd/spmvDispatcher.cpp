@@ -84,6 +84,16 @@ OsdSpMVKernelDispatcher::WriteM() {
     assert(false && "OsdSpMVKernelDispatcher::WriteM must be overridden.");
 }
 
+void
+OsdSpMVKernelDispatcher::PrintReport() {
+    assert(false && "OsdSpMVKernelDispatcher::PrintReport must be overridden.");
+}
+
+bool
+OsdSpMVKernelDispatcher::MReady() {
+    assert(false && "OsdSpMVKernelDispatcher::MReady must be overridden.");
+}
+
 } // end namespace OPENSUBDIV_VERSION
 
 } // end namespace OpenSubdiv
