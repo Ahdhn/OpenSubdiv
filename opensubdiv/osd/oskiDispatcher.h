@@ -32,18 +32,12 @@ public:
     }
 
     static void Register();
-    virtual void BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying);
 
-    virtual int CopyNVerts(int nVerts, int dstIndex, int srcIndex);
     virtual void StageMatrix(int i, int j);
     virtual void StageElem(int i, int j, float value);
     virtual void PushMatrix();
     virtual void ApplyM(int offset);
-
     virtual void WriteM();
-
-    virtual int GetElemsPerVertex() const { return _currentVertexBuffer ? _currentVertexBuffer->GetNumElements() : NULL; }
-    virtual int GetElemsPerVarying() const { return _currentVaryingBuffer ? _currentVaryingBuffer->GetNumElements() : NULL; }
 
     oski_matrix_t A_tunable;
     oski_vecview_t x_view, y_view;

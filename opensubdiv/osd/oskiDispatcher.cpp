@@ -26,27 +26,6 @@ OsdOskiKernelDispatcher::OsdOskiKernelDispatcher( int levels )
 
 OsdOskiKernelDispatcher::~OsdOskiKernelDispatcher() {
     oski_Close();
-
-    if (_vdesc)
-        delete _vdesc;
-}
-
-void
-OsdOskiKernelDispatcher::BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying) {
-
-    if (vertex)
-        _currentVertexBuffer = dynamic_cast<OsdCpuVertexBuffer *>(vertex);
-    else
-        _currentVertexBuffer = NULL;
-
-    if (varying)
-        _currentVaryingBuffer = dynamic_cast<OsdCpuVertexBuffer *>(varying);
-    else
-        _currentVaryingBuffer = NULL;
-
-    _vdesc = new OskiVertexDescriptor(this,
-            _currentVertexBuffer  ? _currentVertexBuffer->GetNumElements()  : 0,
-            _currentVaryingBuffer ? _currentVaryingBuffer->GetNumElements() : 0);
 }
 
 static OsdOskiKernelDispatcher::OsdKernelDispatcher *
@@ -57,13 +36,6 @@ Create(int levels) {
 void
 OsdOskiKernelDispatcher::Register() {
     Factory::GetInstance().Register(Create, kOSKI);
-}
-
-int
-OsdOskiKernelDispatcher::CopyNVerts(int nVerts, int dstIndex, int srcIndex) {
-    for (int i = 0; i < nVerts; i++)
-        _vdesc->AddWithWeight(NULL, dstIndex+i, srcIndex+i, 1.0);
-    return nVerts;
 }
 
 void
