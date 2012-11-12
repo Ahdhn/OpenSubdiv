@@ -3,12 +3,7 @@
 #include "../osd/spmvDispatcher.h"
 #include "../osd/spmvKernel.h"
 
-#include <float.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
-#include <iostream>
-#include <sys/time.h>
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {

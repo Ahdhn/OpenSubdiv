@@ -2,12 +2,7 @@
 #include "../osd/mutex.h"
 #include "../osd/oskiDispatcher.h"
 
-#include <float.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
-#include <iostream>
-#include <sys/time.h>
 
 using namespace std;
 using namespace boost::numeric::ublas;

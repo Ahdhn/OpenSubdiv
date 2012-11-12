@@ -11,8 +11,9 @@ extern "C" {
 
 #include <boost/numeric/ublas/operation.hpp>
 #include <boost/numeric/ublas/matrix_sparse.hpp>
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/io.hpp>
+
+namespace OpenSubdiv {
+namespace OPENSUBDIV_VERSION {
 
 typedef boost::numeric::ublas::compressed_matrix<
     float,
@@ -30,9 +31,6 @@ typedef boost::numeric::ublas::coordinate_matrix<
     unbounded_array<float>
 > coo_matrix;
 
-
-namespace OpenSubdiv {
-namespace OPENSUBDIV_VERSION {
 
 class OsdOskiKernelDispatcher : public OsdSpMVKernelDispatcher
 {
