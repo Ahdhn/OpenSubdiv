@@ -10,9 +10,6 @@
 #include <iostream>
 #include <sys/time.h>
 
-using namespace std;
-using namespace boost::numeric::ublas;
-
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
@@ -42,56 +39,11 @@ OsdSpMVKernelDispatcher::BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuff
             _currentVaryingBuffer ? _currentVaryingBuffer->GetNumElements() : 0);
 }
 
-static OsdSpMVKernelDispatcher::OsdKernelDispatcher *
-Create(int levels) {
-    return new OsdSpMVKernelDispatcher(levels);
-}
-
-void
-OsdSpMVKernelDispatcher::Register() {
-    assert(false && "SpMV Kernel Dispatchers shouldn't be instantiated. Use subclass instead.");
-}
-
 int
 OsdSpMVKernelDispatcher::CopyNVerts(int nVerts, int dstIndex, int srcIndex) {
     for (int i = 0; i < nVerts; i++)
         _vdesc->AddWithWeight(NULL, dstIndex+i, srcIndex+i, 1.0);
     return nVerts;
-}
-
-void
-OsdSpMVKernelDispatcher::StageMatrix(int i, int j) {
-    assert(false && "OsdSpMVKernelDispatcher::StageMatrix must be overridden.");
-}
-
-inline void
-OsdSpMVKernelDispatcher::StageElem(int i, int j, float value) {
-    assert(false && "OsdSpMVKernelDispatcher::StageElem must be overridden.");
-}
-
-void
-OsdSpMVKernelDispatcher::PushMatrix() {
-    assert(false && "OsdSpMVKernelDispatcher::PushMatrix must be overridden.");
-}
-
-void
-OsdSpMVKernelDispatcher::ApplyM(int offset) {
-    assert(false && "OsdSpMVKernelDispatcher::ApplyM must be overridden.");
-}
-
-void
-OsdSpMVKernelDispatcher::WriteM() {
-    assert(false && "OsdSpMVKernelDispatcher::WriteM must be overridden.");
-}
-
-void
-OsdSpMVKernelDispatcher::PrintReport() {
-    assert(false && "OsdSpMVKernelDispatcher::PrintReport must be overridden.");
-}
-
-bool
-OsdSpMVKernelDispatcher::MReady() {
-    assert(false && "OsdSpMVKernelDispatcher::MReady must be overridden.");
 }
 
 } // end namespace OPENSUBDIV_VERSION

@@ -19,20 +19,21 @@ public:
         return FarMesh<OsdVertex>::SpMV;
     }
 
-    static void Register();
-    virtual void BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying);
-
+    void BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying);
+    int GetElemsPerVertex() const { return _currentVertexBuffer ? _currentVertexBuffer->GetNumElements() : NULL; }
+    int GetElemsPerVarying() const { return _currentVaryingBuffer ? _currentVaryingBuffer->GetNumElements() : NULL; }
     virtual int CopyNVerts(int nVerts, int dstIndex, int srcIndex);
-    virtual void StageMatrix(int i, int j);
-    virtual void StageElem(int i, int j, float value);
-    virtual void PushMatrix();
-    virtual void ApplyM(int offset);
-    virtual void WriteM();
-    virtual bool MReady();
-    virtual void PrintReport();
 
-    virtual int GetElemsPerVertex() const { return _currentVertexBuffer ? _currentVertexBuffer->GetNumElements() : NULL; }
-    virtual int GetElemsPerVarying() const { return _currentVaryingBuffer ? _currentVaryingBuffer->GetNumElements() : NULL; }
+    // static OsdSpMVKernelDispatcher* Create(int levels) = 0;
+    // static void Register() = 0;
+
+    virtual void StageMatrix(int i, int j) = 0;
+    virtual void StageElem(int i, int j, float value) = 0;
+    virtual void PushMatrix() = 0;
+    virtual void ApplyM(int offset) = 0;
+    virtual void WriteM() = 0;
+    virtual bool MReady() = 0;
+    virtual void PrintReport() = 0;
 };
 
 } // end namespace OPENSUBDIV_VERSION
