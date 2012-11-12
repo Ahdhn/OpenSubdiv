@@ -36,17 +36,11 @@ typedef coordinate_matrix<
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
-struct OskiVertexDescriptor;
-
 class OsdOskiKernelDispatcher : public OsdSpMVKernelDispatcher
 {
 public:
     OsdOskiKernelDispatcher(int levels);
     virtual ~OsdOskiKernelDispatcher();
-
-    virtual FarMesh<OsdVertex>::Strategy GetStrategy() {
-        return FarMesh<OsdVertex>::SpMV;
-    }
 
     static void Register();
 
