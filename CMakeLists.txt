@@ -104,6 +104,7 @@ find_package(OSKI)
 find_package(CUDA)
 find_package(GLUT)
 find_package(PTex)
+find_package(MKL)
 
 if (NOT APPLE)
     find_package(GLEW REQUIRED)

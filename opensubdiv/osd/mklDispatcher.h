@@ -4,6 +4,10 @@
 #include "../version.h"
 #include "../osd/spmvDispatcher.h"
 
+extern "C" {
+#include <mkl.h>
+}
+
 #include <boost/numeric/ublas/operation.hpp>
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 #include <boost/numeric/ublas/matrix.hpp>

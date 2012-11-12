@@ -179,27 +179,49 @@ if ( OPENCL_FOUND )
 endif()
 
 #-------------------------------------------------------------------------------
-# OSKI code & dependencies
-if ( OSKI_FOUND )
+# SpMV Dispatchers code & dependencies
+if ( OSKI_FOUND OR MKL_FOUND )
     list(APPEND SOURCE_FILES
         spmvDispatcher.cpp
-        oskiDispatcher.cpp
-        mklDispatcher.cpp
         mmio.c
     )
     list(APPEND PUBLIC_HEADER_FILES
         spmvDispatcher.h
-        oskiDispatcher.h
-        mklDispatcher.h
         mmio.h
     )
     list(APPEND KERNEL_FILES
         spmvKernel.h
     )
+endif()
+
+#-------------------------------------------------------------------------------
+# OSKI code & dependencies
+if ( OSKI_FOUND )
+    list(APPEND SOURCE_FILES
+        oskiDispatcher.cpp
+    )
+    list(APPEND PUBLIC_HEADER_FILES
+        oskiDispatcher.h
+    )
     list(APPEND PLATFORM_LIBRARIES
         ${OSKI_LIBRARIES}
     )
     include_directories( ${OSKI_INCLUDE_DIR} )
+endif()
+
+#-------------------------------------------------------------------------------
+# MKL code & dependencies
+if ( MKL_FOUND )
+    list(APPEND SOURCE_FILES
+        mklDispatcher.cpp
+    )
+    list(APPEND PUBLIC_HEADER_FILES
+        mklDispatcher.h
+    )
+    list(APPEND PLATFORM_LIBRARIES
+        ${MKL_LIBRARIES}
+    )
+    include_directories( ${MKL_INCLUDE_DIR} )
 endif()
 
 #-------------------------------------------------------------------------------
