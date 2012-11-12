@@ -10,10 +10,12 @@ namespace OPENSUBDIV_VERSION {
 OsdClSpMVKernelDispatcher::OsdClSpMVKernelDispatcher( int levels )
     : OsdSpMVKernelDispatcher(levels)
 {
+    // add code here optionally
 }
 
 OsdClSpMVKernelDispatcher::~OsdClSpMVKernelDispatcher()
 {
+    // add code here optionally
 }
 
 static OsdClSpMVKernelDispatcher::OsdKernelDispatcher *
@@ -29,16 +31,19 @@ OsdClSpMVKernelDispatcher::Register() {
 void
 OsdClSpMVKernelDispatcher::StageMatrix(int i, int j)
 {
+    // add code here
 }
 
 inline void
 OsdClSpMVKernelDispatcher::StageElem(int i, int j, float value)
 {
+    // add code here
 }
 
 void
 OsdClSpMVKernelDispatcher::PushMatrix()
 {
+    // add code here
 }
 
 void
@@ -48,21 +53,26 @@ OsdClSpMVKernelDispatcher::ApplyMatrix(int offset)
     float* V_in = _currentVertexBuffer->GetCpuBuffer();
     float* V_out = _currentVertexBuffer->GetCpuBuffer()
                    + offset * numElems;
+
+    // add code here
 }
 
 void
 OsdClSpMVKernelDispatcher::WriteMatrix()
 {
+    // add code here optionally
 }
 
 bool
 OsdClSpMVKernelDispatcher::MatrixReady()
 {
+    // add code here
 }
 
 void
 OsdClSpMVKernelDispatcher::PrintReport()
 {
+    // add code here optionally
 }
 
 } // end namespace OPENSUBDIV_VERSION
