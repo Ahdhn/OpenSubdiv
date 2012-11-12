@@ -166,9 +166,11 @@ endif()
 if ( OPENCL_FOUND )
     list(APPEND SOURCE_FILES
         clDispatcher.cpp
+        clspmvDispatcher.cpp
     )
     list(APPEND PUBLIC_HEADER_FILES
         clDispatcher.h
+        clspmvDispatcher.h
     )
     list(APPEND KERNEL_FILES
         clKernel.cl
