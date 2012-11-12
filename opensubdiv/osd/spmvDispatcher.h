@@ -1,31 +1,19 @@
-#ifndef OSD_OSKI_DISPATCHER_H
-#define OSD_OSKI_DISPATCHER_H
+#ifndef OSD_SPMV_DISPATCHER_H
+#define OSD_SPMV_DISPATCHER_H
 
 #include "../version.h"
-#include "../osd/spmvDispatcher.h"
-
-extern "C" {
-    #include <oski/oski_Tis.h>
-    #include "mmio.h"
-}
-
-#include <boost/numeric/ublas/operation.hpp>
-#include <boost/numeric/ublas/matrix_sparse.hpp>
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/io.hpp>
-
-using namespace boost::numeric::ublas;
+#include "../osd/cpuDispatcher.h"
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
-struct OskiVertexDescriptor;
+struct SpMVVertexDescriptor;
 
-class OsdOskiKernelDispatcher : public OsdSpMVKernelDispatcher
+class OsdSpMVKernelDispatcher : public OsdCpuKernelDispatcher
 {
 public:
-    OsdOskiKernelDispatcher(int levels);
-    virtual ~OsdOskiKernelDispatcher();
+    OsdSpMVKernelDispatcher(int levels);
+    virtual ~OsdSpMVKernelDispatcher();
 
     virtual FarMesh<OsdVertex>::Strategy GetStrategy() {
         return FarMesh<OsdVertex>::SpMV;
@@ -44,9 +32,6 @@ public:
 
     virtual int GetElemsPerVertex() const { return _currentVertexBuffer ? _currentVertexBuffer->GetNumElements() : NULL; }
     virtual int GetElemsPerVarying() const { return _currentVaryingBuffer ? _currentVaryingBuffer->GetNumElements() : NULL; }
-
-    oski_matrix_t A_tunable;
-    oski_vecview_t x_view, y_view;
 };
 
 } // end namespace OPENSUBDIV_VERSION
@@ -54,4 +39,4 @@ using namespace OPENSUBDIV_VERSION;
 
 } // end namespace OpenSubdiv
 
-#endif /* OSD_OSKI_DISPATCHER_H */
+#endif /* OSD_SPMV_DISPATCHER_H */

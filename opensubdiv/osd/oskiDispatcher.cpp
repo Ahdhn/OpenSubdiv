@@ -17,8 +17,7 @@ namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
 OsdOskiKernelDispatcher::OsdOskiKernelDispatcher( int levels )
-    : OsdCpuKernelDispatcher(levels), A_tunable(NULL) {
-    _tables.resize(TABLE_MAX);
+    : OsdSpMVKernelDispatcher(levels), A_tunable(NULL) {
     M = NULL;
     S = NULL;
 

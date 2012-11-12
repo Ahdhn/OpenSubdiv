@@ -182,14 +182,17 @@ endif()
 # OSKI code & dependencies
 if ( OSKI_FOUND )
     list(APPEND SOURCE_FILES
+        spmvDispatcher.cpp
         oskiDispatcher.cpp
         mmio.c
     )
     list(APPEND PUBLIC_HEADER_FILES
+        spmvDispatcher.h
         oskiDispatcher.h
         mmio.h
     )
     list(APPEND KERNEL_FILES
+        spmvKernel.cpp
         oskiKernel.cpp
     )
     list(APPEND PLATFORM_LIBRARIES
