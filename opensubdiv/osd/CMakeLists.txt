@@ -184,11 +184,13 @@ if ( OSKI_FOUND )
     list(APPEND SOURCE_FILES
         spmvDispatcher.cpp
         oskiDispatcher.cpp
+        mklDispatcher.cpp
         mmio.c
     )
     list(APPEND PUBLIC_HEADER_FILES
         spmvDispatcher.h
         oskiDispatcher.h
+        mklDispatcher.h
         mmio.h
     )
     list(APPEND KERNEL_FILES

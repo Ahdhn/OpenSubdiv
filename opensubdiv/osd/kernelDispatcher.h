@@ -83,7 +83,7 @@ public:
                       kGLSL = 3,
                       kCL = 4,
                       kOSKI = 5,
-                      kPOSKI = 6,
+                      kMKL = 6,
                       kMAX };
 
 
@@ -191,6 +191,7 @@ protected:
         friend class OsdCpuKernelDispatcher;
         friend class OsdSpMVKernelDispatcher;
         friend class OsdOskiKernelDispatcher;
+        friend class OsdMklKernelDispatcher;
         friend class OsdGlslKernelDispatcher;
         friend class OsdCudaKernelDispatcher;
         friend class OsdClKernelDispatcher;

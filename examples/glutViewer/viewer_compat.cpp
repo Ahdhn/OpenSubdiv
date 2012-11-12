@@ -85,8 +85,8 @@
     #include <osd/oskiDispatcher.h>
 #endif
 
-#ifdef OPENSUBDIV_HAS_POSKI
-    #include <osd/poskiDispatcher.h>
+#ifdef OPENSUBDIV_HAS_MKL
+    #include <osd/mklDispatcher.h>
 #endif
 
 #ifdef OPENSUBDIV_HAS_CUDA
@@ -446,8 +446,8 @@ const char *getKernelName(int kernel) {
         return "OpenCL";
     else if (kernel == OpenSubdiv::OsdKernelDispatcher::kOSKI)
         return "OSKI";
-    else if (kernel == OpenSubdiv::OsdKernelDispatcher::kPOSKI)
-        return "pOSKI";
+    else if (kernel == OpenSubdiv::OsdKernelDispatcher::kMKL)
+        return "MKL";
     return "Unknown";
 }
 
@@ -895,8 +895,8 @@ int main(int argc, char ** argv) {
     OpenSubdiv::OsdOskiKernelDispatcher::Register();
 #endif
 
-#if OPENSUBDIV_HAS_POSKI
-    OpenSubdiv::OsdPoskiKernelDispatcher::Register();
+#if OPENSUBDIV_HAS_MKL
+    OpenSubdiv::OsdMklKernelDispatcher::Register();
 #endif
 
 #if OPENSUBDIV_HAS_CUDA
