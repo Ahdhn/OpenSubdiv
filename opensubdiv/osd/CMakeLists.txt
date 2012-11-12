@@ -243,6 +243,16 @@ if( CUDA_FOUND )
     endif()
 endif()
 
+#-------------------------------------------------------------------------------
+# CUSPARSE code & dependencies
+if( CUSPARSE_FOUND )
+    list(APPEND SOURCE_FILES
+        cusparseDispatcher.cpp
+    )
+    list(APPEND PUBLIC_HEADER_FILES
+        cusparseDispatcher.h
+    )
+endif()
 
 #-------------------------------------------------------------------------------
 # Kernel Stringification

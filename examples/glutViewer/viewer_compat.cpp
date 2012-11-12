@@ -99,6 +99,10 @@
     #include "../common/cudaInit.h"
 #endif
 
+#ifdef OPENSUBDIV_HAS_CUDA
+    #include <osd/cusparseDispatcher.h>
+#endif
+
 #include <common/shape_utils.h>
 
 #include "../common/stopwatch.h"
@@ -451,6 +455,8 @@ const char *getKernelName(int kernel) {
         return "MKL";
     else if (kernel == OpenSubdiv::OsdKernelDispatcher::kCLSPMV)
         return "ClSpMV";
+    else if (kernel == OpenSubdiv::OsdKernelDispatcher::kCUSPARSE)
+        return "CuSPARSE";
     return "Unknown";
 }
 
@@ -901,6 +907,10 @@ int main(int argc, char ** argv) {
 
 #if OPENSUBDIV_HAS_MKL
     OpenSubdiv::OsdMklKernelDispatcher::Register();
+#endif
+
+#if OPENSUBDIV_HAS_CUSPARSE
+    OpenSubdiv::OsdCusparseKernelDispatcher::Register();
 #endif
 
 #if OPENSUBDIV_HAS_CUDA
