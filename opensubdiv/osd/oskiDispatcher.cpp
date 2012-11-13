@@ -4,14 +4,13 @@
 
 #include <stdio.h>
 
-using namespace std;
 using namespace boost::numeric::ublas;
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
 OsdOskiKernelDispatcher::OsdOskiKernelDispatcher( int levels )
-    : OsdSpMVKernelDispatcher(levels), A_tunable(NULL), M(NULL), S(NULL) {
+    : OsdUBlasKernelDispatcher(levels), A_tunable(NULL) {
     oski_Init();
 }
 
@@ -27,50 +26,6 @@ Create(int levels) {
 void
 OsdOskiKernelDispatcher::Register() {
     Factory::GetInstance().Register(Create, kOSKI);
-}
-
-void
-OsdOskiKernelDispatcher::StageMatrix(int i, int j)
-{
-    if (S != NULL) delete S;
-    S = new coo_matrix(i,j);
-}
-
-inline void
-OsdOskiKernelDispatcher::StageElem(int i, int j, float value)
-{
-#ifdef DEBUG
-    assert(0 <= i);
-    assert(i < S->size1());
-    assert(0 <= j);
-    assert(j < S->size2());
-#endif
-
-    (*S)(i,j) = value;
-}
-
-void
-OsdOskiKernelDispatcher::PushMatrix()
-{
-    if (M != NULL) {
-        csr_matrix A(*S);
-        csr_matrix *B = M;
-        csr_matrix *C = new csr_matrix(A.size1(), B->size2());
-        printf("PushMatrix mul %d-%d = %d-%d * %d-%d\n",
-                (int) C->size1(), (int) C->size2(),
-                (int) A.size1(), (int) A.size2(),
-                (int) B->size1(), (int) B->size2());
-        axpy_prod(A, *B, *C, true);
-        M = C;
-        delete B;
-    } else {
-        M = new csr_matrix(*S);
-        printf("PushMatrix set %d-%d\n", (int) M->size1(), (int) M->size2());
-    }
-
-    assert(M);
-    delete S;
-    S = NULL;
 }
 
 void
@@ -107,57 +62,6 @@ OsdOskiKernelDispatcher::ApplyMatrix(int offset)
     }
 
     oski_MatMult( A_tunable, OP_NORMAL, 1.0, x_view, 0.0, y_view );
-}
-
-void
-OsdOskiKernelDispatcher::WriteMatrix()
-{
-    MM_typecode matcode;
-
-    int *I = &M->index1_data()[0];
-    int *J = &M->index2_data()[0];
-    float *val = &M->value_data()[0];
-    int Mlen = (int) M->size1() / 6;
-    int Nlen = (int) M->size2() / 6;
-    int nz = M->value_data().size();
-
-    FILE* ofile = fopen("subdiv_matrix.mm", "w");
-    assert(ofile != NULL);
-
-    mm_initialize_typecode(&matcode);
-    mm_set_matrix(&matcode);
-    mm_set_coordinate(&matcode);
-    mm_set_real(&matcode);
-
-    mm_write_banner(ofile, matcode);
-    mm_write_mtx_crd_size(ofile, Mlen, Nlen, nz);
-
-    for(int i = 0; i < M->size1(); i++)
-        for(int j = 0; j < M->size2(); j++)
-            if ((*M)(i,j) != 0.0 && i%6==0 && j%6==0)
-                fprintf(ofile, "%d %d %10.3g\n", i/6+1, j/6+1, (float) (*M)(i,j));
-
-    fclose(ofile);
-}
-
-bool
-OsdOskiKernelDispatcher::MatrixReady()
-{
-    return (M != NULL);
-}
-
-void
-OsdOskiKernelDispatcher::PrintReport()
-{
-    printf("Subdivision matrix is %d-by-%d with %d nonzeroes (%f%%) %2.fKB\n",
-            (int) M->size1(),
-            (int) M->size2(),
-            (int) M->value_data().size(),
-            100.0 * M->value_data().size() /
-            (M->size1() *
-             M->size2()),
-            ((float) (M->size1() + M->size2() + M->size1()) * sizeof(float)) / 1024.0
-          );
 }
 
 } // end namespace OPENSUBDIV_VERSION

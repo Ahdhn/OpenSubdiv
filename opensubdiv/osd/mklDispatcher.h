@@ -19,7 +19,7 @@ typedef boost::numeric::ublas::compressed_matrix<
     1,
     unbounded_array<int>,
     unbounded_array<float>
-> csr_matrix;
+> csr_matrix1;
 
 typedef boost::numeric::ublas::coordinate_matrix<
     float,
@@ -27,7 +27,7 @@ typedef boost::numeric::ublas::coordinate_matrix<
     1,
     unbounded_array<int>,
     unbounded_array<float>
-> coo_matrix;
+> coo_matrix1;
 
 
 namespace OpenSubdiv {
@@ -49,7 +49,7 @@ public:
     virtual bool MatrixReady();
     virtual void PrintReport();
 
-    coo_matrix *S;
+    coo_matrix1 *S;
 };
 
 } // end namespace OPENSUBDIV_VERSION

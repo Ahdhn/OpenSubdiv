@@ -4,20 +4,14 @@
 
 #include <stdio.h>
 
-using namespace std;
 using namespace boost::numeric::ublas;
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
-extern void mkl_scsrmultcsr(char *trans, int *request, int *sort, int *m, int *n, int *k,
-        float *a, int *ja, int *ia, float *b, int *jb, int *ib, float *c, 
-        int *jc, int *ic, int *nzmax, int *info);
-
 OsdMklKernelDispatcher::OsdMklKernelDispatcher( int levels )
     : OsdSpMVKernelDispatcher(levels), S(NULL)
-{
-}
+{ }
 
 OsdMklKernelDispatcher::~OsdMklKernelDispatcher()
 {
@@ -37,7 +31,7 @@ OsdMklKernelDispatcher::Register() {
 void
 OsdMklKernelDispatcher::StageMatrix(int i, int j)
 {
-    S = new coo_matrix(i,j);
+    S = new coo_matrix1(i,j);
 }
 
 inline void
@@ -55,7 +49,7 @@ OsdMklKernelDispatcher::StageElem(int i, int j, float value)
 void
 OsdMklKernelDispatcher::PushMatrix()
 {
-    csr_matrix A(*S);
+    csr_matrix1 A(*S);
 
     // mkl_scsrmultcsr
 

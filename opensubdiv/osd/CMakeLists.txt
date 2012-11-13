@@ -185,11 +185,9 @@ endif()
 if ( Boost_FOUND OR OSKI_FOUND OR MKL_FOUND )
     list(APPEND SOURCE_FILES
         spmvDispatcher.cpp
-        mmio.c
     )
     list(APPEND PUBLIC_HEADER_FILES
         spmvDispatcher.h
-        mmio.h
     )
     list(APPEND KERNEL_FILES
         spmvKernel.h
