@@ -53,7 +53,7 @@ OsdCusparseKernelDispatcher::PushMatrix()
 {
     csr_matrix A(*S);
 
-    // mkl_scsrmultcsr
+    // cusparseScsrgemm
 
     delete S;
 }
@@ -65,6 +65,8 @@ OsdCusparseKernelDispatcher::ApplyMatrix(int offset)
     float* V_in = _currentVertexBuffer->GetCpuBuffer();
     float* V_out = _currentVertexBuffer->GetCpuBuffer()
                    + offset * numElems;
+
+    // cusparseScsrmv
 }
 
 void

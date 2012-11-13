@@ -157,14 +157,6 @@ if(OSKI_FOUND)
     add_definitions(
         -DOPENSUBDIV_HAS_OSKI
     )
-else()
-    message(WARNING
-        "OSKI was not found : support for OSKI compute kernels "
-        "will be disabled in Osd.  If you have OSKI installed, "
-        "please refer to the FindOSKI.cmake in ${PROJECT_SOURCE_DIR}/cmake.")
-endif()
-
-if(OSKI_FOUND)
     find_package( Boost )
     if(Boost_FOUND)
         include_directories(${Boost_INCLUDE_DIRS})
@@ -173,9 +165,11 @@ if(OSKI_FOUND)
         "SpMV kernels (OSKI) require Boost. Specify Boost location with "
         "   -DBOOST_ROOT=/path/to/boost")
     endif()
-    add_definitions(
-        -DOPENSUBDIV_HAS_OSKI
-    )
+else()
+    message(WARNING
+        "OSKI was not found : support for OSKI compute kernels "
+        "will be disabled in Osd.  If you have OSKI installed, "
+        "please refer to the FindOSKI.cmake in ${PROJECT_SOURCE_DIR}/cmake.")
 endif()
 
 if(MKL_FOUND)

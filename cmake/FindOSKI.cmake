@@ -16,18 +16,25 @@ IF(WIN32)
   ENDIF(NOT UNIX)
 ENDIF(WIN32)
 
-find_path( OSKI_INCLUDE_DIR oski/oski.h
-    ${OSKI_LOCATION}/include
-    $ENV{OSKI_LOCATION}/include
-    DOC "The directory where oski.h resides")
-
-find_library( OSKI_oski_LIBRARY oski
+find_path( OSKI_INCLUDE_DIR
+    NAMES
+        oski/oski.h
     PATHS
-    ${OSKI_LOCATION}/lib/oski
-    $ENV{OSKI_LOCATION}/lib/oski
-    DOC "The OSKI library")
+        ${OSKI_LOCATION}/include
+        $ENV{OSKI_LOCATION}/include
+    DOC
+        "The directory where oski.h resides"
+)
 
-set( OSKI_FOUND "NO" )
+find_library( OSKI_oski_LIBRARY
+    NAMES
+        oski
+    PATHS
+        ${OSKI_LOCATION}/lib/oski
+        $ENV{OSKI_LOCATION}/lib/oski
+    DOC
+        "The OSKI library"
+)
 
 if(OSKI_INCLUDE_DIR)
   if(OSKI_oski_LIBRARY)
