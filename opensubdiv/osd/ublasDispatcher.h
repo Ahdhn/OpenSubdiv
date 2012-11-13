@@ -46,6 +46,7 @@ public:
     virtual void PrintReport();
 
     coo_matrix *S;
+    csr_matrix *M;
 };
 
 } // end namespace OPENSUBDIV_VERSION
