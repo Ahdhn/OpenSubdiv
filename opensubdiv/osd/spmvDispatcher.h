@@ -57,8 +57,7 @@ public:
     virtual void ApplyMatrix(int offset) = 0;
 
     /**
-     * Writes the subdivison matrix to a file. MatrixMarket I/O
-     * routines are available in mmio.h . This step is optional,
+     * Writes the subdivison matrix to a file. This step is optional,
      * but helpful for visualizing sparsity patterns.
      */
     virtual void WriteMatrix() = 0;
