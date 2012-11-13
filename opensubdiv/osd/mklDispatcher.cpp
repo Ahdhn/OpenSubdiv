@@ -51,11 +51,16 @@ OsdMklKernelDispatcher::StageElem(int i, int j, float value)
 void
 OsdMklKernelDispatcher::PushMatrix()
 {
+    /* convert coo matrix to csr */
     csr_matrix1 A(*S);
     delete S;
 
-    // todo set sizes
+    /* TODO set sizes */
+    Mlen = 0;
+    milen = 0;
+    mjlen = 0;
 
+    /* if no M exists, create one from A */
     if (M == NULL) {
         M = new float[Mlen];
         mj = new int[mjlen];
@@ -63,6 +68,7 @@ OsdMklKernelDispatcher::PushMatrix()
         return;
     }
 
+    /* otherwise, compute the new M */
     char trans = 'N'; // no transpose A
     int request = 0; // output arrays pre allocated
     int sort = 7; // reordering of zeroes
@@ -87,13 +93,13 @@ OsdMklKernelDispatcher::PushMatrix()
             c, jc, ic, &nzmax, &info);
     assert(info == 0);
 
-    delete M, mi, mj;
+    /* clean up and replace old M */
+    delete[] M;
+    delete[] mi;
+    delete[] mj;
     M = c;
     mi = ic;
     mj = jc;
-    Mlen = 0;
-    mjlen = 0;
-    milen = 0;
 }
 
 void
