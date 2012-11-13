@@ -90,6 +90,10 @@
     #include <osd/mklDispatcher.h>
 #endif
 
+#ifdef OPENSUBDIV_HAS_BOOST
+    #include <osd/ublasDispatcher.h>
+#endif
+
 #ifdef OPENSUBDIV_HAS_CUDA
     #include <osd/cudaDispatcher.h>
 
@@ -457,6 +461,8 @@ const char *getKernelName(int kernel) {
         return "ClSpMV";
     else if (kernel == OpenSubdiv::OsdKernelDispatcher::kCUSPARSE)
         return "CuSPARSE";
+    else if (kernel == OpenSubdiv::OsdKernelDispatcher::kUBLAS)
+        return "uBLAS";
     return "Unknown";
 }
 
@@ -911,6 +917,10 @@ int main(int argc, char ** argv) {
 
 #if OPENSUBDIV_HAS_CUSPARSE
     OpenSubdiv::OsdCusparseKernelDispatcher::Register();
+#endif
+
+#if OPENSUBDIV_HAS_BOOST
+    OpenSubdiv::OsdUBlasKernelDispatcher::Register();
 #endif
 
 #if OPENSUBDIV_HAS_CUDA

@@ -182,7 +182,7 @@ endif()
 
 #-------------------------------------------------------------------------------
 # SpMV Dispatchers code & dependencies
-if ( OSKI_FOUND OR MKL_FOUND )
+if ( Boost_FOUND OR OSKI_FOUND OR MKL_FOUND )
     list(APPEND SOURCE_FILES
         spmvDispatcher.cpp
         mmio.c
@@ -193,6 +193,17 @@ if ( OSKI_FOUND OR MKL_FOUND )
     )
     list(APPEND KERNEL_FILES
         spmvKernel.h
+    )
+endif()
+
+#-------------------------------------------------------------------------------
+# SpMV Dispatchers code & dependencies
+if ( Boost_FOUND )
+    list(APPEND SOURCE_FILES
+        ublasDispatcher.cpp
+    )
+    list(APPEND PUBLIC_HEADER_FILES
+        ublasDispatcher.h
     )
 endif()
 
