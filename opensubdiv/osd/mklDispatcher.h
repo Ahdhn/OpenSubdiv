@@ -50,6 +50,12 @@ public:
     virtual void PrintReport();
 
     coo_matrix1 *S;
+
+    float* M;                // value array
+    int* mj;                 // col index array
+    int* mi;                 // row ptr array
+    int Mlen, mjlen, milen;  // lengths of the above
+    int m, n;                // logical size of matrix
 };
 
 } // end namespace OPENSUBDIV_VERSION
