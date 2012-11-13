@@ -105,6 +105,7 @@ find_package(CUDA)
 find_package(GLUT)
 find_package(PTex)
 find_package(MKL)
+find_package(Boost)
 
 if (NOT APPLE)
     find_package(GLEW REQUIRED)
@@ -153,18 +154,18 @@ else()
         "please refer to the FindOpenCL.cmake in ${PROJECT_SOURCE_DIR}/cmake.")
 endif()
 
+if(Boost_FOUND)
+    include_directories(${Boost_INCLUDE_DIRS})
+    add_definitions(
+            -DOPENSUBDIV_HAS_BOOST
+    )
+endif(Boost_FOUND)
+
 if(OSKI_FOUND)
+    find_package(Boost REQUIRED)
     add_definitions(
         -DOPENSUBDIV_HAS_OSKI
     )
-    find_package( Boost )
-    if(Boost_FOUND)
-        include_directories(${Boost_INCLUDE_DIRS})
-    else()
-    message(FATAL_ERROR
-        "SpMV kernels (OSKI) require Boost. Specify Boost location with "
-        "   -DBOOST_ROOT=/path/to/boost")
-    endif()
 else()
     message(WARNING
         "OSKI was not found : support for OSKI compute kernels "
@@ -173,14 +174,7 @@ else()
 endif()
 
 if(MKL_FOUND)
-    find_package( Boost )
-    if(Boost_FOUND)
-        include_directories(${Boost_INCLUDE_DIRS})
-    else()
-    message(FATAL_ERROR
-        "SpMV kernels (OSKI, MKL) require Boost. Specify Boost location with "
-        "   -DBOOST_ROOT=/path/to/boost")
-    endif()
+    find_package(Boost REQUIRED)
     add_definitions(
         -DOPENSUBDIV_HAS_MKL
     )
