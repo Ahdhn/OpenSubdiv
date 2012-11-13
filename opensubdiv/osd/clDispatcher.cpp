@@ -578,7 +578,7 @@ OsdClKernelDispatcher::ClKernel::Compile(cl_context clContext, int numVertexElem
         char cBuildLog[10240];
         clGetProgramBuildInfo(_clProgram, _clDevice, CL_PROGRAM_BUILD_LOG,
                               sizeof(cBuildLog), cBuildLog, NULL);
-        OSD_ERROR(cBuildLog);
+        OSD_ERROR("%s", cBuildLog);
         return false;
     }
 
