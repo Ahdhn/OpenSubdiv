@@ -67,6 +67,7 @@ bool
 OsdClSpMVKernelDispatcher::MatrixReady()
 {
     // add code here
+    return false;
 }
 
 void

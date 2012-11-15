@@ -169,7 +169,7 @@ FarBilinearSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const
     int nVerts     = this->GetNumVertices(level);
 
     int nElemsPerVert = dispatch->GetElemsPerVertex();
-    int iop, jop, iv, jv;
+    int iop, jop;
 
     dispatch->SetSrcOffset(prevOffset);
 

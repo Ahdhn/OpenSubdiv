@@ -94,9 +94,6 @@ OsdUBlasKernelDispatcher::ApplyMatrix(int offset)
 void
 OsdUBlasKernelDispatcher::WriteMatrix()
 {
-    int *I = &M->index1_data()[0];
-    int *J = &M->index2_data()[0];
-    float *val = &M->value_data()[0];
     int Mlen = (int) M->size1() / 6;
     int Nlen = (int) M->size2() / 6;
     int nz = M->value_data().size();
