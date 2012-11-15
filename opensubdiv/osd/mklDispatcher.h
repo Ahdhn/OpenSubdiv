@@ -17,8 +17,8 @@ typedef boost::numeric::ublas::compressed_matrix<
     float,
     basic_row_major<int,int>,
     1,
-    unbounded_array<int>,
-    unbounded_array<float>
+    std::vector<int>,
+    std::vector<float>
 > csr_matrix1;
 
 typedef boost::numeric::ublas::coordinate_matrix<
@@ -28,7 +28,6 @@ typedef boost::numeric::ublas::coordinate_matrix<
     unbounded_array<int>,
     unbounded_array<float>
 > coo_matrix1;
-
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
@@ -50,12 +49,7 @@ public:
     virtual void PrintReport();
 
     coo_matrix1 *S;
-
-    float* M;                // value array
-    int* mj;                 // col index array
-    int* mi;                 // row ptr array
-    int Mlen, mjlen, milen;  // lengths of the above
-    int m, n;                // logical size of matrix
+    csr_matrix1 *M;
 };
 
 } // end namespace OPENSUBDIV_VERSION
