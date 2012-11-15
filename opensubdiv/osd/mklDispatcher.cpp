@@ -58,10 +58,37 @@ OsdMklKernelDispatcher::PushMatrix()
 
     } else {
 
+#if INTEL_DIDNT_PUT_A_DUMMY_ELEMENT_AT_END_OF_INDEX1_DATA_IN_THEIR_CSR_FORMAT
+        /* convert S from COO to CSR format efficiently */
+        csr_matrix1 A(S->size1(), S->size2(), S->value_data().size());
+        {
+            int nnz = S->value_data().size();
+            int job[] = {
+                2, // job(1)=2 (coo->csr with sorting)
+                1, // job(2)=1 (one-based indexing for csr matrix)
+                1, // job(3)=1 (one-based indexing for coo matrix)
+                0, // empty
+                nnz, // job(5)=nnz (sets nnz for csr matrix)
+                0  // job(6)=0 (all output arrays filled)
+            };
+            int n = A.size1();
+            float* acsr = &A.value_data()[0];
+            int* ja = &A.index2_data()[0];
+            int* ia = &A.index1_data()[0];
+            float* acoo = &S->value_data()[0];
+            int* rowind = &S->index1_data()[0];
+            int* colind = &S->index2_data()[0];
+            int info;
+            mkl_scsrcoo(job, &n, acsr, ja, ia, &nnz, acoo, rowind, colind, &info);
+            assert(info == 0);
+        }
+#else
         csr_matrix1 A(*S);
+#endif
+
         int i = A.size1(),
             j = M->size2(),
-            nnz = M->value_data().size() * 8;
+            nnz = M->value_data().size() * 6; // XXX: shouldn't this be 4?
         csr_matrix1 *C = new csr_matrix1(i, j, nnz);
 
         char trans = 'N'; // no transpose A
@@ -139,9 +166,9 @@ OsdMklKernelDispatcher::MatrixReady()
 void
 OsdMklKernelDispatcher::PrintReport()
 {
-    printf("Subdiv matrix is %d-by-%d with %2.2f%% nonzeroes.\n",
+    printf("Subdiv matrix is %d-by-%d with %f%% nonzeroes.\n",
         M->size1(), M->size2(),
-        100.0 * ((double) M->value_data().size()) / ((double) (M->size1() * M->size2())));
+        100.0 * M->value_data().size() / M->size1() / M->size2());
 }
 
 } // end namespace OPENSUBDIV_VERSION
