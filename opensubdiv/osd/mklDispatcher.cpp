@@ -169,10 +169,10 @@ OsdMklKernelDispatcher::PrintReport()
     int size_in_bytes =  (int) (M->value_data().size() +
                                 M->index1_data().size() +
                                 M->index2_data().size()) * sizeof(float);
-    printf("Subdiv matrix is %d-by-%d with %f%% nonzeroes, takes %d KB.\n",
+    printf("Subdiv matrix is %d-by-%d with %f%% nonzeroes, takes %d MB.\n",
         M->size1(), M->size2(),
         100.0 * M->value_data().size() / M->size1() / M->size2(),
-        size_in_bytes / 1024);
+        size_in_bytes / 1024 / 1024);
 }
 
 } // end namespace OPENSUBDIV_VERSION
