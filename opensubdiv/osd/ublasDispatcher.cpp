@@ -32,7 +32,9 @@ void
 OsdUBlasKernelDispatcher::StageMatrix(int i, int j)
 {
     if (S != NULL) delete S;
-    S = new coo_matrix(i,j);
+
+    int numElems = _currentVertexBuffer->GetNumElements();
+    S = new coo_matrix(i*numElems,j*numElems);
 }
 
 inline void
@@ -44,7 +46,9 @@ OsdUBlasKernelDispatcher::StageElem(int i, int j, float value)
     assert(0 <= j);
     assert(j < S->size2());
 #endif
-    (*S)(i,j) = value;
+    int numElems = _currentVertexBuffer->GetNumElements();
+    for(int k = 0; k < numElems; k++)
+        (*S)(i*numElems+k,j*numElems+k) = value;
 }
 
 void
