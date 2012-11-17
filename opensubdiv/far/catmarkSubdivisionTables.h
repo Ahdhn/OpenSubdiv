@@ -187,11 +187,9 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
     int nPrevVerts = this->GetNumVertices(level-1);
     int nVerts     = this->GetNumVertices(level);
 
-    int nElemsPerVert = dispatch->GetElemsPerVertex();
-
     int iop, jop, iv, jv;
-    iop = (nPrevVerts+batch->kernelF) * nElemsPerVert,
-    jop = iv = nPrevVerts * nElemsPerVert,
+    iop = (nPrevVerts+batch->kernelF),
+    jop = iv = nPrevVerts,
     jv  = 1;
 
     dispatch->SetSrcOffset(prevOffset);
@@ -213,8 +211,8 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
     }
     dispatch->PushMatrix();
 
-    iop = nVerts*nElemsPerVert,
-    jop = iv = (nPrevVerts+batch->kernelF) * nElemsPerVert,
+    iop = nVerts,
+    jop = iv = (nPrevVerts+batch->kernelF),
     jv  = 1;
 
     dispatch->StageMatrix(iop,jop);

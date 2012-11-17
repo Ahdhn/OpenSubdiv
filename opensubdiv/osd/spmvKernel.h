@@ -17,10 +17,9 @@ public:
 
     virtual void AddWithWeight(float *vertex, int dstIndex, int srcIndex, float weight) const {
         int srcOffset = _dispatcher->srcOffset;
-        int d = dstIndex * numVertexElements;
-        int s = (srcIndex-srcOffset) * numVertexElements;
-        for (int i = 0; i < numVertexElements; ++i)
-            _dispatcher->StageElem(d+i,s+i,weight);
+        int d = dstIndex;
+        int s = (srcIndex-srcOffset);
+        _dispatcher->StageElem(d,s,weight);
     }
 
     virtual void AddVaryingWithWeight(float *varying, int dstIndex, int srcIndex, float weight) const {

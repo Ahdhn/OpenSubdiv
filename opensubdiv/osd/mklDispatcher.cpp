@@ -32,7 +32,8 @@ OsdMklKernelDispatcher::Register() {
 void
 OsdMklKernelDispatcher::StageMatrix(int i, int j)
 {
-    S = new coo_matrix1(i,j);
+    int numElems = _currentVertexBuffer->GetNumElements();
+    S = new coo_matrix1(i*numElems,j*numElems);
 }
 
 inline void
@@ -44,7 +45,9 @@ OsdMklKernelDispatcher::StageElem(int i, int j, float value)
     assert(0 <= j);
     assert(j < S->size2());
 #endif
-    S->append_element(i, j, value);
+    int numElems = _currentVertexBuffer->GetNumElements();
+    for(int k = 0; k < numElems; k++)
+        S->append_element(i*numElems+k, j*numElems+k, value);
 }
 
 void
