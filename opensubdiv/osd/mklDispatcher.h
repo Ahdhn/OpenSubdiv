@@ -50,6 +50,7 @@ public:
 
     coo_matrix1 *S;
     csr_matrix1 *M;
+    csr_matrix1 *M_big;
 };
 
 } // end namespace OPENSUBDIV_VERSION
