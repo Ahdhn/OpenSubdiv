@@ -105,7 +105,10 @@ find_package(CUDA)
 find_package(GLUT)
 find_package(PTex)
 find_package(MKL)
-find_package(Boost)
+
+
+set(Boost_ADDITIONAL_VERSIONS "1.52.0")
+find_package(Boost 1.52.0 )
 
 if (NOT APPLE)
     find_package(GLEW REQUIRED)
