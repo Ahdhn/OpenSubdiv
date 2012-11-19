@@ -169,17 +169,18 @@ OsdMklKernelDispatcher::FinalizeMatrix()
         int nve = _currentVertexBuffer->GetNumElements();
         coo_matrix1 M_big_coo(M->size1()*nve, M->size2()*nve, M->nnz()*nve);
 
-        /* FIXME naive implementation. too slow */
+        /* build M_big_coo matrix from M */
         for(int i = 0; i < M->size1(); i++) {
-            for(int j = 0; j < M->size2(); j++) {
-                float factor = (*M)(i,j);
-                if (factor != 0.0)
-                    for(int k = 0; k < nve; k++)
-                        M_big_coo.append_element(i*nve+k, j*nve+k, factor);
+            for( int j = M->index1_data()[i]; j < M->index1_data()[ std::min(i+1,(int)M->size1()) ]; j++ ) {
+                float factor = M->value_data()[ j-1 ];
+                int ii = i;
+                int jj = M->index2_data()[ j-1 ] - 1;
+                for(int k = 0; k < nve; k++)
+                    M_big_coo.append_element(ii*nve+k, jj*nve+k, factor);
             }
         }
 
-        /* convert S from COO to CSR format efficiently */
+        /* convert M_big_coo from COO to CSR format efficiently */
         M_big = new csr_matrix1(M_big_coo.size1(), M_big_coo.size2(), M_big_coo.nnz());
         {
             int nnz = M_big_coo.nnz();
