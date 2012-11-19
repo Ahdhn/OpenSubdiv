@@ -50,6 +50,12 @@ public:
     virtual void PushMatrix() = 0;
 
     /**
+     * Called after all matrices have been pushed, and before
+     * the matrix is applied to the vertices (ApplyMatrix).
+     */
+    virtual void FinalizeMatrix() = 0;
+
+    /**
      * Apply the subdivison matrix on the vertices at index 0,
      * and store the result at the given offset. In pseudocode:
      * v[offset:...] = M * v[0:...]

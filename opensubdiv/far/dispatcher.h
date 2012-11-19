@@ -125,6 +125,7 @@ public:
     virtual void StageMatrix(int i, int j) { };
     virtual void StageElem(int i, int j, float value) { };
     virtual void PushMatrix() { };
+    virtual void FinalizeMatrix() { };
     virtual void ApplyMatrix(int offset) { };
     void SetSrcOffset(int srcOffset) { this->srcOffset = srcOffset; };
     virtual int CopyNVerts(int nVerts, int dstIndex, int srcIndex) { return 0; };

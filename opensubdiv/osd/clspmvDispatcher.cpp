@@ -47,6 +47,13 @@ OsdClSpMVKernelDispatcher::PushMatrix()
 }
 
 void
+OsdClSpMVKernelDispatcher::FinalizeMatrix()
+{
+    this->PrintReport();
+    // add code here
+}
+
+void
 OsdClSpMVKernelDispatcher::ApplyMatrix(int offset)
 {
     int numElems = _currentVertexBuffer->GetNumElements();

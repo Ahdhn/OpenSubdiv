@@ -241,7 +241,7 @@ FarMesh<U>::SubdivideSpMV(int level) {
         for (int i=1; i<level; ++i)
             _subdivisionTables->ApplySpMV(i);
 
-        _dispatcher->PrintReport();
+        _dispatcher->FinalizeMatrix();
     }
     assert(_dispatcher->MatrixReady());
 

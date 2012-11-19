@@ -52,6 +52,12 @@ OsdUBlasKernelDispatcher::StageElem(int i, int j, float value)
 }
 
 void
+OsdUBlasKernelDispatcher::FinalizeMatrix()
+{
+    this->PrintReport();
+}
+
+void
 OsdUBlasKernelDispatcher::PushMatrix()
 {
     if (M != NULL) {

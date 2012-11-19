@@ -43,6 +43,7 @@ public:
     virtual void StageMatrix(int i, int j);
     virtual void StageElem(int i, int j, float value);
     virtual void PushMatrix();
+    virtual void FinalizeMatrix();
     virtual void ApplyMatrix(int offset);
     virtual void WriteMatrix();
     virtual bool MatrixReady();

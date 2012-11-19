@@ -139,23 +139,6 @@ OsdMklKernelDispatcher::PushMatrix()
 void
 OsdMklKernelDispatcher::ApplyMatrix(int offset)
 {
-    /* expand M to M_big if necessary */
-    if (M_big == NULL) {
-        int nve = _currentVertexBuffer->GetNumElements();
-        coo_matrix1 M_big_coo(M->size1()*nve, M->size2()*nve, M->value_data().size()*nve);
-
-        for(int i = 0; i < M->size1(); i++) {
-            for(int j = 0; j < M->size2(); j++) {
-                float factor = (*M)(i,j);
-                if (factor != 0.0)
-                    for(int k = 0; k < nve; k++)
-                        M_big_coo.append_element(i*nve+k, j*nve+k, factor);
-            }
-        }
-
-        M_big = new csr_matrix1(M_big_coo);
-    }
-
     int numElems = _currentVertexBuffer->GetNumElements();
     float* V_in = _currentVertexBuffer->GetCpuBuffer();
     float* V_out = _currentVertexBuffer->GetCpuBuffer()
@@ -178,16 +161,38 @@ OsdMklKernelDispatcher::WriteMatrix()
     assert(!"WriteMatrix not implemented for MKL dispatcher.");
 }
 
+void
+OsdMklKernelDispatcher::FinalizeMatrix()
+{
+    /* expand M to M_big if necessary */
+    if (M_big == NULL) {
+        int nve = _currentVertexBuffer->GetNumElements();
+        coo_matrix1 M_big_coo(M->size1()*nve, M->size2()*nve, M->value_data().size()*nve);
+
+        for(int i = 0; i < M->size1(); i++) {
+            for(int j = 0; j < M->size2(); j++) {
+                float factor = (*M)(i,j);
+                if (factor != 0.0)
+                    for(int k = 0; k < nve; k++)
+                        M_big_coo.append_element(i*nve+k, j*nve+k, factor);
+            }
+        }
+
+        M_big = new csr_matrix1(M_big_coo);
+    }
+
+    this->PrintReport();
+}
+
 bool
 OsdMklKernelDispatcher::MatrixReady()
 {
-    return (M != NULL);
+    return (M_big != NULL);
 }
 
 void
 OsdMklKernelDispatcher::PrintReport()
 {
-    return;
     int size_in_bytes =  (int) (M_big->value_data().size() +
                                 M_big->index1_data().size() +
                                 M_big->index2_data().size()) * sizeof(float);
