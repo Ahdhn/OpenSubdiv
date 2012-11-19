@@ -167,8 +167,9 @@ OsdMklKernelDispatcher::FinalizeMatrix()
     /* expand M to M_big if necessary */
     if (M_big == NULL) {
         int nve = _currentVertexBuffer->GetNumElements();
-        coo_matrix1 M_big_coo(M->size1()*nve, M->size2()*nve, M->value_data().size()*nve);
+        coo_matrix1 M_big_coo(M->size1()*nve, M->size2()*nve, M->nnz()*nve);
 
+        /* FIXME naive implementation. too slow */
         for(int i = 0; i < M->size1(); i++) {
             for(int j = 0; j < M->size2(); j++) {
                 float factor = (*M)(i,j);
@@ -178,7 +179,30 @@ OsdMklKernelDispatcher::FinalizeMatrix()
             }
         }
 
-        M_big = new csr_matrix1(M_big_coo);
+        /* convert S from COO to CSR format efficiently */
+        M_big = new csr_matrix1(M_big_coo.size1(), M_big_coo.size2(), M_big_coo.nnz());
+        {
+            int nnz = M_big_coo.nnz();
+            int job[] = {
+                2, // job(1)=2 (coo->csr with sorting)
+                1, // job(2)=1 (one-based indexing for csr matrix)
+                1, // job(3)=1 (one-based indexing for coo matrix)
+                0, // empty
+                nnz, // job(5)=nnz (sets nnz for csr matrix)
+                0  // job(6)=0 (all output arrays filled)
+            };
+            int n = M_big->size1();
+            float* acsr = &M_big->value_data()[0];
+            int* ja = &M_big->index2_data()[0];
+            int* ia = &M_big->index1_data()[0];
+            float* acoo = &M_big_coo.value_data()[0];
+            int* rowind = &M_big_coo.index1_data()[0];
+            int* colind = &M_big_coo.index2_data()[0];
+            int info;
+            mkl_scsrcoo(job, &n, acsr, ja, ia, &nnz, acoo, rowind, colind, &info);
+            assert(info == 0);
+            M_big->set_filled(n+1, M_big->index1_data()[n] - 1);
+        }
     }
 
     this->PrintReport();
@@ -193,12 +217,12 @@ OsdMklKernelDispatcher::MatrixReady()
 void
 OsdMklKernelDispatcher::PrintReport()
 {
-    int size_in_bytes =  (int) (M_big->value_data().size() +
-                                M_big->index1_data().size() +
-                                M_big->index2_data().size()) * sizeof(float);
+    int size_in_bytes =  (int) (M_big->index2_data().capacity() +
+                                M_big->index1_data().capacity()) * sizeof(int)  +
+                                M_big->value_data().capacity() * sizeof(float);
     printf("Subdiv matrix is %d-by-%d with %f%% nonzeroes, takes %d MB.\n",
         M_big->size1(), M_big->size2(),
-        100.0 * M_big->value_data().size() / M_big->size1() / M_big->size2(),
+        100.0 * M_big->nnz() / M_big->size1() / M_big->size2(),
         size_in_bytes / 1024 / 1024);
 }
 
