@@ -13,6 +13,7 @@ find_path(MKL_INCLUDE_DIR
         mkl.h
     PATHS
         /opt/intel/mkl/include
+        /opt/intel/composerxe/mkl/include
         ${MKL_LOCATION}/include
         $ENV{MKL_LOCATION}/include
     DOC
@@ -24,6 +25,7 @@ find_path( MKL_LIBRARY_PATH
         libmkl_core.a
     PATHS
         /opt/intel/mkl/lib
+        /opt/intel/composerxe/mkl/lib/intel64
         ${MKL_LOCATION}/lib
         $ENV{MKL_LOCATION}/lib
     DOC

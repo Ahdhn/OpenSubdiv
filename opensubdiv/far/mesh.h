@@ -227,7 +227,6 @@ FarMesh<U>::SubdivideAdHoc(int level) {
     }
 }
 
-#include <cstdio>
 template <class U> void
 FarMesh<U>::SubdivideSpMV(int level) {
 

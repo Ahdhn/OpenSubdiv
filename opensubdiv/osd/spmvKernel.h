@@ -5,6 +5,8 @@
 #include "osd/spmvDispatcher.h"
 #include "osd/cpuKernel.h"
 
+#include <stdio.h>
+
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 

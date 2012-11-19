@@ -143,7 +143,6 @@ FarCatmarkSubdivisionTables<U>::GetMemoryUsed() const {
         _F_IT.GetMemoryUsed();
 }
 
-#include <cstdio>
 template <class U> void
 FarCatmarkSubdivisionTables<U>::Apply( int level, void * clientdata ) const {
 
@@ -171,7 +170,6 @@ FarCatmarkSubdivisionTables<U>::Apply( int level, void * clientdata ) const {
         dispatch->ApplyCatmarkVertexVerticesKernelA(this->_mesh, offset, true, level, batch->kernelA2.first, batch->kernelA2.second, clientdata);
 }
 
-#include <cstdio>
 template <class U> void
 FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const {
 
@@ -197,17 +195,8 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
     {
         offset = dispatch->CopyNVerts(nPrevVerts, 0, prevOffset);
 
-        if (batch->kernelF>0) {
-#if 0
-            printf("spmv: v[%d] = S0(%d-by-%d) * v(%d-by-%d) @ v[%d]\n",
-                    prevOffset,       // dest idx
-                    iop, jop,         // operator dimensions
-                    iv, jv,           // source vector dimensions
-                    prevOffset);      // source idx
-
-#endif
+        if (batch->kernelF>0)
             dispatch->ApplyCatmarkFaceVerticesKernel(this->_mesh, offset, level, 0, batch->kernelF, clientdata);
-        }
     }
     dispatch->PushMatrix();
 
@@ -219,16 +208,8 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
     {
         offset = dispatch->CopyNVerts(batch->kernelF, 0, nPrevVerts+prevOffset);
 
-        if (batch->kernelE>0) {
-#if 0
-            printf("spmv: v[%d] = S1(%d-by-%d) * v(%d-by-%d) @ v[%d]\n",
-                    this->GetFirstVertexOffset(level), // dest idx
-                    iop, jop,      // operator dimensions
-                    iv, jv,        // source v dimensions
-                    prevOffset);   // source idx
-#endif
+        if (batch->kernelE>0)
             dispatch->ApplyCatmarkEdgeVerticesKernel(this->_mesh, offset, level, 0, batch->kernelE, clientdata);
-        }
 
         offset += this->GetNumEdgeVertices(level);
         if (batch->kernelB.first < batch->kernelB.second)
