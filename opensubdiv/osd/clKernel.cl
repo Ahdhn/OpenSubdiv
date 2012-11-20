@@ -55,6 +55,8 @@
 //     a particular purpose and non-infringement.
 //
 
+#define M_PI 3.14159265358979323846
+
 struct Vertex
 {
     float v[NUM_VERTEX_ELEMENTS];
@@ -244,7 +246,7 @@ __kernel void computeVertexA(__global struct Vertex *vertex,
         weight=1.0f-weight;
 
     struct Vertex dst;
-    if (not pass)
+    if (!pass)
         clearVertex(&dst);
     else
         dst = vertex[i+offset];
@@ -258,7 +260,7 @@ __kernel void computeVertexA(__global struct Vertex *vertex,
     }
     vertex[i+offset] = dst;
 
-    if (not pass && varying) {
+    if (!pass && varying) {
         struct Varying dstVarying;
         clearVarying(&dstVarying);
         addVaryingWithWeight(&dstVarying, &varying[p], 1.0f);
