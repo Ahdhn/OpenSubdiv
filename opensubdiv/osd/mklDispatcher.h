@@ -5,7 +5,7 @@
 #include "../osd/spmvDispatcher.h"
 
 extern "C" {
-#include <mkl.h>
+#include <mkl_spblas.h>
 }
 
 #include <boost/numeric/ublas/operation.hpp>
