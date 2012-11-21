@@ -182,7 +182,7 @@ endif()
 
 #-------------------------------------------------------------------------------
 # SpMV Dispatchers code & dependencies
-if ( Boost_FOUND OR OSKI_FOUND OR MKL_FOUND )
+if ( Boost_FOUND OR OSKI_FOUND OR MKL_FOUND OR OPENCL_FOUND )
     list(APPEND SOURCE_FILES
         spmvDispatcher.cpp
     )

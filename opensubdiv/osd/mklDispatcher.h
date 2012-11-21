@@ -15,7 +15,7 @@ extern "C" {
 
 typedef boost::numeric::ublas::compressed_matrix<
     float,
-    basic_row_major<int,int>,
+    boost::numeric::ublas::basic_row_major<int,int>,
     1,
     std::vector<int>,
     std::vector<float>
@@ -23,10 +23,10 @@ typedef boost::numeric::ublas::compressed_matrix<
 
 typedef boost::numeric::ublas::coordinate_matrix<
     float,
-    basic_row_major<int,int>,
+    boost::numeric::ublas::basic_row_major<int,int>,
     1,
-    unbounded_array<int>,
-    unbounded_array<float>
+    boost::numeric::ublas::unbounded_array<int>,
+    boost::numeric::ublas::unbounded_array<float>
 > coo_matrix1;
 
 namespace OpenSubdiv {
