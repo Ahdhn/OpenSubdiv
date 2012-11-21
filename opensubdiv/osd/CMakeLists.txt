@@ -249,6 +249,9 @@ if( CUDA_FOUND )
     list(APPEND KERNEL_FILES
         cudaKernel.cu
     )
+    list(APPEND PLATFORM_LIBRARIES
+        ${CUDA_cusparse_LIBRARY}
+    )
     if (UNIX)
         list( APPEND CUDA_NVCC_FLAGS -Xcompiler -fPIC )
     endif()
@@ -314,7 +317,6 @@ if (NOT WIN32)
     )
 
 endif()
-
 
 install( FILES ${PUBLIC_HEADER_FILES}
          DESTINATION include/osd
