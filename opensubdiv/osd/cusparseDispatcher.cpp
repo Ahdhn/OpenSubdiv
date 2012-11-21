@@ -36,6 +36,7 @@ OsdCusparseKernelDispatcher::Register() {
 void
 OsdCusparseKernelDispatcher::FinalizeMatrix()
 {
+    this->OsdMklKernelDispatcher::FinalizeMatrix();
 }
 
 void
@@ -44,49 +45,57 @@ OsdCusparseKernelDispatcher::ApplyMatrix(int offset)
     int *d_rows, *d_cols;
     float *d_in, *d_out, *d_vals;
 
-    int n_in = M_big->size1();
-    int n_out = M_big->size2();
+    int n_in = M_big->size2();
+    int n_out = M_big->size1();
     int numElems = _currentVertexBuffer->GetNumElements();
     float* V_in = _currentVertexBuffer->GetCpuBuffer();
     float* V_out = _currentVertexBuffer->GetCpuBuffer()
                    + offset * numElems;
 
-    /* allocate device memory for vertices */
-    cudaMalloc((void**) &d_in, n_in*sizeof(float));
-    cudaMalloc((void**) &d_out, n_out*sizeof(float));
+    /* allocate device memory */
+    cudaMalloc(&d_in, n_in*sizeof(float));
+    cudaMalloc(&d_out, n_out*sizeof(float));
+    cudaMalloc(&d_rows, M_big->index1_data().size()*sizeof(int));
+    cudaMalloc(&d_cols, M_big->index2_data().size()*sizeof(int));
+    cudaMalloc(&d_vals, M_big->value_data().size()*sizeof(float));
 
-    /* allocate device memory for M */
-    cudaMalloc((void**) &d_rows, M_big->size1()*sizeof(int));
-    cudaMalloc((void**) &d_cols, M_big->nnz()*sizeof(int));
-    cudaMalloc((void**) &d_vals, M_big->nnz()*sizeof(float));
+    /* copy data to device */
+    cudaMemcpy(d_in, V_in, n_in*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_rows, &M_big->index1_data()[0], M_big->index1_data().size()*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_cols, &M_big->index2_data()[0], M_big->index2_data().size()*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_vals, &M_big->value_data()[0], M_big->value_data().size()*sizeof(float), cudaMemcpyHostToDevice);
 
-    /* cusparse matrix descriptor */
+    /* make cusparse matrix descriptor */
     cusparseMatDescr_t desc = 0;
     cusparseCreateMatDescr(&desc);
     cusparseSetMatType(desc,CUSPARSE_MATRIX_TYPE_GENERAL);
-    cusparseSetMatIndexBase(desc,CUSPARSE_INDEX_BASE_ZERO);
+    cusparseSetMatIndexBase(desc,CUSPARSE_INDEX_BASE_ONE);
 
-    cusparseHandle_t handle = 0;
+    /* make cusparse handle */
+    cusparseHandle_t handle;
+    cusparseStatus_t status = cusparseCreate(&handle);
+    assert(status == CUSPARSE_STATUS_SUCCESS);
+
+    /* do spmv */
     cusparseOperation_t op = CUSPARSE_OPERATION_NON_TRANSPOSE;
     int m = M_big->size1();
     int n = M_big->size2();
     int nnz = M_big->nnz();
-    const float alpha = 1.0;
-    const cusparseMatDescr_t descrA = desc;
-    const float *csrValA = d_vals;
-    const int *csrRowPtrA = d_rows;
-    const int *csrColIndA = d_cols;
-    const float *x = d_in;
-    const float beta = 0.0;
-    float *y = d_out;
+    float alpha = 1.0,
+          beta = 0.0;
+    status = cusparseScsrmv(handle, op, m, n, nnz, &alpha, desc, d_vals, d_rows, d_cols, d_in, &beta, d_out);
+    assert(status == CUSPARSE_STATUS_SUCCESS);
 
-    cusparseScsrmv(handle, op, m, n, nnz, &alpha, descrA, csrValA, csrRowPtrA, csrColIndA, x, &beta, y);
-}
+    /* copy vertices back */
+    cudaMemcpy(V_out, d_out, n_out*sizeof(float), cudaMemcpyDeviceToHost);
 
-bool
-OsdCusparseKernelDispatcher::MatrixReady()
-{
-    return true;
+    /* clean up */
+    cusparseDestroy(handle);
+    cudaFree(d_in);
+    cudaFree(d_out);
+    cudaFree(d_rows);
+    cudaFree(d_cols);
+    cudaFree(d_vals);
 }
 
 } // end namespace OPENSUBDIV_VERSION

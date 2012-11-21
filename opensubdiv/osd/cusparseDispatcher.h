@@ -18,7 +18,6 @@ public:
 
     virtual void ApplyMatrix(int offset);
     virtual void FinalizeMatrix();
-    virtual bool MatrixReady();
 };
 
 } // end namespace OPENSUBDIV_VERSION
