@@ -4,10 +4,15 @@
 #include "../version.h"
 #include "../osd/spmvDispatcher.h"
 
-#include <boost/numeric/ublas/operation.hpp>
 #include <boost/numeric/ublas/matrix_sparse.hpp>
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/io.hpp>
+
+typedef boost::numeric::ublas::coordinate_matrix<
+    float,
+    boost::numeric::ublas::basic_row_major<int,int>,
+    0,
+    boost::numeric::ublas::unbounded_array<int>,
+    boost::numeric::ublas::unbounded_array<float>
+> coo_matrix;
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
@@ -25,6 +30,7 @@ public:
     virtual void PushMatrix();
     virtual void ApplyMatrix(int offset);
     virtual void WriteMatrix();
+    virtual void FinalizeMatrix();
     virtual bool MatrixReady();
     virtual void PrintReport();
 

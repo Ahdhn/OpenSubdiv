@@ -240,9 +240,11 @@ endif()
 if( CUDA_FOUND )
     list(APPEND SOURCE_FILES
         cudaDispatcher.cpp
+        cusparseDispatcher.cpp
     )
     list(APPEND PUBLIC_HEADER_FILES
         cudaDispatcher.h
+        cusparseDispatcher.h
     )
     list(APPEND KERNEL_FILES
         cudaKernel.cu
@@ -250,17 +252,6 @@ if( CUDA_FOUND )
     if (UNIX)
         list( APPEND CUDA_NVCC_FLAGS -Xcompiler -fPIC )
     endif()
-endif()
-
-#-------------------------------------------------------------------------------
-# CUSPARSE code & dependencies
-if( CUSPARSE_FOUND )
-    list(APPEND SOURCE_FILES
-        cusparseDispatcher.cpp
-    )
-    list(APPEND PUBLIC_HEADER_FILES
-        cusparseDispatcher.h
-    )
 endif()
 
 #-------------------------------------------------------------------------------

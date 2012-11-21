@@ -96,15 +96,12 @@
 
 #ifdef OPENSUBDIV_HAS_CUDA
     #include <osd/cudaDispatcher.h>
+    #include <osd/cusparseDispatcher.h>
 
     #include <cuda_runtime_api.h>
     #include <cuda_gl_interop.h>
 
     #include "../common/cudaInit.h"
-#endif
-
-#ifdef OPENSUBDIV_HAS_CUDA
-    #include <osd/cusparseDispatcher.h>
 #endif
 
 #include <common/shape_utils.h>
@@ -915,16 +912,13 @@ int main(int argc, char ** argv) {
     OpenSubdiv::OsdMklKernelDispatcher::Register();
 #endif
 
-#if OPENSUBDIV_HAS_CUSPARSE
-    OpenSubdiv::OsdCusparseKernelDispatcher::Register();
-#endif
-
 #if OPENSUBDIV_HAS_BOOST
     OpenSubdiv::OsdUBlasKernelDispatcher::Register();
 #endif
 
 #if OPENSUBDIV_HAS_CUDA
     OpenSubdiv::OsdCudaKernelDispatcher::Register();
+    OpenSubdiv::OsdCusparseKernelDispatcher::Register();
 
     // Note: This function randomly crashes with linux 5.0-dev driver.
     // cudaGetDeviceProperties overrun stack..?

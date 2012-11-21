@@ -51,11 +51,16 @@ OsdCusparseKernelDispatcher::StageElem(int i, int j, float value)
 void
 OsdCusparseKernelDispatcher::PushMatrix()
 {
-    csr_matrix A(*S);
+    // csr_matrix A(*S);
 
     // cusparseScsrgemm
 
     delete S;
+}
+
+void
+OsdCusparseKernelDispatcher::FinalizeMatrix()
+{
 }
 
 void
@@ -77,6 +82,7 @@ OsdCusparseKernelDispatcher::WriteMatrix()
 bool
 OsdCusparseKernelDispatcher::MatrixReady()
 {
+    return true;
 }
 
 void
