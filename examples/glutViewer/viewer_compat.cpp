@@ -407,7 +407,7 @@ updateGeom() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     /* exponential averaging */
-    g_vertPerMillisec = (1.0-g_alpha)*g_vertPerMillisec + g_alpha*(g_osdmesh->GetFarMesh()->GetNumVertices() / g_cpuTime);
+    g_vertPerMillisec = (1.0-g_alpha)*g_vertPerMillisec + g_alpha*(g_osdmesh->GetFarMesh()->GetNumVertices() / (g_cpuTime+g_gpuTime));
 }
 
 //-------------------------------------------------------------------------------
