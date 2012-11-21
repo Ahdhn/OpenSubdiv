@@ -17,7 +17,7 @@ public:
         return FarMesh<OsdVertex>::SpMV;
     }
 
-    void BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying);
+    virtual void BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying);
     int GetElemsPerVertex() const { return _currentVertexBuffer ? _currentVertexBuffer->GetNumElements() : 0; }
     int GetElemsPerVarying() const { return _currentVaryingBuffer ? _currentVaryingBuffer->GetNumElements() : 0; }
     int CopyNVerts(int nVerts, int dstIndex, int srcIndex);

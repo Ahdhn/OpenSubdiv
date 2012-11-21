@@ -3,6 +3,7 @@
 
 #include "../version.h"
 #include "../osd/spmvDispatcher.h"
+#include "../osd/cudaDispatcher.h"
 
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 
@@ -24,6 +25,9 @@ public:
     virtual ~OsdCusparseKernelDispatcher();
 
     static void Register();
+    virtual void BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying);
+    virtual void UnbindVertexBuffer();
+
 
     virtual void StageMatrix(int i, int j);
     virtual void StageElem(int i, int j, float value);
@@ -35,6 +39,24 @@ public:
     virtual void PrintReport();
 
     coo_matrix *S;
+
+protected:
+    struct DeviceTable
+    {
+        DeviceTable() : devicePtr(NULL) {}
+       ~DeviceTable();
+
+        void Copy(int size, const void *ptr);
+
+        void *devicePtr;
+    };
+
+    std::vector<DeviceTable> _tables;
+    std::vector<DeviceTable> _editTables;
+
+    OsdCudaVertexBuffer *_currentVertexBuffer;
+    float *_deviceVertices;
+    int _numVertexElements;
 };
 
 } // end namespace OPENSUBDIV_VERSION
