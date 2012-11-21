@@ -25,6 +25,7 @@ public:
     virtual ~OsdCusparseKernelDispatcher();
 
     static void Register();
+    virtual OsdVertexBuffer *InitializeVertexBuffer(int numElements, int numVertices);
     virtual void BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying);
     virtual void UnbindVertexBuffer();
 

@@ -33,6 +33,11 @@ OsdCusparseKernelDispatcher::Register() {
     Factory::GetInstance().Register(Create, kCUSPARSE);
 }
 
+OsdVertexBuffer*
+OsdCusparseKernelDispatcher::InitializeVertexBuffer(int numElements, int numVertices) {
+    return new OsdCudaVertexBuffer(numElements, numVertices);
+}
+
 void
 OsdCusparseKernelDispatcher::BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying) {
 
@@ -92,9 +97,8 @@ OsdCusparseKernelDispatcher::FinalizeMatrix()
 void
 OsdCusparseKernelDispatcher::ApplyMatrix(int offset)
 {
-    int numElems = _currentVertexBuffer->GetNumElements();
     float* V_in = _deviceVertices;
-    float* V_out = _deviceVertices + offset * numElems;
+    float* V_out = _deviceVertices + offset * _numVertexElements;
 
     // cusparseScsrmv
 }
