@@ -85,7 +85,7 @@ OsdMklKernelDispatcher::PushMatrix()
 
         int i = A.size1(),
             j = M->size2(),
-            nnz = std::min(i*j, (int) M->nnz() * 6); // XXX: shouldn't this be 4?
+            nnz = std::min(i*j, (int) M->nnz() * 7); // XXX: shouldn't this be 4?
         csr_matrix1 *C = new csr_matrix1(i, j, nnz);
 
         char trans = 'N'; // no transpose A

@@ -866,7 +866,7 @@ int main(int argc, char ** argv) {
             ifs.close();
             str = ss.str();
 
-            g_defaultShapes.push_back(SimpleShape(str.c_str(), argv[1], kCatmark));
+            g_defaultShapes.push_back(SimpleShape(str.c_str(), argv[1], kLoop));
         }
     }
 
