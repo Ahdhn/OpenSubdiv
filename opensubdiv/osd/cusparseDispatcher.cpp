@@ -32,8 +32,24 @@ OsdCusparseKernelDispatcher::InitializeVertexBuffer(int numElements, int numVert
 }
 
 OsdCusparseVertexBuffer::OsdCusparseVertexBuffer(int numElements, int numVertices) :
-    OsdCudaVertexBuffer(numElements, numVertices)
+    OsdCudaVertexBuffer(numElements, numVertices), _deviceVertices(NULL)
 { }
+
+void*
+OsdCusparseVertexBuffer::Map()
+{
+    if (_deviceVertices == NULL)
+        _deviceVertices = (float*) OsdCudaVertexBuffer::Map();
+
+    return _deviceVertices;
+}
+
+void
+OsdCusparseVertexBuffer::Unmap()
+{
+    _deviceVertices = NULL;
+    OsdCudaVertexBuffer::Unmap();;
+}
 
 OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher( int levels )
     : OsdMklKernelDispatcher(levels)
