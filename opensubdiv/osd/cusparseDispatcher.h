@@ -12,7 +12,8 @@ namespace OPENSUBDIV_VERSION {
 
 class OsdCusparseVertexBuffer : public OsdCudaVertexBuffer {
 public:
-    OsdCusparseVertexBuffer(int numElements, int numVertices);
+    OsdCusparseVertexBuffer(int numElements, int numVertices) :
+        OsdCudaVertexBuffer(numElements, numVertices) { }
 };
 
 class OsdCusparseKernelDispatcher : public OsdMklKernelDispatcher

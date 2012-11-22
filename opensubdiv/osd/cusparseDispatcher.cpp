@@ -31,10 +31,6 @@ OsdCusparseKernelDispatcher::InitializeVertexBuffer(int numElements, int numVert
     return new OsdCusparseVertexBuffer(numElements, numVertices);
 }
 
-OsdCusparseVertexBuffer::OsdCusparseVertexBuffer(int numElements, int numVertices) :
-    OsdCudaVertexBuffer(numElements, numVertices)
-{ }
-
 OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher( int levels )
     : OsdMklKernelDispatcher(levels)
 {
