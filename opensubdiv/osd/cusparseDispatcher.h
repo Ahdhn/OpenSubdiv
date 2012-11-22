@@ -13,11 +13,6 @@ namespace OPENSUBDIV_VERSION {
 class OsdCusparseVertexBuffer : public OsdCudaVertexBuffer {
 public:
     OsdCusparseVertexBuffer(int numElements, int numVertices);
-    virtual void * Map();
-    virtual void Unmap();
-
-protected:
-    float* _deviceVertices;
 };
 
 class OsdCusparseKernelDispatcher : public OsdMklKernelDispatcher

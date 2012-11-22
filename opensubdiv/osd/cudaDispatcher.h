@@ -77,8 +77,8 @@ public:
     virtual ~OsdCudaVertexBuffer();
 
     virtual void UpdateData(const float *src, int numVertices);
-    virtual void * Map();
-    virtual void Unmap();
+    void * Map();
+    void Unmap();
 
 protected:
     cudaGraphicsResource *_cudaResource;
