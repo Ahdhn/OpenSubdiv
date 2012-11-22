@@ -52,8 +52,6 @@ OsdCusparseKernelDispatcher::~OsdCusparseKernelDispatcher()
 {
     /* clean up device memory */
     cusparseDestroy(handle);
-    cudaFree(d_in);
-    cudaFree(d_out);
     cudaFree(d_rows);
     cudaFree(d_cols);
     cudaFree(d_vals);
@@ -76,8 +74,6 @@ OsdCusparseKernelDispatcher::FinalizeMatrix()
     this->OsdMklKernelDispatcher::FinalizeMatrix();
 
     /* allocate device memory */
-    cudaMalloc(&d_in, M_big->size2()*sizeof(float));
-    cudaMalloc(&d_out, M_big->size1()*sizeof(float));
     cudaMalloc(&d_rows, M_big->index1_data().size()*sizeof(int));
     cudaMalloc(&d_cols, M_big->index2_data().size()*sizeof(int));
     cudaMalloc(&d_vals, M_big->value_data().size()*sizeof(float));

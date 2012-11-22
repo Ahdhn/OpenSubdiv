@@ -29,7 +29,7 @@ public:
     virtual void FinalizeMatrix();
 
     int *d_rows, *d_cols;
-    float *d_in, *d_out, *d_vals;
+    float *d_vals;
 
     cusparseMatDescr_t desc;
     cusparseHandle_t handle;
