@@ -10,6 +10,13 @@
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
+class OsdCusparseVertexBuffer : public OsdCudaVertexBuffer {
+public:
+    OsdCusparseVertexBuffer(int numElements, int numVertices);
+
+    virtual ~OsdCusparseVertexBuffer();
+};
+
 class OsdCusparseKernelDispatcher : public OsdMklKernelDispatcher
 {
 public:
@@ -29,21 +36,6 @@ public:
 
     cusparseMatDescr_t desc;
     cusparseHandle_t handle;
-};
-
-class OsdCusparseVertexBuffer : public OsdCpuVertexBuffer {
-public:
-    OsdCusparseVertexBuffer(int numElements, int numVertices);
-
-    virtual ~OsdCusparseVertexBuffer();
-
-    virtual void UpdateData(const float *src, int numVertices);
-
-    float *GetCpuBuffer() {
-        return _cpuVbo;
-    }
-
-    virtual GLuint GetGpuBuffer();
 };
 
 } // end namespace OPENSUBDIV_VERSION

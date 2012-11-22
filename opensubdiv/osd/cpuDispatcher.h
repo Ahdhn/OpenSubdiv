@@ -135,8 +135,8 @@ protected:
 
     float *GetVaryingBuffer() const { return _currentVaryingBuffer ? _currentVaryingBuffer->GetCpuBuffer() : NULL; }
 
-    OsdCpuVertexBuffer *_currentVertexBuffer,
-                       *_currentVaryingBuffer;
+    OsdVertexBuffer *_currentVertexBuffer,
+                    *_currentVaryingBuffer;
 
     VertexDescriptor *_vdesc;
 

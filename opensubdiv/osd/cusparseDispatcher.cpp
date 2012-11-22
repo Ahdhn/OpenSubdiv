@@ -15,10 +15,10 @@ void
 OsdCusparseKernelDispatcher::BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying)
 {
     _currentVertexBuffer = (vertex) ?
-        dynamic_cast<OsdCpuVertexBuffer *>(vertex) : NULL;
+        dynamic_cast<OsdCusparseVertexBuffer *>(vertex) : NULL;
 
     _currentVaryingBuffer = (varying) ?
-        dynamic_cast<OsdCpuVertexBuffer *>(varying) : NULL;
+        dynamic_cast<OsdCusparseVertexBuffer *>(varying) : NULL;
 
     _vdesc = new SpMVVertexDescriptor(this,
             _currentVertexBuffer  ? _currentVertexBuffer->GetNumElements()  : 0,
@@ -42,34 +42,11 @@ OsdCusparseKernelDispatcher::InitializeVertexBuffer(int numElements, int numVert
 }
 
 OsdCusparseVertexBuffer::OsdCusparseVertexBuffer(int numElements, int numVertices) :
-    OsdCpuVertexBuffer(numElements, numVertices)
-{
-    printf("Created vertex buffer with %d elems and %d verts\n", numElements, numVertices);
-
-}
+    OsdCudaVertexBuffer(numElements, numVertices)
+{ }
 
 OsdCusparseVertexBuffer::~OsdCusparseVertexBuffer()
-{
-}
-
-void
-OsdCusparseVertexBuffer::UpdateData(const float *src, int numVertices)
-{
-    memcpy(_cpuVbo, src, _numElements * numVertices * sizeof(float));
-}
-
-GLuint
-OsdCusparseVertexBuffer::GetGpuBuffer()
-{
-    if (!_vbo)
-        glGenBuffers(1, &_vbo);
-
-    glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-    glBufferData(GL_ARRAY_BUFFER, _vboSize * sizeof(float), _cpuVbo, GL_STREAM_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    return _vbo;
-}
+{ }
 
 OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher( int levels )
     : OsdMklKernelDispatcher(levels)
@@ -130,12 +107,8 @@ OsdCusparseKernelDispatcher::ApplyMatrix(int offset)
     int n_in = M_big->size2();
     int n_out = M_big->size1();
     int numElems = _currentVertexBuffer->GetNumElements();
-    float* V_in = _currentVertexBuffer->GetCpuBuffer();
-    float* V_out = _currentVertexBuffer->GetCpuBuffer()
-                   + offset * numElems;
-
-    /* copy coarse vertices to device */
-    cudaMemcpy(d_in, V_in, n_in*sizeof(float), cudaMemcpyHostToDevice);
+    float* V_in = (float*) _currentVertexBuffer->Map();
+    float* V_out = V_in + offset * numElems;
 
     /* do spmv */
     cusparseStatus_t status;
@@ -145,11 +118,8 @@ OsdCusparseKernelDispatcher::ApplyMatrix(int offset)
     int nnz = M_big->nnz();
     float alpha = 1.0,
           beta = 0.0;
-    status = cusparseScsrmv(handle, op, m, n, nnz, &alpha, desc, d_vals, d_rows, d_cols, d_in, &beta, d_out);
+    status = cusparseScsrmv(handle, op, m, n, nnz, &alpha, desc, d_vals, d_rows, d_cols, V_in, &beta, V_out);
     assert(status == CUSPARSE_STATUS_SUCCESS);
-
-    /* copy refined vertices back */
-    cudaMemcpy(V_out, d_out, n_out*sizeof(float), cudaMemcpyDeviceToHost);
 }
 
 } // end namespace OPENSUBDIV_VERSION

@@ -84,6 +84,14 @@ public:
         return _numElements;
     }
 
+    virtual float* GetCpuBuffer() {
+        return NULL;
+    };
+
+    virtual void* Map() {
+        return NULL;
+    }
+
 protected:
     int _numElements;
 };
