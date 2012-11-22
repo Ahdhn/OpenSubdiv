@@ -39,9 +39,17 @@ OsdCusparseKernelDispatcher::UnbindVertexBuffer()
     _currentVaryingBuffer = NULL;
 }
 
+OsdVertexBuffer *
+OsdCusparseKernelDispatcher::InitializeVertexBuffer(int numElements, int numVertices)
+{
+    return new OsdCusparseVertexBuffer(numElements, numVertices);
+}
+
 OsdCusparseVertexBuffer::OsdCusparseVertexBuffer(int numElements, int numVertices) :
     OsdCpuVertexBuffer(numElements, numVertices)
-{ }
+{
+    printf("Created vertex buffer with %d elems and %d verts\n", numElements, numVertices);
+}
 
 OsdCusparseVertexBuffer::~OsdCusparseVertexBuffer()
 { }
