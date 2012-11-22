@@ -40,8 +40,7 @@ OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher( int levels )
     cusparseSetMatIndexBase(desc,CUSPARSE_INDEX_BASE_ONE);
 
     /* make cusparse handle */
-    cusparseStatus_t status = cusparseCreate(&handle);
-    assert(status == CUSPARSE_STATUS_SUCCESS);
+    cusparseCreate(&handle);
 }
 
 OsdCusparseKernelDispatcher::~OsdCusparseKernelDispatcher()

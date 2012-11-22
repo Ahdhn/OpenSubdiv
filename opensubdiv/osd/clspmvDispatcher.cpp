@@ -56,10 +56,12 @@ OsdClSpMVKernelDispatcher::FinalizeMatrix()
 void
 OsdClSpMVKernelDispatcher::ApplyMatrix(int offset)
 {
+    /*
     int numElems = _currentVertexBuffer->GetNumElements();
     float* V_in = _currentVertexBuffer->GetCpuBuffer();
     float* V_out = _currentVertexBuffer->GetCpuBuffer()
                    + offset * numElems;
+    */
 
     // add code here
 }

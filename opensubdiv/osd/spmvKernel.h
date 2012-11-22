@@ -15,6 +15,8 @@ public:
     SpMVVertexDescriptor(OsdKernelDispatcher* dispatcher, int numVertexElem, int numVaryingElem)
         : VertexDescriptor(numVertexElem, numVaryingElem), _dispatcher(dispatcher) { }
 
+    virtual ~SpMVVertexDescriptor() { }
+
     virtual void Clear(float *vertex, float *varying, int index) const { }
 
     virtual void AddWithWeight(float *vertex, int dstIndex, int srcIndex, float weight) const {

@@ -66,6 +66,8 @@ public:
     VertexDescriptor(int numVertexElem, int numVaryingElem)
         : numVertexElements(numVertexElem), numVaryingElements(numVaryingElem) { }
 
+    virtual ~VertexDescriptor() { }
+
     virtual void Clear(float *vertex, float *varying, int index) const {
         if (vertex) {
             for (int i = 0; i < numVertexElements; ++i)
