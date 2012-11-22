@@ -63,7 +63,7 @@
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
-struct VertexDescriptor;
+class VertexDescriptor;
 
 class OsdCpuKernelDispatcher : public OsdKernelDispatcher
 {

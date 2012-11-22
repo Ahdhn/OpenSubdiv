@@ -123,6 +123,7 @@ void*
 OsdClVertexBuffer::Map() {
 
     clEnqueueAcquireGLObjects(_clQueue, 1, &_clVbo, 0, 0, 0);
+    return NULL;
 }
 
 void
@@ -508,6 +509,7 @@ OsdClKernelDispatcher::uninitCL() {
 // ------------------------------------------------------------------
 
 OsdClKernelDispatcher::ClKernel::ClKernel() :
+    _clProgram(NULL),
     _clBilinearEdge(NULL),
     _clBilinearVertex(NULL),
     _clCatmarkFace(NULL),
@@ -516,8 +518,7 @@ OsdClKernelDispatcher::ClKernel::ClKernel() :
     _clCatmarkVertexB(NULL),
     _clLoopEdge(NULL),
     _clLoopVertexA(NULL),
-    _clLoopVertexB(NULL),
-    _clProgram(NULL) {
+    _clLoopVertexB(NULL) {
 }
 
 OsdClKernelDispatcher::ClKernel::~ClKernel() {

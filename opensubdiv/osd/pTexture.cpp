@@ -619,7 +619,6 @@ resampleBorder(PtexTexture * ptex, int face, int edgeId, GLubyte *result, int ed
                                     {0, 0, 1, 0},    // left   = blue
                                     {1, 1, 0, 0} };  // top    = yellow
         for(int i=0;i<dstLength;++i){
-            float *fb = (float*)result;
             Ptex::ConvertFromFloat(result+i*bpp, debugColors[edge], ptex->dataType(), 4);
         }
     }
@@ -659,7 +658,6 @@ sampleNeighbor(PtexTexture * ptex, GLubyte *border, int face, int edge, int leng
             resampleBorder(ptex, adjface, ae, border, edge, length/2, bpp);
             const Ptex::FaceInfo &sfi1 = ptex->getFaceInfo(adjface);
             adjface = sfi1.adjface((ae+3)%4);
-            const Ptex::FaceInfo &sfi2 = ptex->getFaceInfo(adjface);
             ae = (sfi1.adjedge((ae+3)%4)+3)%4;
             resampleBorder(ptex, adjface, ae, border+(length/2*bpp), edge, length/2, bpp);
 
@@ -753,7 +751,6 @@ averageCorner(PtexTexture *ptex, float *accumPixel, int numchannels, int face, i
 static void
 guttering(PtexTexture *_ptex, block *b, GLubyte *pptr, int _bpp, int _pagesize, int stride, int gwidth)
 {
-    const Ptex::FaceInfo &fi = _ptex->getFaceInfo(b->idx);
     GLubyte * border = new GLubyte[_pagesize * _bpp];
 
     for(int w=0; w<gwidth; ++w) {

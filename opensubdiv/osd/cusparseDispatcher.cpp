@@ -83,8 +83,6 @@ OsdCusparseKernelDispatcher::FinalizeMatrix()
 void
 OsdCusparseKernelDispatcher::ApplyMatrix(int offset)
 {
-    int n_in = M_big->size2();
-    int n_out = M_big->size1();
     int numElems = _currentVertexBuffer->GetNumElements();
     float* V_in = (float*) _currentVertexBuffer->Map();
     float* V_out = V_in + offset * numElems;
