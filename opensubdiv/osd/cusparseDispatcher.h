@@ -17,6 +17,8 @@ public:
     virtual ~OsdCusparseKernelDispatcher();
 
     static void Register();
+    virtual void BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying);
+    virtual void UnbindVertexBuffer();
 
     virtual void ApplyMatrix(int offset);
     virtual void FinalizeMatrix();
