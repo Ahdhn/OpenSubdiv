@@ -13,8 +13,6 @@ namespace OPENSUBDIV_VERSION {
 class OsdCusparseVertexBuffer : public OsdCudaVertexBuffer {
 public:
     OsdCusparseVertexBuffer(int numElements, int numVertices);
-
-    virtual ~OsdCusparseVertexBuffer();
 };
 
 class OsdCusparseKernelDispatcher : public OsdMklKernelDispatcher
@@ -25,7 +23,6 @@ public:
 
     static void Register();
     virtual void BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying);
-    virtual void UnbindVertexBuffer();
     virtual OsdVertexBuffer *InitializeVertexBuffer(int numElements, int numVertices);
 
     virtual void ApplyMatrix(int offset);

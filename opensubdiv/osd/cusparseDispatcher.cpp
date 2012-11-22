@@ -25,16 +25,6 @@ OsdCusparseKernelDispatcher::BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertex
             _currentVaryingBuffer ? _currentVaryingBuffer->GetNumElements() : 0);
 }
 
-void
-OsdCusparseKernelDispatcher::UnbindVertexBuffer()
-{
-    delete _vdesc;
-    _vdesc = NULL;
-
-    _currentVertexBuffer = NULL;
-    _currentVaryingBuffer = NULL;
-}
-
 OsdVertexBuffer *
 OsdCusparseKernelDispatcher::InitializeVertexBuffer(int numElements, int numVertices)
 {
@@ -43,9 +33,6 @@ OsdCusparseKernelDispatcher::InitializeVertexBuffer(int numElements, int numVert
 
 OsdCusparseVertexBuffer::OsdCusparseVertexBuffer(int numElements, int numVertices) :
     OsdCudaVertexBuffer(numElements, numVertices)
-{ }
-
-OsdCusparseVertexBuffer::~OsdCusparseVertexBuffer()
 { }
 
 OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher( int levels )
