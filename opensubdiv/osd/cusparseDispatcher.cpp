@@ -39,6 +39,24 @@ OsdCusparseKernelDispatcher::UnbindVertexBuffer()
     _currentVaryingBuffer = NULL;
 }
 
+OsdCusparseVertexBuffer::OsdCusparseVertexBuffer(int numElements, int numVertices) :
+    OsdCpuVertexBuffer(numElements, numVertices)
+{ }
+
+OsdCusparseVertexBuffer::~OsdCusparseVertexBuffer()
+{ }
+
+void
+OsdCusparseVertexBuffer::UpdateData(const float *src, int numVertices)
+{
+    this->OsdCpuVertexBuffer::UpdateData(src, numVertices);
+}
+
+GLuint
+OsdCusparseVertexBuffer::GetGpuBuffer()
+{
+    return this->OsdCpuVertexBuffer::GetGpuBuffer();
+}
 
 OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher( int levels )
     : OsdMklKernelDispatcher(levels)

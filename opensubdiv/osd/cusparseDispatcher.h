@@ -30,6 +30,26 @@ public:
     cusparseHandle_t handle;
 };
 
+class OsdCusparseVertexBuffer : public OsdCpuVertexBuffer {
+public:
+    OsdCusparseVertexBuffer(int numElements, int numVertices);
+
+    virtual ~OsdCusparseVertexBuffer();
+
+    virtual void UpdateData(const float *src, int numVertices);
+
+    float *GetCpuBuffer() {
+        return _cpuVbo;
+    }
+
+    virtual GLuint GetGpuBuffer();
+
+protected:
+    float *_cpuVbo;
+    int _vboSize;
+    GLuint _vbo;
+};
+
 } // end namespace OPENSUBDIV_VERSION
 using namespace OPENSUBDIV_VERSION;
 
