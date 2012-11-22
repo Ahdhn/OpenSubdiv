@@ -100,7 +100,6 @@ set(CMAKE_SUPPRESS_REGENERATION TRUE)
 find_package(OpenMP)
 find_package(OpenGL)
 find_package(OpenCL)
-find_package(OSKI)
 find_package(CUDA)
 find_package(GLUT)
 find_package(PTex)
@@ -163,18 +162,6 @@ if(Boost_FOUND)
             -DOPENSUBDIV_HAS_BOOST
     )
 endif(Boost_FOUND)
-
-if(OSKI_FOUND)
-    find_package(Boost REQUIRED)
-    add_definitions(
-        -DOPENSUBDIV_HAS_OSKI
-    )
-else()
-    message(WARNING
-        "OSKI was not found : support for OSKI compute kernels "
-        "will be disabled in Osd.  If you have OSKI installed, "
-        "please refer to the FindOSKI.cmake in ${PROJECT_SOURCE_DIR}/cmake.")
-endif()
 
 if(MKL_FOUND)
     find_package(Boost REQUIRED)

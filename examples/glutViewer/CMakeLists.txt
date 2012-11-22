@@ -75,11 +75,6 @@ include_directories(
     ${GLUT_INCLUDE_DIR}
 )
 
-if ( OSKI_FOUND )
-    list(APPEND PLATFORM_LIBRARIES ${OSKI_LIBRARIES} )
-    include_directories( ${OSKI_INCLUDE_PATH} )
-endif()
-
 if ( MKL_FOUND )
     list(APPEND PLATFORM_LIBRARIES ${MKL_LIBRARIES} )
     include_directories( ${MKL_INCLUDE_PATH} )

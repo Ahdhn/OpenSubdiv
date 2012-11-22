@@ -182,7 +182,7 @@ endif()
 
 #-------------------------------------------------------------------------------
 # SpMV Dispatchers code & dependencies
-if ( Boost_FOUND OR OSKI_FOUND OR MKL_FOUND OR OPENCL_FOUND )
+if ( Boost_FOUND OR MKL_FOUND OR OPENCL_FOUND )
     list(APPEND SOURCE_FILES
         spmvDispatcher.cpp
     )
@@ -203,21 +203,6 @@ if ( Boost_FOUND )
     list(APPEND PUBLIC_HEADER_FILES
         ublasDispatcher.h
     )
-endif()
-
-#-------------------------------------------------------------------------------
-# OSKI code & dependencies
-if ( OSKI_FOUND )
-    list(APPEND SOURCE_FILES
-        oskiDispatcher.cpp
-    )
-    list(APPEND PUBLIC_HEADER_FILES
-        oskiDispatcher.h
-    )
-    list(APPEND PLATFORM_LIBRARIES
-        ${OSKI_LIBRARIES}
-    )
-    include_directories( ${OSKI_INCLUDE_DIR} )
 endif()
 
 #-------------------------------------------------------------------------------
