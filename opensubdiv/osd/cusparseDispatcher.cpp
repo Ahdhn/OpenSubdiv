@@ -14,15 +14,11 @@ namespace OPENSUBDIV_VERSION {
 void
 OsdCusparseKernelDispatcher::BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying)
 {
-    if (vertex)
-        _currentVertexBuffer = dynamic_cast<OsdCpuVertexBuffer *>(vertex);
-    else
-        _currentVertexBuffer = NULL;
+    _currentVertexBuffer = (vertex) ?
+        dynamic_cast<OsdCpuVertexBuffer *>(vertex) : NULL;
 
-    if (varying)
-        _currentVaryingBuffer = dynamic_cast<OsdCpuVertexBuffer *>(varying);
-    else
-        _currentVaryingBuffer = NULL;
+    _currentVaryingBuffer = (varying) ?
+        dynamic_cast<OsdCpuVertexBuffer *>(varying) : NULL;
 
     _vdesc = new SpMVVertexDescriptor(this,
             _currentVertexBuffer  ? _currentVertexBuffer->GetNumElements()  : 0,
@@ -49,21 +45,30 @@ OsdCusparseVertexBuffer::OsdCusparseVertexBuffer(int numElements, int numVertice
     OsdCpuVertexBuffer(numElements, numVertices)
 {
     printf("Created vertex buffer with %d elems and %d verts\n", numElements, numVertices);
+
 }
 
 OsdCusparseVertexBuffer::~OsdCusparseVertexBuffer()
-{ }
+{
+}
 
 void
 OsdCusparseVertexBuffer::UpdateData(const float *src, int numVertices)
 {
-    this->OsdCpuVertexBuffer::UpdateData(src, numVertices);
+    memcpy(_cpuVbo, src, _numElements * numVertices * sizeof(float));
 }
 
 GLuint
 OsdCusparseVertexBuffer::GetGpuBuffer()
 {
-    return this->OsdCpuVertexBuffer::GetGpuBuffer();
+    if (!_vbo)
+        glGenBuffers(1, &_vbo);
+
+    glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+    glBufferData(GL_ARRAY_BUFFER, _vboSize * sizeof(float), _cpuVbo, GL_STREAM_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    return _vbo;
 }
 
 OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher( int levels )

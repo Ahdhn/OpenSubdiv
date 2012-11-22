@@ -44,11 +44,6 @@ public:
     }
 
     virtual GLuint GetGpuBuffer();
-
-protected:
-    float *_cpuVbo;
-    int _vboSize;
-    GLuint _vbo;
 };
 
 } // end namespace OPENSUBDIV_VERSION
