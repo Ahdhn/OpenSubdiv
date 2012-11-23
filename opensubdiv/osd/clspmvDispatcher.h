@@ -31,6 +31,9 @@ public:
     virtual bool MatrixReady();
     virtual void WriteMatrix() { };
     virtual void PrintReport() { };
+
+protected:
+    coo_matrix *S;
 };
 
 } // end namespace OPENSUBDIV_VERSION
