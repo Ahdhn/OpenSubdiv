@@ -4,8 +4,26 @@
 #include "../version.h"
 #include "../osd/cpuDispatcher.h"
 
+#include <boost/numeric/ublas/matrix_sparse.hpp>
+
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
+
+typedef boost::numeric::ublas::compressed_matrix<
+    float,
+    boost::numeric::ublas::basic_row_major<int,int>,
+    0,
+    std::vector<int>,
+    std::vector<float>
+> csr_matrix;
+
+typedef boost::numeric::ublas::coordinate_matrix<
+    float,
+    boost::numeric::ublas::basic_row_major<int,int>,
+    0,
+    boost::numeric::ublas::unbounded_array<int>,
+    boost::numeric::ublas::unbounded_array<float>
+> coo_matrix;
 
 class OsdSpMVKernelDispatcher : public OsdCpuKernelDispatcher
 {

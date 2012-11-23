@@ -10,6 +10,8 @@
     #include <CL/opencl.h>
 #endif
 
+#include <boost/numeric/ublas/matrix_sparse.hpp>
+
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 

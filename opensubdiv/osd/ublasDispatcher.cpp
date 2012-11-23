@@ -3,6 +3,7 @@
 #include "../osd/ublasDispatcher.h"
 
 #include <stdio.h>
+#include <boost/numeric/ublas/operation.hpp>
 
 using namespace boost::numeric::ublas;
 
