@@ -66,23 +66,11 @@ OsdClSpMVKernelDispatcher::ApplyMatrix(int offset)
     // add code here
 }
 
-void
-OsdClSpMVKernelDispatcher::WriteMatrix()
-{
-    // add code here optionally
-}
-
 bool
 OsdClSpMVKernelDispatcher::MatrixReady()
 {
     // add code here
     return true;
-}
-
-void
-OsdClSpMVKernelDispatcher::PrintReport()
-{
-    // add code here optionally
 }
 
 } // end namespace OPENSUBDIV_VERSION
