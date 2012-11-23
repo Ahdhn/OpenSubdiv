@@ -96,6 +96,8 @@ OsdCusparseKernelDispatcher::ApplyMatrix(int offset)
           beta = 0.0;
     status = cusparseScsrmv(handle, op, m, n, nnz, &alpha, desc, d_vals, d_rows, d_cols, V_in, &beta, V_out);
     assert(status == CUSPARSE_STATUS_SUCCESS);
+
+    _currentVertexBuffer->Unmap();
 }
 
 } // end namespace OPENSUBDIV_VERSION

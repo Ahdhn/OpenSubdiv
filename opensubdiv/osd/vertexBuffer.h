@@ -92,6 +92,8 @@ public:
         return NULL;
     }
 
+    virtual void Unmap() { }
+
 protected:
     int _numElements;
 };
