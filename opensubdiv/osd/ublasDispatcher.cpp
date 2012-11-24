@@ -132,14 +132,16 @@ void
 OsdUBlasKernelDispatcher::PrintReport()
 {
     assert(M != NULL);
-    printf("Subdivision matrix is %d-by-%d with %d nonzeroes (%f%%) %2.fKB\n",
+    int size_in_bytes =
+            (M->index1_data().size() +
+             M->index2_data().size() +
+             M->value_data().size()) * sizeof(float);
+    printf("Subdivision matrix is %d-by-%d with %d nonzeroes (%f%%) %dMB\n",
             (int) M->size1(),
             (int) M->size2(),
             (int) M->value_data().size(),
-            100.0 * M->value_data().size() /
-            (M->size1() *
-             M->size2()),
-            ((float) (M->index1_data().size() + M->index2_data().size() + M->value_data().size()) * sizeof(float)) / 1024.0
+            100.0 * M->value_data().size() / (M->size1() * M->size2()),
+            size_in_bytes / 1024 / 1024
           );
 }
 
