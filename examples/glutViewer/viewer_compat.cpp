@@ -534,6 +534,9 @@ drawCoarseMesh(int mode) {
 //------------------------------------------------------------------------------
 void
 createOsdMesh( const char * shape, int level, int kernel, Scheme scheme=kCatmark ) {
+    // start timer
+    Stopwatch s;
+    s.Start();
 
     // generate Hbr representation from "obj" description
     OpenSubdiv::OsdHbrMesh * hmesh = simpleHbr<OpenSubdiv::OsdVertex>(shape, scheme, g_orgPositions);
@@ -599,6 +602,8 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme=kCatmark
 
     updateGeom();
 
+    s.Stop();
+    printf("Time to first frame: %f ms\n",  float(s.GetElapsed() * 1000.0f));
 }
 
 //------------------------------------------------------------------------------
