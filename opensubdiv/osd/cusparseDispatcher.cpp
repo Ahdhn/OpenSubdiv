@@ -40,7 +40,7 @@ device_csr_matrix_view::device_csr_matrix_view(csr_matrix1* M) :
 
 device_csr_matrix_view::~device_csr_matrix_view() {
     /* clean up device memory */
-    //cusparseDestroyMatDescr(desc);
+    cusparseDestroyMatDescr(desc);
     cusparseDestroy(handle);
     cudaFree(rows);
     cudaFree(cols);
@@ -55,7 +55,6 @@ device_csr_matrix_view::spmv(float* d_out, const float* d_in) {
           beta = 0.0;
     status = cusparseScsrmv(handle, op, m, n, nnz, &alpha, desc,
             vals, rows, cols, d_in, &beta, d_out);
-    printf("Status: %d\n", status);
     assert(status == CUSPARSE_STATUS_SUCCESS);
 }
 
@@ -86,7 +85,9 @@ OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher( int levels )
     : OsdMklKernelDispatcher(levels), _deviceMatrix(NULL) { }
 
 OsdCusparseKernelDispatcher::~OsdCusparseKernelDispatcher()
-{ }
+{
+    delete _deviceMatrix;
+}
 
 static OsdCusparseKernelDispatcher::OsdKernelDispatcher *
 Create(int levels) {
