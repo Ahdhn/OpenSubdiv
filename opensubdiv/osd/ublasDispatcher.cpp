@@ -139,7 +139,7 @@ OsdUBlasKernelDispatcher::PrintReport()
             100.0 * M->value_data().size() /
             (M->size1() *
              M->size2()),
-            ((float) (M->size1() + M->size2() + M->size1()) * sizeof(float)) / 1024.0
+            ((float) (M->index1_data().size() + M->index2_data().size() + M->value_data().size()) * sizeof(float)) / 1024.0
           );
 }
 
