@@ -214,10 +214,9 @@ OsdCusparseKernelDispatcher::FinalizeMatrix()
 {
     int nve = _currentVertexBuffer->GetNumElements();
     device_csr_matrix_view* M_src = _deviceMatrix;
-
-#if 0
     device_csr_matrix_view* M_dst =
         new device_csr_matrix_view(nve*M_src->m, nve*M_src->n, nve*M_src->nnz);
+
     int *coo_dst_rows;
     cusparseStatus_t status;
     cudaMalloc(&coo_dst_rows, nve * M_src->nnz * sizeof(int));
@@ -234,32 +233,6 @@ OsdCusparseKernelDispatcher::FinalizeMatrix()
     }
     cudaFree(coo_dst_rows);
     _deviceMatrixBig = M_dst;
-
-#else
-    csr_matrix small(M_src->m, M_src->n, M_src->nnz);
-    cudaMemcpy(&small.value_data()[0], M_src->vals,
-            M_src->nnz * sizeof(float), cudaMemcpyDeviceToHost);
-    cudaMemcpy(&small.index2_data()[0], M_src->cols,
-            M_src->nnz * sizeof(int), cudaMemcpyDeviceToHost);
-    cudaMemcpy(&small.index1_data()[0], M_src->rows,
-            (M_src->m+1) * sizeof(int), cudaMemcpyDeviceToHost);
-    small.set_filled(M_src->m+1, small.index1_data()[M_src->m]);
-
-    /* build big matrix from small */
-    coo_matrix big(M_src->m * nve, M_src->n * nve, M_src->nnz * nve);
-    for(int i = 0; i < small.size1(); i++) {
-        for( int j = small.index1_data()[i]; j < small.index1_data()[i+1]; j++ ) {
-            float factor = small.value_data()[ j-1 ];
-            int ii = i;
-            int jj = small.index2_data()[ j-1 ] - 1;
-            for(int k = 0; k < nve; k++)
-                big.append_element(ii*nve+k, jj*nve+k, factor);
-        }
-    }
-
-    csr_matrix bigCSR(big);
-    _deviceMatrixBig = new device_csr_matrix_view(&bigCSR);
-#endif
 
     PrintReport();
 }
