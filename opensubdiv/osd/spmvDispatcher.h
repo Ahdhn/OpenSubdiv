@@ -25,6 +25,22 @@ typedef boost::numeric::ublas::coordinate_matrix<
     boost::numeric::ublas::unbounded_array<float>
 > coo_matrix;
 
+typedef boost::numeric::ublas::compressed_matrix<
+    float,
+    boost::numeric::ublas::basic_row_major<int,int>,
+    1,
+    std::vector<int>,
+    std::vector<float>
+> csr_matrix1;
+
+typedef boost::numeric::ublas::coordinate_matrix<
+    float,
+    boost::numeric::ublas::basic_row_major<int,int>,
+    1,
+    boost::numeric::ublas::unbounded_array<int>,
+    boost::numeric::ublas::unbounded_array<float>
+> coo_matrix1;
+
 class OsdSpMVKernelDispatcher : public OsdCpuKernelDispatcher
 {
 public:

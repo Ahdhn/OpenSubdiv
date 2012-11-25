@@ -2,11 +2,10 @@
 #define OSD_CUSPARSE_DISPATCHER_H
 
 #include "../version.h"
-#include "../osd/mklDispatcher.h"
+#include "../osd/spmvDispatcher.h"
 #include "../osd/cudaDispatcher.h"
 
 #include <cusparse_v2.h>
-#include "boost/numeric/ublas/experimental/sparse_view.hpp"
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
@@ -34,7 +33,7 @@ public:
         OsdCudaVertexBuffer(numElements, numVertices) { }
 };
 
-class OsdCusparseKernelDispatcher : public OsdMklKernelDispatcher
+class OsdCusparseKernelDispatcher : public OsdSpMVKernelDispatcher
 {
 public:
     OsdCusparseKernelDispatcher(int levels);
@@ -44,6 +43,8 @@ public:
     virtual void BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying);
     virtual OsdVertexBuffer *InitializeVertexBuffer(int numElements, int numVertices);
 
+    virtual void StageMatrix(int i, int j);
+    virtual void StageElem(int i, int j, float value);
     virtual void ApplyMatrix(int offset);
     virtual void PushMatrix();
     virtual void FinalizeMatrix();
@@ -53,6 +54,7 @@ public:
 
     device_csr_matrix_view *_deviceMatrix;
     device_csr_matrix_view *_deviceMatrixBig;
+    coo_matrix1 *S;
 };
 
 } // end namespace OPENSUBDIV_VERSION

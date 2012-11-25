@@ -144,12 +144,14 @@ OsdCusparseKernelDispatcher::InitializeVertexBuffer(int numElements, int numVert
 }
 
 OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher( int levels )
-    : OsdMklKernelDispatcher(levels),
-      _deviceMatrix(NULL), _deviceMatrixBig(NULL) { }
+    : OsdSpMVKernelDispatcher(levels),
+      _deviceMatrix(NULL), _deviceMatrixBig(NULL), S(NULL) { }
 
 OsdCusparseKernelDispatcher::~OsdCusparseKernelDispatcher()
 {
-    delete _deviceMatrix;
+    if (S)                  delete S;
+    if (_deviceMatrix)      delete _deviceMatrix;
+    if (_deviceMatrixBig)   delete _deviceMatrixBig;
 }
 
 static OsdCusparseKernelDispatcher::OsdKernelDispatcher *
@@ -160,6 +162,25 @@ Create(int levels) {
 void
 OsdCusparseKernelDispatcher::Register() {
     Factory::GetInstance().Register(Create, kCUSPARSE);
+}
+
+void
+OsdCusparseKernelDispatcher::StageMatrix(int i, int j)
+{
+    if (S) delete S;
+    S = new coo_matrix1(i,j);
+}
+
+inline void
+OsdCusparseKernelDispatcher::StageElem(int i, int j, float value)
+{
+#ifdef DEBUG
+    assert(0 <= i);
+    assert(i < S->size1());
+    assert(0 <= j);
+    assert(j < S->size2());
+#endif
+    S->append_element(i, j, value);
 }
 
 void
@@ -201,13 +222,16 @@ OsdCusparseKernelDispatcher::FinalizeMatrix()
     cudaMalloc(&coo_src_rows, M_src->nnz * sizeof(int));
     cudaMalloc(&coo_dst_rows, nve * M_src->nnz * sizeof(int));
     {
+        /* convert to COO format */
         cusparseXcsr2coo(handle, M_src->rows, M_src->nnz, M_src->m,
                 coo_src_rows, CUSPARSE_INDEX_BASE_ONE);
 
+        /* expand by a factor of nve */
         OsdCusparseExpand(M_src->nnz, nve,
                 coo_dst_rows, M_dst->cols, M_dst->vals,
                 coo_src_rows, M_src->cols, M_src->vals);
 
+        /* convert to csr format */
         cusparseXcoo2csr(handle, coo_dst_rows, nve*M_src->nnz, nve*M_src->m,
                 M_dst->rows, CUSPARSE_INDEX_BASE_ONE);
     }
@@ -222,7 +246,7 @@ OsdCusparseKernelDispatcher::ApplyMatrix(int offset)
 {
     float* d_in = (float*) _currentVertexBuffer->Map();
     float* d_out = d_in + offset * _currentVertexBuffer->GetNumElements();
-    _deviceMatrix->spmv(d_out, d_in);
+    _deviceMatrixBig->spmv(d_out, d_in);
     _currentVertexBuffer->Unmap();
 }
 
