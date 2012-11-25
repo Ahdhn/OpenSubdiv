@@ -257,6 +257,12 @@ OsdCusparseKernelDispatcher::PrintReport()
         size_in_bytes / 1024 / 1024);
 }
 
+void
+OsdCusparseKernelDispatcher::Synchronize()
+{
+    cudaThreadSynchronize();
+}
+
 } // end namespace OPENSUBDIV_VERSION
 
 } // end namespace OpenSubdiv

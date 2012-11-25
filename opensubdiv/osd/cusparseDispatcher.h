@@ -51,6 +51,7 @@ public:
     virtual bool MatrixReady();
     virtual void WriteMatrix() { };
     virtual void PrintReport();
+    virtual void Synchronize();
 
     device_csr_matrix_view *_deviceMatrix;
     device_csr_matrix_view *_deviceMatrixBig;
