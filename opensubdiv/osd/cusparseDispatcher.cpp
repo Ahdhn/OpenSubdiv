@@ -217,6 +217,10 @@ OsdCusparseKernelDispatcher::FinalizeMatrix()
     device_csr_matrix_view* M_dst =
         new device_csr_matrix_view(nve*M_src->m, nve*M_src->n, nve*M_src->nnz);
 
+    /* Call expansion kernel. This is currently done by expanding
+     * the CSR matrix to a COO matrix and calling the cusparse
+     * routine to convert COO->CSR, but the kernel can probably be
+     * rewritten to expanding directly from CSR to CSR. */
     int *coo_dst_rows;
     cusparseStatus_t status;
     cudaMalloc(&coo_dst_rows, M_dst->nnz * sizeof(int));
