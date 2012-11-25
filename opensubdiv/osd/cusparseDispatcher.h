@@ -13,10 +13,10 @@ namespace OPENSUBDIV_VERSION {
 
 class device_csr_matrix_view {
 public:
-    device_csr_matrix_view();
+    device_csr_matrix_view(int m, int n);
     device_csr_matrix_view(csr_matrix1* M);
     void spmv(float* d_out, const float* d_in);
-    device_csr_matrix_view* spgemm(csr_matrix1* lhs);
+    device_csr_matrix_view* times(device_csr_matrix_view* rhs);
     virtual ~device_csr_matrix_view();
 
     int m, n, nnz;
@@ -45,7 +45,11 @@ public:
     virtual OsdVertexBuffer *InitializeVertexBuffer(int numElements, int numVertices);
 
     virtual void ApplyMatrix(int offset);
+    virtual void PushMatrix();
     virtual void FinalizeMatrix();
+    virtual bool MatrixReady();
+    virtual void WriteMatrix() { };
+    virtual void PrintReport() { };
 
     device_csr_matrix_view *_deviceMatrix;
 };

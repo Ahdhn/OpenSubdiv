@@ -59,9 +59,8 @@ device_csr_matrix_view::spmv(float* d_out, const float* d_in) {
 }
 
 device_csr_matrix_view*
-device_csr_matrix_view::spgemm(csr_matrix1* h_leftMatrix) {
+device_csr_matrix_view::times(device_csr_matrix_view* B) {
     device_csr_matrix_view* A = this;
-    device_csr_matrix_view* B = new device_csr_matrix_view(h_leftMatrix);
     int mm = A->m,
         nn = A->n,
         kk = B->n;
@@ -70,18 +69,19 @@ device_csr_matrix_view::spgemm(csr_matrix1* h_leftMatrix) {
     cusparseOperation_t transA = CUSPARSE_OPERATION_NON_TRANSPOSE,
                         transB = CUSPARSE_OPERATION_NON_TRANSPOSE;
 
-    device_csr_matrix_view* C = new device_csr_matrix_view();
+    device_csr_matrix_view* C = new device_csr_matrix_view(mm, kk);
 
-    int baseC;
+    //int baseC;
+    cusparseStatus_t status;
     cudaMalloc(&C->rows, sizeof(int)*(mm+1));
     cusparseXcsrgemmNnz(handle, transA, transB,
             mm, nn, kk,
             A->desc, A->nnz, A->rows, A->cols,
             B->desc, B->nnz, B->rows, B->cols,
-            C->desc, C->rows, C->cols);
-    cudaMemcpy(&C->nnz, C->rows+mm, sizeof(int), cudaMemcpyDeviceToHost);
-    cudaMemcpy(&baseC, C->rows, sizeof(int), cudaMemcpyDeviceToHost);
-    C->nnz -= baseC;
+            C->desc, C->rows, &C->nnz);
+    //cudaMemcpy(&C->nnz, C->rows+mm, sizeof(int), cudaMemcpyDeviceToHost);
+    //cudaMemcpy(&baseC, C->rows, sizeof(int), cudaMemcpyDeviceToHost);
+    //C->nnz -= baseC;
     cudaMalloc(&C->cols, sizeof(int)*C->nnz);
     cudaMalloc(&C->vals, sizeof(float)*C->nnz);
     cusparseScsrgemm(handle, transA, transB,
@@ -90,13 +90,11 @@ device_csr_matrix_view::spgemm(csr_matrix1* h_leftMatrix) {
             B->desc, B->nnz, B->vals, B->rows, B->cols,
             C->desc, C->vals, C->rows, C->cols);
 
-    //delete A; // or by caller
-    delete B;
     return C;
 }
 
-device_csr_matrix_view::device_csr_matrix_view() :
-    m(0), n(0), nnz(0), rows(NULL), cols(NULL), vals(NULL), desc(NULL), handle(NULL) { }
+device_csr_matrix_view::device_csr_matrix_view(int m, int n) :
+    m(m), n(n), nnz(0), rows(NULL), cols(NULL), vals(NULL), desc(NULL), handle(NULL) { }
 
 void
 OsdCusparseKernelDispatcher::BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying)
@@ -137,11 +135,35 @@ OsdCusparseKernelDispatcher::Register() {
 }
 
 void
+OsdCusparseKernelDispatcher::PushMatrix()
+{
+    if (_deviceMatrix == NULL) {
+        printf("PushMatrix set %d-%d\n", S->size1(), S->size2());
+        csr_matrix1 S_csr(*S);
+        _deviceMatrix = new device_csr_matrix_view(&S_csr);
+    } else {
+        printf("PushMatrix mul %d-%d = %d-%d * %d-%d\n",
+                (int) S->size1(), (int) _deviceMatrix->n,
+                (int) S->size1(),  (int) S->size2(),
+                _deviceMatrix->m, _deviceMatrix->n);
+        csr_matrix1 S_csr(*S);
+        device_csr_matrix_view A (&S_csr);
+        device_csr_matrix_view *C = A.times(_deviceMatrix);
+        delete _deviceMatrix;
+        _deviceMatrix = C;
+    }
+}
+
+bool
+OsdCusparseKernelDispatcher::MatrixReady()
+{
+    return (_deviceMatrix != NULL);
+}
+
+void
 OsdCusparseKernelDispatcher::FinalizeMatrix()
 {
-    /* use mkl to build M_big */
-    this->OsdMklKernelDispatcher::FinalizeMatrix();
-    _deviceMatrix = new device_csr_matrix_view(M_big);
+    printf("Finalizing\n");
 }
 
 void
