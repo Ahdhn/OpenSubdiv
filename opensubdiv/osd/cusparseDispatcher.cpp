@@ -260,6 +260,8 @@ OsdCusparseKernelDispatcher::FinalizeMatrix()
     csr_matrix bigCSR(big);
     _deviceMatrixBig = new device_csr_matrix_view(&bigCSR);
 #endif
+
+    PrintReport();
 }
 
 void
@@ -269,6 +271,17 @@ OsdCusparseKernelDispatcher::ApplyMatrix(int offset)
     float* d_out = d_in + offset * _currentVertexBuffer->GetNumElements();
     _deviceMatrixBig->spmv(d_out, d_in);
     _currentVertexBuffer->Unmap();
+}
+
+void
+OsdCusparseKernelDispatcher::PrintReport()
+{
+    int size_in_bytes = (_deviceMatrixBig->nnz * 2 +
+            _deviceMatrixBig->m + 1) * sizeof(float);
+    printf("Subdiv matrix is %d-by-%d with %f%% nonzeroes, takes %d MB.\n",
+        _deviceMatrixBig->m, _deviceMatrixBig->n,
+        100.0 * _deviceMatrixBig->nnz / _deviceMatrixBig->m / _deviceMatrixBig->n,
+        size_in_bytes / 1024 / 1024);
 }
 
 } // end namespace OPENSUBDIV_VERSION
