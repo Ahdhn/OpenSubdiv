@@ -11,16 +11,19 @@
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
+static cusparseHandle_t handle = NULL;
+
 device_csr_matrix_view::device_csr_matrix_view(csr_matrix1* M) :
     m(M->size1()), n(M->size2()), nnz(M->nnz()) {
 
-    /* make cusparse matrix descriptor */
+    /* make cusparse matrix descriptor and handle */
     cusparseCreateMatDescr(&desc);
     cusparseSetMatType(desc,CUSPARSE_MATRIX_TYPE_GENERAL);
     cusparseSetMatIndexBase(desc,CUSPARSE_INDEX_BASE_ONE);
 
-    /* make cusparse handle */
-    cusparseCreate(&handle);
+    /* make cusparse handle if null */
+    if (handle == NULL)
+        cusparseCreate(&handle);
 
     /* alias csr vectors */
     std::vector<int> &r = M->index1_data();
@@ -94,7 +97,7 @@ device_csr_matrix_view::times(device_csr_matrix_view* B) {
 }
 
 device_csr_matrix_view::device_csr_matrix_view(int m, int n) :
-    m(m), n(n), nnz(0), rows(NULL), cols(NULL), vals(NULL), desc(NULL), handle(NULL) { }
+    m(m), n(n), nnz(0), rows(NULL), cols(NULL), vals(NULL), desc(NULL) { }
 
 void
 OsdCusparseKernelDispatcher::BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying)

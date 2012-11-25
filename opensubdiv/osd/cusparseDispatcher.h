@@ -25,7 +25,6 @@ public:
     float* vals;
 
     cusparseMatDescr_t desc;
-    cusparseHandle_t handle;
 };
 
 class OsdCusparseVertexBuffer : public OsdCudaVertexBuffer {
