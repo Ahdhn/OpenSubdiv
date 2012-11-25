@@ -115,7 +115,7 @@ device_csr_matrix_view::device_csr_matrix_view(int m, int n, int nnz) :
     if (handle == NULL)
         cusparseCreate(&handle);
 
-    /* allocate space if nnz != 0 */
+    /* allocate space if nnz > 0 */
     if (nnz > 0) {
         cudaMalloc(&rows, (m+1) * sizeof(int));
         cudaMalloc(&cols, nnz * sizeof(int));
@@ -207,23 +207,6 @@ bool
 OsdCusparseKernelDispatcher::MatrixReady()
 {
     return (_deviceMatrixBig != NULL);
-}
-
-template<typename T> void
-printmat(T* d_mat, std::string name, size_t len) {
-    T *h_mat= new T[len];
-    cudaMemcpy(h_mat, d_mat, len * sizeof(T), cudaMemcpyDeviceToHost);
-    std::cout << name << ": ";
-    for(int i = 0; i < len; i++) {
-        T elem = h_mat[i];
-        if (elem != elem || elem < 0 || elem > 100) {
-            std::cout << elem << " X ...";
-            break;
-        }
-        std::cout << elem << " ";
-    }
-    std::cout << std::endl;
-    delete[] h_mat;
 }
 
 void
