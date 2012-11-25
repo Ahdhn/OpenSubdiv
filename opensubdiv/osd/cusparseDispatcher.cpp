@@ -209,6 +209,17 @@ OsdCusparseKernelDispatcher::MatrixReady()
     return (_deviceMatrixBig != NULL);
 }
 
+template<typename T> void
+printmat(T* d_mat, std::string name, size_t len) {
+    T *h_mat= new T[len];
+    cudaMemcpy(h_mat, d_mat, len * sizeof(T), cudaMemcpyDeviceToHost);
+    std::cout << name << ": ";
+    for(int i = 0; i < len; i++)
+        std::cout << h_mat[i] << " ";
+    std::cout << std::endl;
+    delete[] h_mat;
+}
+
 void
 OsdCusparseKernelDispatcher::FinalizeMatrix()
 {
@@ -216,6 +227,10 @@ OsdCusparseKernelDispatcher::FinalizeMatrix()
     device_csr_matrix_view* M_src = _deviceMatrix;
     device_csr_matrix_view* M_dst =
         new device_csr_matrix_view(nve*M_src->m, nve*M_src->n, nve*M_src->nnz);
+
+    printmat<int>(M_src->rows, "src rows", M_src->m+1);
+    printmat<int>(M_src->cols, "src cols", M_src->nnz);
+    printmat<float>(M_src->vals, "src vals", M_src->nnz);
 
     int *coo_dst_rows;
     cusparseStatus_t status;
@@ -226,6 +241,10 @@ OsdCusparseKernelDispatcher::FinalizeMatrix()
                 coo_dst_rows, M_dst->cols, M_dst->vals,
                 M_src->rows, M_src->cols, M_src->vals);
 
+        printmat<int>(coo_dst_rows, "coo rows", M_dst->nnz);
+        printmat<int>(M_dst->cols, "coo cols", M_dst->nnz);
+        printmat<float>(M_dst->vals, "coo vals", M_dst->nnz);
+
         /* convert to csr format */
         status = cusparseXcoo2csr(handle, coo_dst_rows, M_dst->nnz, M_dst->m,
                 M_dst->rows, CUSPARSE_INDEX_BASE_ZERO);
@@ -233,6 +252,10 @@ OsdCusparseKernelDispatcher::FinalizeMatrix()
     }
     cudaFree(coo_dst_rows);
     _deviceMatrixBig = M_dst;
+
+    printmat<int>(M_dst->rows, "dst rows", M_dst->m+1);
+    printmat<int>(M_dst->cols, "dst cols", M_dst->nnz);
+    printmat<float>(M_dst->vals, "dst vals", M_dst->nnz);
 
     PrintReport();
 }
