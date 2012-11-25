@@ -17,13 +17,13 @@ namespace OPENSUBDIV_VERSION {
 
 static cusparseHandle_t handle = NULL;
 
-device_csr_matrix_view::device_csr_matrix_view(csr_matrix1* M) :
+device_csr_matrix_view::device_csr_matrix_view(csr_matrix* M) :
     m(M->size1()), n(M->size2()), nnz(M->nnz()) {
 
     /* make cusparse matrix descriptor */
     cusparseCreateMatDescr(&desc);
     cusparseSetMatType(desc,CUSPARSE_MATRIX_TYPE_GENERAL);
-    cusparseSetMatIndexBase(desc,CUSPARSE_INDEX_BASE_ONE);
+    cusparseSetMatIndexBase(desc,CUSPARSE_INDEX_BASE_ZERO);
 
     /* make cusparse handle if null */
     if (handle == NULL)
@@ -109,7 +109,7 @@ device_csr_matrix_view::device_csr_matrix_view(int m, int n, int nnz) :
     /* make cusparse matrix descriptor */
     cusparseCreateMatDescr(&desc);
     cusparseSetMatType(desc,CUSPARSE_MATRIX_TYPE_GENERAL);
-    cusparseSetMatIndexBase(desc,CUSPARSE_INDEX_BASE_ONE);
+    cusparseSetMatIndexBase(desc,CUSPARSE_INDEX_BASE_ZERO);
 
     /* make cusparse handle if null */
     if (handle == NULL)
@@ -168,7 +168,7 @@ void
 OsdCusparseKernelDispatcher::StageMatrix(int i, int j)
 {
     if (S) delete S;
-    S = new coo_matrix1(i,j);
+    S = new coo_matrix(i,j);
 }
 
 inline void
@@ -188,14 +188,14 @@ OsdCusparseKernelDispatcher::PushMatrix()
 {
     if (_deviceMatrix == NULL) {
         printf("PushMatrix set %d-%d\n", S->size1(), S->size2());
-        csr_matrix1 S_csr(*S);
+        csr_matrix S_csr(*S);
         _deviceMatrix = new device_csr_matrix_view(&S_csr);
     } else {
         printf("PushMatrix mul %d-%d = %d-%d * %d-%d\n",
                 (int) S->size1(), (int) _deviceMatrix->n,
                 (int) S->size1(),  (int) S->size2(),
                 _deviceMatrix->m, _deviceMatrix->n);
-        csr_matrix1 S_csr(*S);
+        csr_matrix S_csr(*S);
         device_csr_matrix_view A (&S_csr);
         device_csr_matrix_view *C = A.times(_deviceMatrix);
         delete _deviceMatrix;
@@ -217,25 +217,18 @@ OsdCusparseKernelDispatcher::FinalizeMatrix()
     device_csr_matrix_view* M_dst =
         new device_csr_matrix_view(nve*M_src->m, nve*M_src->n, nve*M_src->nnz);
 
-    int *coo_src_rows,
-        *coo_dst_rows;
-    cudaMalloc(&coo_src_rows, M_src->nnz * sizeof(int));
+    int *coo_dst_rows;
     cudaMalloc(&coo_dst_rows, nve * M_src->nnz * sizeof(int));
     {
-        /* convert to COO format */
-        cusparseXcsr2coo(handle, M_src->rows, M_src->nnz, M_src->m,
-                coo_src_rows, CUSPARSE_INDEX_BASE_ONE);
-
         /* expand by a factor of nve */
-        OsdCusparseExpand(M_src->nnz, nve,
+        OsdCusparseExpand(M_src->m, M_src->nnz, nve,
                 coo_dst_rows, M_dst->cols, M_dst->vals,
-                coo_src_rows, M_src->cols, M_src->vals);
+                M_src->rows, M_src->cols, M_src->vals);
 
         /* convert to csr format */
         cusparseXcoo2csr(handle, coo_dst_rows, nve*M_src->nnz, nve*M_src->m,
-                M_dst->rows, CUSPARSE_INDEX_BASE_ONE);
+                M_dst->rows, CUSPARSE_INDEX_BASE_ZERO);
     }
-    cudaFree(coo_src_rows);
     cudaFree(coo_dst_rows);
 
     _deviceMatrixBig = M_dst;
