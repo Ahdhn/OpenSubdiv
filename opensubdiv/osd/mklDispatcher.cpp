@@ -171,7 +171,7 @@ OsdMklKernelDispatcher::FinalizeMatrix()
 
         /* build M_big_coo matrix from M */
         for(int i = 0; i < M->size1(); i++) {
-            for( int j = M->index1_data()[i]; j < M->index1_data()[ std::min(i+1,(int)M->size1()) ]; j++ ) {
+            for( int j = M->index1_data()[i]; j < M->index1_data()[i+1]; j++ ) {
                 float factor = M->value_data()[ j-1 ];
                 int ii = i;
                 int jj = M->index2_data()[ j-1 ] - 1;
