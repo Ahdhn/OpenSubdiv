@@ -16,7 +16,7 @@ static cusparseHandle_t handle = NULL;
 device_csr_matrix_view::device_csr_matrix_view(csr_matrix1* M) :
     m(M->size1()), n(M->size2()), nnz(M->nnz()) {
 
-    /* make cusparse matrix descriptor and handle */
+    /* make cusparse matrix descriptor */
     cusparseCreateMatDescr(&desc);
     cusparseSetMatType(desc,CUSPARSE_MATRIX_TYPE_GENERAL);
     cusparseSetMatIndexBase(desc,CUSPARSE_INDEX_BASE_ONE);
@@ -44,10 +44,15 @@ device_csr_matrix_view::device_csr_matrix_view(csr_matrix1* M) :
 device_csr_matrix_view::~device_csr_matrix_view() {
     /* clean up device memory */
     cusparseDestroyMatDescr(desc);
-    cusparseDestroy(handle);
     cudaFree(rows);
     cudaFree(cols);
     cudaFree(vals);
+}
+
+void
+device_csr_matrix_view::report(std::string name) {
+    printf("%s: %d-%d, %d nnz, r/c/v: 0%x 0%x 0%x\n",
+            name.c_str(), m, n, nnz, (void*) rows, (void*) cols, (void*) vals);
 }
 
 void
@@ -74,30 +79,38 @@ device_csr_matrix_view::times(device_csr_matrix_view* B) {
 
     device_csr_matrix_view* C = new device_csr_matrix_view(mm, kk);
 
-    //int baseC;
     cusparseStatus_t status;
-    cudaMalloc(&C->rows, sizeof(int)*(mm+1));
-    cusparseXcsrgemmNnz(handle, transA, transB,
+    cudaMalloc(&C->rows, (mm+1) * sizeof(int));
+    status = cusparseXcsrgemmNnz(handle, transA, transB,
             mm, nn, kk,
             A->desc, A->nnz, A->rows, A->cols,
             B->desc, B->nnz, B->rows, B->cols,
             C->desc, C->rows, &C->nnz);
-    //cudaMemcpy(&C->nnz, C->rows+mm, sizeof(int), cudaMemcpyDeviceToHost);
-    //cudaMemcpy(&baseC, C->rows, sizeof(int), cudaMemcpyDeviceToHost);
-    //C->nnz -= baseC;
-    cudaMalloc(&C->cols, sizeof(int)*C->nnz);
-    cudaMalloc(&C->vals, sizeof(float)*C->nnz);
-    cusparseScsrgemm(handle, transA, transB,
+    assert(status == CUSPARSE_STATUS_SUCCESS);
+    cudaMalloc(&C->cols, C->nnz * sizeof(int));
+    cudaMalloc(&C->vals, C->nnz * sizeof(float));
+    status = cusparseScsrgemm(handle, transA, transB,
             mm, nn, kk,
             A->desc, A->nnz, A->vals, A->rows, A->cols,
             B->desc, B->nnz, B->vals, B->rows, B->cols,
             C->desc, C->vals, C->rows, C->cols);
+    assert(status == CUSPARSE_STATUS_SUCCESS);
 
     return C;
 }
 
 device_csr_matrix_view::device_csr_matrix_view(int m, int n) :
-    m(m), n(n), nnz(0), rows(NULL), cols(NULL), vals(NULL), desc(NULL) { }
+    m(m), n(n), nnz(0), rows(NULL), cols(NULL), vals(NULL)
+{
+    /* make cusparse matrix descriptor */
+    cusparseCreateMatDescr(&desc);
+    cusparseSetMatType(desc,CUSPARSE_MATRIX_TYPE_GENERAL);
+    cusparseSetMatIndexBase(desc,CUSPARSE_INDEX_BASE_ONE);
+
+    /* make cusparse handle if null */
+    if (handle == NULL)
+        cusparseCreate(&handle);
+}
 
 void
 OsdCusparseKernelDispatcher::BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying)
@@ -166,17 +179,14 @@ OsdCusparseKernelDispatcher::MatrixReady()
 void
 OsdCusparseKernelDispatcher::FinalizeMatrix()
 {
-    printf("Finalizing\n");
 }
 
 void
 OsdCusparseKernelDispatcher::ApplyMatrix(int offset)
 {
-    float* V_in = (float*) _currentVertexBuffer->Map();
-    float* V_out = V_in + offset * _currentVertexBuffer->GetNumElements();
-
-    _deviceMatrix->spmv(V_out, V_in);
-
+    float* d_in = (float*) _currentVertexBuffer->Map();
+    float* d_out = d_in + offset * _currentVertexBuffer->GetNumElements();
+    _deviceMatrix->spmv(d_out, d_in);
     _currentVertexBuffer->Unmap();
 }
 

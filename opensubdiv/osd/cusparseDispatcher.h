@@ -18,6 +18,7 @@ public:
     void spmv(float* d_out, const float* d_in);
     device_csr_matrix_view* times(device_csr_matrix_view* rhs);
     virtual ~device_csr_matrix_view();
+    void report(std::string name);
 
     int m, n, nnz;
     int* rows;
