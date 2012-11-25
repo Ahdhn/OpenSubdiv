@@ -16,6 +16,7 @@ public:
     device_csr_matrix_view();
     device_csr_matrix_view(csr_matrix1* M);
     void spmv(float* d_out, const float* d_in);
+    device_csr_matrix_view* spgemm(csr_matrix1* lhs);
     virtual ~device_csr_matrix_view();
 
     int m, n, nnz;

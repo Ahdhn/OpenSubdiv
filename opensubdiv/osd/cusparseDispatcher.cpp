@@ -58,6 +58,43 @@ device_csr_matrix_view::spmv(float* d_out, const float* d_in) {
     assert(status == CUSPARSE_STATUS_SUCCESS);
 }
 
+device_csr_matrix_view*
+device_csr_matrix_view::spgemm(csr_matrix1* h_leftMatrix) {
+    device_csr_matrix_view* A = this;
+    device_csr_matrix_view* B = new device_csr_matrix_view(h_leftMatrix);
+    int mm = A->m,
+        nn = A->n,
+        kk = B->n;
+    assert(A->n == B->m);
+
+    cusparseOperation_t transA = CUSPARSE_OPERATION_NON_TRANSPOSE,
+                        transB = CUSPARSE_OPERATION_NON_TRANSPOSE;
+
+    device_csr_matrix_view* C = new device_csr_matrix_view();
+
+    int baseC;
+    cudaMalloc(&C->rows, sizeof(int)*(mm+1));
+    cusparseXcsrgemmNnz(handle, transA, transB,
+            mm, nn, kk,
+            A->desc, A->nnz, A->rows, A->cols,
+            B->desc, B->nnz, B->rows, B->cols,
+            C->desc, C->rows, C->cols);
+    cudaMemcpy(&C->nnz, C->rows+mm, sizeof(int), cudaMemcpyDeviceToHost);
+    cudaMemcpy(&baseC, C->rows, sizeof(int), cudaMemcpyDeviceToHost);
+    C->nnz -= baseC;
+    cudaMalloc(&C->cols, sizeof(int)*C->nnz);
+    cudaMalloc(&C->vals, sizeof(float)*C->nnz);
+    cusparseScsrgemm(handle, transA, transB,
+            mm, nn, kk,
+            A->desc, A->nnz, A->vals, A->rows, A->cols,
+            B->desc, B->nnz, B->vals, B->rows, B->cols,
+            C->desc, C->vals, C->rows, C->cols);
+
+    //delete A; // or by caller
+    delete B;
+    return C;
+}
+
 device_csr_matrix_view::device_csr_matrix_view() :
     m(0), n(0), nnz(0), rows(NULL), cols(NULL), vals(NULL), desc(NULL), handle(NULL) { }
 
