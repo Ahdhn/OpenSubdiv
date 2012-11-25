@@ -13,7 +13,7 @@ namespace OPENSUBDIV_VERSION {
 
 class device_csr_matrix_view {
 public:
-    device_csr_matrix_view(int m, int n);
+    device_csr_matrix_view(int m, int n, int nnz=0);
     device_csr_matrix_view(csr_matrix1* M);
     void spmv(float* d_out, const float* d_in);
     device_csr_matrix_view* times(device_csr_matrix_view* rhs);
@@ -52,6 +52,7 @@ public:
     virtual void PrintReport() { };
 
     device_csr_matrix_view *_deviceMatrix;
+    device_csr_matrix_view *_deviceMatrixBig;
 };
 
 } // end namespace OPENSUBDIV_VERSION

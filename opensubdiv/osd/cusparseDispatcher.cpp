@@ -8,6 +8,10 @@
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
 
+extern "C" {
+void OsdCusparseExpand(int src_nnz, int factor, int* dst_rows, int* dst_cols, float* dst_vals, int* src_rows, int* src_cols, float* src_vals);
+}
+
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
@@ -99,8 +103,8 @@ device_csr_matrix_view::times(device_csr_matrix_view* B) {
     return C;
 }
 
-device_csr_matrix_view::device_csr_matrix_view(int m, int n) :
-    m(m), n(n), nnz(0), rows(NULL), cols(NULL), vals(NULL)
+device_csr_matrix_view::device_csr_matrix_view(int m, int n, int nnz) :
+    m(m), n(n), nnz(nnz), rows(NULL), cols(NULL), vals(NULL)
 {
     /* make cusparse matrix descriptor */
     cusparseCreateMatDescr(&desc);
@@ -110,6 +114,13 @@ device_csr_matrix_view::device_csr_matrix_view(int m, int n) :
     /* make cusparse handle if null */
     if (handle == NULL)
         cusparseCreate(&handle);
+
+    /* allocate space if nnz != 0 */
+    if (nnz > 0) {
+        cudaMalloc(&rows, (m+1) * sizeof(int));
+        cudaMalloc(&cols, nnz * sizeof(int));
+        cudaMalloc(&vals, nnz * sizeof(float));
+    }
 }
 
 void
@@ -133,7 +144,8 @@ OsdCusparseKernelDispatcher::InitializeVertexBuffer(int numElements, int numVert
 }
 
 OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher( int levels )
-    : OsdMklKernelDispatcher(levels), _deviceMatrix(NULL) { }
+    : OsdMklKernelDispatcher(levels),
+      _deviceMatrix(NULL), _deviceMatrixBig(NULL) { }
 
 OsdCusparseKernelDispatcher::~OsdCusparseKernelDispatcher()
 {
@@ -173,12 +185,36 @@ OsdCusparseKernelDispatcher::PushMatrix()
 bool
 OsdCusparseKernelDispatcher::MatrixReady()
 {
-    return (_deviceMatrix != NULL);
+    return (_deviceMatrixBig != NULL);
 }
 
 void
 OsdCusparseKernelDispatcher::FinalizeMatrix()
 {
+    int nve = _currentVertexBuffer->GetNumElements();
+    device_csr_matrix_view* M_src = _deviceMatrix;
+    device_csr_matrix_view* M_dst =
+        new device_csr_matrix_view(nve*M_src->m, nve*M_src->n, nve*M_src->nnz);
+
+    int *coo_src_rows,
+        *coo_dst_rows;
+    cudaMalloc(&coo_src_rows, M_src->nnz * sizeof(int));
+    cudaMalloc(&coo_dst_rows, nve * M_src->nnz * sizeof(int));
+    {
+        cusparseXcsr2coo(handle, M_src->rows, M_src->nnz, M_src->m,
+                coo_src_rows, CUSPARSE_INDEX_BASE_ONE);
+
+        OsdCusparseExpand(M_src->nnz, nve,
+                coo_dst_rows, M_dst->cols, M_dst->vals,
+                coo_src_rows, M_src->cols, M_src->vals);
+
+        cusparseXcoo2csr(handle, coo_dst_rows, nve*M_src->nnz, nve*M_src->m,
+                M_dst->rows, CUSPARSE_INDEX_BASE_ONE);
+    }
+    cudaFree(coo_src_rows);
+    cudaFree(coo_dst_rows);
+
+    _deviceMatrixBig = M_dst;
 }
 
 void

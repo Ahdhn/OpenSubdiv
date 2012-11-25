@@ -233,6 +233,7 @@ if( CUDA_FOUND )
     )
     list(APPEND KERNEL_FILES
         cudaKernel.cu
+        cusparseKernel.cu
     )
     list(APPEND PLATFORM_LIBRARIES
         ${CUDA_cusparse_LIBRARY}
