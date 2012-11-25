@@ -9,7 +9,7 @@
 #include <cuda_gl_interop.h>
 
 extern "C" {
-void OsdCusparseExpand(int src_nnz, int factor, int* dst_rows, int* dst_cols, float* dst_vals, int* src_rows, int* src_cols, float* src_vals);
+void OsdCusparseExpand(int src_m, int factor, int* dst_rows, int* dst_cols, float* dst_vals, int* src_rows, int* src_cols, float* src_vals);
 }
 
 namespace OpenSubdiv {
@@ -214,24 +214,52 @@ OsdCusparseKernelDispatcher::FinalizeMatrix()
 {
     int nve = _currentVertexBuffer->GetNumElements();
     device_csr_matrix_view* M_src = _deviceMatrix;
+
+#if 0
     device_csr_matrix_view* M_dst =
         new device_csr_matrix_view(nve*M_src->m, nve*M_src->n, nve*M_src->nnz);
-
     int *coo_dst_rows;
+    cusparseStatus_t status;
     cudaMalloc(&coo_dst_rows, nve * M_src->nnz * sizeof(int));
     {
         /* expand by a factor of nve */
-        OsdCusparseExpand(M_src->m, M_src->nnz, nve,
+        OsdCusparseExpand(M_src->m, nve,
                 coo_dst_rows, M_dst->cols, M_dst->vals,
                 M_src->rows, M_src->cols, M_src->vals);
 
         /* convert to csr format */
-        cusparseXcoo2csr(handle, coo_dst_rows, nve*M_src->nnz, nve*M_src->m,
+        status = cusparseXcoo2csr(handle, coo_dst_rows, M_dst->nnz, M_dst->m,
                 M_dst->rows, CUSPARSE_INDEX_BASE_ZERO);
+        assert(status == CUSPARSE_STATUS_SUCCESS);
     }
     cudaFree(coo_dst_rows);
-
     _deviceMatrixBig = M_dst;
+
+#else
+    csr_matrix small(M_src->m, M_src->n, M_src->nnz);
+    cudaMemcpy(&small.value_data()[0], M_src->vals,
+            M_src->nnz * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(&small.index2_data()[0], M_src->cols,
+            M_src->nnz * sizeof(int), cudaMemcpyDeviceToHost);
+    cudaMemcpy(&small.index1_data()[0], M_src->rows,
+            (M_src->m+1) * sizeof(int), cudaMemcpyDeviceToHost);
+    small.set_filled(M_src->m+1, small.index1_data()[M_src->m]);
+
+    /* build big matrix from small */
+    coo_matrix big(M_src->m * nve, M_src->n * nve, M_src->nnz * nve);
+    for(int i = 0; i < small.size1(); i++) {
+        for( int j = small.index1_data()[i]; j < small.index1_data()[i+1]; j++ ) {
+            float factor = small.value_data()[ j-1 ];
+            int ii = i;
+            int jj = small.index2_data()[ j-1 ] - 1;
+            for(int k = 0; k < nve; k++)
+                big.append_element(ii*nve+k, jj*nve+k, factor);
+        }
+    }
+
+    csr_matrix bigCSR(big);
+    _deviceMatrixBig = new device_csr_matrix_view(&bigCSR);
+#endif
 }
 
 void
