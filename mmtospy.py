@@ -2,18 +2,40 @@
 Plot the sparsity pattern of arrays
 """
 
-from sys import argv
-assert len(argv) == 2, "Usage: python %s matrix.mm" % argv[0]
-mm_filename = argv[1]
+#SORT = True # slowww
+SORT = False
 
 from matplotlib.pyplot import figure, show
-import numpy
 from scipy.io import mmread, mminfo
+import numpy
 
-fig = figure()
-ax = fig.add_subplot(111)
+def swap(A, i, j):
+    tmp = numpy.copy(A[i])
+    A[i] = A[j]
+    A[j] = tmp
 
-x = mmread(mm_filename)
+def main(argv):
+    assert len(argv) == 2, "Usage: python %s matrix.mm" % argv[0]
+    mm_filename = argv[1]
 
-ax.spy(x, markersize=1)
-show()
+    fig = figure()
+    ax = fig.add_subplot(111)
+
+    x = mmread(mm_filename)
+
+    if SORT:
+        print "Re-arranging rows."
+        xd = x.todense()
+        m, n = xd.shape
+        for i in range(0,m):
+            for j in range(i,m):
+                if xd[j].tolist() > xd[i].tolist():
+                    swap(xd, i, j)
+        x = xd
+
+    ax.spy(x, markersize=1)
+    show()
+
+if __name__ == '__main__':
+    import sys
+    main(sys.argv)
