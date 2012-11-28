@@ -80,6 +80,8 @@ OsdUBlasKernelDispatcher::PushMatrix()
     assert(M);
     delete S;
     S = NULL;
+
+    WriteMatrix();
 }
 
 void
@@ -112,8 +114,8 @@ OsdUBlasKernelDispatcher::WriteMatrix()
     FILE* ofile = fopen("subdiv_matrix.mm", "w");
     assert(ofile != NULL);
 
-    printf("%%MatrixMarket matrix coordinate real general\n");
-    printf("%d %d %d\n", Mlen, Nlen, nz);
+    fprintf(ofile, "%%%%MatrixMarket matrix coordinate real general\n");
+    fprintf(ofile, "%d %d %d\n", Mlen, Nlen, nz);
 
     for(int i = 0; i < M->size1(); i++)
         for(int j = 0; j < M->size2(); j++)
