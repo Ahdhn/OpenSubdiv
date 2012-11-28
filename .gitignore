@@ -8,3 +8,6 @@ build_xcode
 
 # vim swap files
 *.swp
+
+# sparse matrix files
+*.mm
