@@ -5,7 +5,10 @@ Plot the sparsity pattern of arrays
 #SORT = True # slowww
 SORT = False
 
-from matplotlib.pyplot import figure, show
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
 from scipy.io import mmread, mminfo
 import numpy
 
@@ -17,11 +20,11 @@ def swap(A, i, j):
 def main(argv):
     assert len(argv) == 2, "Usage: python %s matrix.mm" % argv[0]
     mm_filename = argv[1]
-
-    fig = figure()
-    ax = fig.add_subplot(111)
-
     x = mmread(mm_filename)
+
+    w, h = matplotlib.figure.figaspect(x)
+    fig = plt.figure(figsize=(w,h))
+    ax = fig.add_subplot(111)
 
     if SORT:
         print "Re-arranging rows."
@@ -34,7 +37,11 @@ def main(argv):
         x = xd
 
     ax.spy(x, markersize=1)
-    show()
+    ax.xaxis.set_visible(False)
+    ax.yaxis.set_visible(False)
+
+    extent = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+    fig.savefig("%s.pdf" % mm_filename[:-3], bbox_inches=extent)
 
 if __name__ == '__main__':
     import sys
