@@ -41,7 +41,7 @@ def main(argv):
     ax.yaxis.set_visible(False)
 
     extent = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
-    fig.savefig("%s.pdf" % mm_filename[:-3], bbox_inches=extent)
+    fig.savefig("spy_%s.pdf" % mm_filename[:-3], bbox_inches=extent)
 
 if __name__ == '__main__':
     import sys
