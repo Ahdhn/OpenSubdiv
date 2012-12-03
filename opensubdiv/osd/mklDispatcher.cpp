@@ -156,24 +156,6 @@ OsdMklKernelDispatcher::ApplyMatrix(int offset)
 }
 
 void
-OsdMklKernelDispatcher::WriteMatrix()
-{
-    printf("mkl writing out matrix\n");
-    FILE* ofile = fopen("subdiv_matrix.mm", "w");
-    assert(ofile != NULL);
-
-    fprintf(ofile, "%%%%MatrixMarket matrix coordinate real general\n");
-    fprintf(ofile, "%d %d %d\n", M->size1(), M->size2(), M->nnz());
-
-    for(int i = 0; i < M->size1(); i++)
-        for(int j = 0; j < M->size2(); j++)
-            if ((*M)(i,j) != 0.0)
-                fprintf(ofile, "%d %d %10.3g\n", i+1, j+1, (float) (*M)(i,j));
-
-    fclose(ofile);
-}
-
-void
 OsdMklKernelDispatcher::FinalizeMatrix()
 {
     /* expand M to M_big if necessary */
@@ -218,7 +200,7 @@ OsdMklKernelDispatcher::FinalizeMatrix()
         }
     }
 
-    //this->WriteMatrix();
+    //this->WriteMatrix(M, "subdiv_matrix");
     this->PrintReport();
 }
 
