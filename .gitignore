@@ -11,3 +11,6 @@ build_xcode
 
 # sparse matrix files
 *.mm
+
+# OS X icon files
+.DS_Store
