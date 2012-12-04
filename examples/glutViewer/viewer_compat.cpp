@@ -696,7 +696,7 @@ display() {
     if (g_drawHUD) {
         glColor3f(1, 1, 1);
         drawString(10, 10, "LEVEL = %d", g_level);
-        drawString(10, 30, "# of Vertices = %d", g_osdmesh->GetFarMesh()->GetNumVertices());
+        drawString(10, 30, "# of Vertices = %d (%d)", g_osdmesh->GetFarMesh()->GetNumVertices(), g_osdmesh->GetFarMesh()->GetSubdivision()->GetNumVertices(g_level));
         drawString(10, 50, "KERNEL = %s", getKernelName(g_kernel));
         drawString(10, 70, "CPU TIME = %.3f ms", g_cpuTime);
         drawString(10, 90, "GPU TIME = %.3f ms", g_gpuTime);
