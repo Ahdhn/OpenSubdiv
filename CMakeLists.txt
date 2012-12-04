@@ -105,7 +105,7 @@ find_package(GLUT)
 find_package(PTex)
 find_package(MKL)
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBENCHMARKING")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBENCHMARKING -g -ggdb3")
 
 set(Boost_ADDITIONAL_VERSIONS "1.52.0")
 find_package(Boost 1.52.0 )
