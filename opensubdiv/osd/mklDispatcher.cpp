@@ -219,7 +219,7 @@ OsdMklKernelDispatcher::PrintReport()
 
 #if BENCHMARKING
     printf(" nverts=%d", M->size1());
-    printf(" size=%d", size_in_bytes);
+    printf(" mem=%d", size_in_bytes);
     printf(" sparsity=%f", sparsity_factor);
 #else
     printf("Subdiv matrix is %d-by-%d with %f%% nonzeroes, takes %d MB.\n",

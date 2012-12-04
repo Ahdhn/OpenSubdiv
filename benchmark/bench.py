@@ -30,12 +30,14 @@ modelNum = {
     "bilin_cube": 0,
     "cube":       8,
     "crease":     7,
+    "icos":       26,
 }
 
 activeModels = [
     #"bilin_cube",
     "cube",
-    #"crease",
+    "icos",
+    "crease",
 ]
 
 class Run(object):
