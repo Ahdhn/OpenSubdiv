@@ -961,17 +961,21 @@ int main(int argc, char ** argv) {
     const char *filename = NULL;
 
     for (int i = 1; i < argc; ++i) {
-        if (!strcmp(argv[i], "-d"))
+        if (!strcmp(argv[i], "-l") || !strcmp(argv[i], "--level"))
             g_level = atoi(argv[++i]);
-        else if (!strcmp(argv[i], "-c"))
+        else if (!strcmp(argv[i], "-c") || !strcmp(argv[i], "--count"))
             g_repeatCount = atoi(argv[++i]);
+        else if (!strcmp(argv[i], "-m") || !strcmp(argv[i], "--model"))
+            g_currentShape = atoi(argv[++i]);
+        else if (!strcmp(argv[i], "-k") || !strcmp(argv[i], "--kernel"))
+            g_kernel = atoi(argv[++i]);
         else
             filename = argv[i];
     }
 
     glGenBuffers(1, &g_indexBuffer);
 
-    modelMenu(0);
+    modelMenu(g_currentShape);
 
     glutIdleFunc(idle);
     glutMainLoop();
