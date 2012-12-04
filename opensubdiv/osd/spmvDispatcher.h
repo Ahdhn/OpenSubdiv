@@ -4,6 +4,8 @@
 #include "../version.h"
 #include "../osd/cpuDispatcher.h"
 
+#include <sstream>
+
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 
@@ -101,19 +103,22 @@ public:
      * Writes the subdivison matrix to a file. This step is helpful
      * for visualizing sparsity patterns.
      */
-    template<typename matrix_type>
-    void WriteMatrix(matrix_type* M, std::string file_basename) {
-        printf("Writing out matrix ...");
-        FILE* ofile = fopen((file_basename + ".mm").c_str(), "w");
+    void WriteMatrix(coo_matrix1* M, std::string file_basename, int id=0) {
+        printf("Writing out matrix ... "); fflush(stdout);
+
+        std::ostringstream fname;
+        fname << file_basename << "_" << id << ".mm";
+        FILE* ofile = fopen(fname.str().c_str(), "w");
         assert(ofile != NULL);
 
         fprintf(ofile, "%%%%MatrixMarket matrix coordinate real general\n");
         fprintf(ofile, "%d %d %d\n", M->size1(), M->size2(), M->nnz());
 
-        for(int i = 0; i < M->size1(); i++)
-            for(int j = 0; j < M->size2(); j++)
-                if ((*M)(i,j) != 0.0)
-                    fprintf(ofile, "%d %d %10.3g\n", i+1, j+1, (float) (*M)(i,j));
+        for(int i = 0; i < M->nnz(); i++)
+            fprintf(ofile, "%d %d %10.3g\n",
+                    M->index1_data()[i],
+                    M->index2_data()[i],
+                    M->value_data()[i]);
 
         fclose(ofile);
         printf("done.\n");
@@ -131,6 +136,11 @@ public:
      * matrix dimensions, number of nonzeroes, memory usage, etc.
      */
     virtual void PrintReport() = 0;
+
+    /**
+     * Unique ID for each subdivision matrix.
+     */
+    int matrix_id;
 };
 
 } // end namespace OPENSUBDIV_VERSION

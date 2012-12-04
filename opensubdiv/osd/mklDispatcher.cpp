@@ -200,7 +200,6 @@ OsdMklKernelDispatcher::FinalizeMatrix()
         }
     }
 
-    //this->WriteMatrix(M, "subdiv_matrix");
     this->PrintReport();
 }
 

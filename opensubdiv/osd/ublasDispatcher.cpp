@@ -80,8 +80,6 @@ OsdUBlasKernelDispatcher::PushMatrix()
     assert(M);
     delete S;
     S = NULL;
-
-    WriteMatrix(M, "subdiv_matrix");
 }
 
 void
