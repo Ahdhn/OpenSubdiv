@@ -218,6 +218,7 @@ OsdMklKernelDispatcher::PrintReport()
     double sparsity_factor = 100.0 * M_big->nnz() / M_big->size1() / M_big->size2();
 
 #if BENCHMARKING
+    printf(" nverts=%d", M->size1());
     printf(" size=%d", size_in_bytes);
     printf(" sparsity=%f", sparsity_factor);
 #else
