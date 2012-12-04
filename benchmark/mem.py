@@ -13,7 +13,7 @@ def build_db(model):
 def gen_dat_file(ofile, model, db):
     size_set = { r.nverts for r in db if r.nverts }
     size_list = sorted(size_set)
-    print >>ofile, "nVerts", model
+    print >>ofile, "nVerts", escape_latex(model)
     for size in size_list:
         print >>ofile, size,
         run_list = filter(lambda r: r.nverts == size, db)
@@ -24,7 +24,8 @@ def gen_dat_file(ofile, model, db):
 
 
 def main(argv):
-    for model in activeModels:
+    for model in argv[1:]:
+        model = model[4:-4]
         db = build_db(model)
         with open("mem_%s.dat" % model, 'w') as ofile:
             gen_dat_file(ofile, model, db)

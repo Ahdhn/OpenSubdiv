@@ -27,18 +27,10 @@ activeKernels = [
 ]
 
 modelNum = {
-    "bilin_cube": 0,
-    "cube":       8,
-    "crease":     7,
-    "icos":       26,
+    "catmark_cube":       8,
+    "loop_icosahedron":     26,
+    "catmark_dart_edgecorner": 9
 }
-
-activeModels = [
-    #"bilin_cube",
-    "cube",
-    "icos",
-    "crease",
-]
 
 class Run(object):
     def __init__(self, line):
@@ -79,6 +71,9 @@ class Run(object):
 
     def kernel_id(self):
         return kernelNum[ self.kernel ]
+
+def escape_latex(string):
+    return string.replace('_', '\\\\_')
 
 def do_run(model='cube', frames=1000, level=1, kernel='CPU'):
     assert 0 < level <= 7, "Must select positive subdiv level from 1 to 7."
