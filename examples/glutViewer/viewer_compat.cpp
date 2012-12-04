@@ -404,6 +404,9 @@ updateGeom() {
 
     /* exponential averaging */
     g_vertPerMillisec = (1.0-g_alpha)*g_vertPerMillisec + g_alpha*(g_osdmesh->GetFarMesh()->GetNumVertices() / (g_cpuTime+g_gpuTime));
+#if BENCHMARKING
+    printf(" f%06d=%f", g_frame, g_osdmesh->GetFarMesh()->GetNumVertices() / (g_cpuTime+g_gpuTime));
+#endif
 }
 
 //-------------------------------------------------------------------------------
@@ -603,7 +606,9 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme=kCatmark
     updateGeom();
 
     s.Stop();
-    printf("Time to first frame: %f ms\n",  float(s.GetElapsed() * 1000.0f));
+#if BENCHMARKING
+    printf(" ttff=%f",  float(s.GetElapsed() * 1000.0f));
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -737,6 +742,9 @@ void mouse(int button, int state, int x, int y) {
 
 //------------------------------------------------------------------------------
 void quit() {
+#if BENCHMARKING
+    printf("\n");
+#endif
 
     if(g_osdmesh)
         delete g_osdmesh;
