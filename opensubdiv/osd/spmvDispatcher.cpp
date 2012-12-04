@@ -9,7 +9,12 @@ namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
 OsdSpMVKernelDispatcher::OsdSpMVKernelDispatcher( int levels )
-    : OsdCpuKernelDispatcher(levels), matrix_id(0) { }
+    : OsdCpuKernelDispatcher(levels), matrix_id(0)
+{
+#if BENCHMARKING
+    printf("\n");
+#endif
+}
 
 OsdSpMVKernelDispatcher::~OsdSpMVKernelDispatcher() {
     if (_vdesc)

@@ -403,9 +403,11 @@ updateGeom() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     /* exponential averaging */
-    g_vertPerMillisec = (1.0-g_alpha)*g_vertPerMillisec + g_alpha*(g_osdmesh->GetFarMesh()->GetNumVertices() / (g_cpuTime+g_gpuTime));
+    double frameVertsPerMillisecond = g_osdmesh->GetFarMesh()->GetNumVertices() / (g_cpuTime+g_gpuTime);
+    g_vertPerMillisec = (1.0-g_alpha)*g_vertPerMillisec + g_alpha*frameVertsPerMillisecond;
+
 #if BENCHMARKING
-    printf(" f%06d=%f", g_frame, g_osdmesh->GetFarMesh()->GetNumVertices() / (g_cpuTime+g_gpuTime));
+    printf(" %f", frameVertsPerMillisecond);
 #endif
 }
 
@@ -608,6 +610,7 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme=kCatmark
     s.Stop();
 #if BENCHMARKING
     printf(" ttff=%f",  float(s.GetElapsed() * 1000.0f));
+    printf(" model=%s", g_defaultShapes[ g_currentShape ].name.c_str());
 #endif
 }
 
@@ -697,6 +700,7 @@ display() {
         drawString(10, 90, "GPU TIME = %.3f ms", g_gpuTime);
         drawString(10, 110, "SUBDIVISION = %s", g_scheme==kBilinear ? "BILINEAR" : (g_scheme == kLoop ? "LOOP" : "CATMARK"));
         drawString(10, 130, "AVG VERT/MS = %4.f", g_vertPerMillisec);
+        drawString(10, 150, "MODEL = %s", g_defaultShapes[ g_currentShape ].name.c_str());
 
         drawString(10, g_height-30, "w:   toggle wireframe");
         drawString(10, g_height-50, "e:   display normal vector");
