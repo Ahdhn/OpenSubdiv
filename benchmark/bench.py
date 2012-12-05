@@ -4,17 +4,17 @@ import sys, re
 from subprocess import *
 import numpy as np
 
-GLUT_VIEWER_PATH = "/Users/mbdriscoll/cs284/OpenSubdiv/build/bin/glutViewer"
+GLUT_VIEWER_PATH = "/Users/driscoll/OpenSubdiv/build/bin/glutViewer"
 
 kernelNum = {
 	"CPU":        0,
 	"OpenMP":     1,
-	"CUDA":       2,
+	"Cuda":       2,
 	"GLSL":       3,
 	"OpenCL":     4,
 	"MKL":        5,
 	"ClSpMV":     6,
-	"cuSPARSE":   7,
+	"CuSPARSE":   7,
 	"uBLAS":      8,
 	"MAX":        9
 }
@@ -22,7 +22,9 @@ kernelNum = {
 activeKernels = [
     "CPU",
     "OpenMP",
-    "OpenCL",
+    #"OpenCL",
+    "Cuda",
+    "CuSPARSE",
     "MKL"
 ]
 
@@ -84,6 +86,7 @@ def do_run(model='cube', frames=1000, level=1, kernel='CPU'):
         "--level", str(level),
         "--model", str(modelNum[model])
     ]
+    print "Running: %s" % " ".join(cmd_line)
     osd = Popen(cmd_line, stdin=PIPE, stdout=PIPE, stderr=PIPE)
     stdout, stderr = osd.communicate()
     assert stderr == "", "OpenSubdiv must exit cleanly, got: %s" % stderr
