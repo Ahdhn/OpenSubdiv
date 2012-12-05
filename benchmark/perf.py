@@ -30,9 +30,9 @@ def gen_dat_file(ofile, db):
 
 
 def main(argv):
-    for model in activeModels:
-        with open("perf_%s.dat" % model, 'w') as ofile:
-            gen_dat_file(ofile, build_db(model))
+    model = argv[1][5:-4]
+    with open("perf_%s.dat" % model, 'w') as ofile:
+        gen_dat_file(ofile, build_db(model))
 
 
 if __name__ == '__main__':
