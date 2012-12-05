@@ -403,7 +403,12 @@ updateGeom() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     /* exponential averaging */
-    g_vertPerMillisec = (1.0-g_alpha)*g_vertPerMillisec + g_alpha*(g_osdmesh->GetFarMesh()->GetNumVertices() / (g_cpuTime+g_gpuTime));
+    double frameVertsPerMillisecond = g_osdmesh->GetFarMesh()->GetNumVertices() / (g_cpuTime+g_gpuTime);
+    g_vertPerMillisec = (1.0-g_alpha)*g_vertPerMillisec + g_alpha*frameVertsPerMillisecond;
+
+#if BENCHMARKING
+    printf(" %f", frameVertsPerMillisecond);
+#endif
 }
 
 //-------------------------------------------------------------------------------
@@ -603,7 +608,14 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme=kCatmark
     updateGeom();
 
     s.Stop();
-    printf("Time to first frame: %f ms\n",  float(s.GetElapsed() * 1000.0f));
+
+#if BENCHMARKING
+    printf(" nverts=%d", g_osdmesh->GetFarMesh()->GetSubdivision()->GetNumVertices(level));
+    printf(" level=%d", level);
+    printf(" kernel=%s", getKernelName(g_kernel));
+    printf(" ttff=%f",  float(s.GetElapsed() * 1000.0f));
+    printf(" model=%s", g_defaultShapes[ g_currentShape ].name.c_str());
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -686,12 +698,13 @@ display() {
     if (g_drawHUD) {
         glColor3f(1, 1, 1);
         drawString(10, 10, "LEVEL = %d", g_level);
-        drawString(10, 30, "# of Vertices = %d", g_osdmesh->GetFarMesh()->GetNumVertices());
+        drawString(10, 30, "# of Vertices = %d (%d)", g_osdmesh->GetFarMesh()->GetNumVertices(), g_osdmesh->GetFarMesh()->GetSubdivision()->GetNumVertices(g_level));
         drawString(10, 50, "KERNEL = %s", getKernelName(g_kernel));
         drawString(10, 70, "CPU TIME = %.3f ms", g_cpuTime);
         drawString(10, 90, "GPU TIME = %.3f ms", g_gpuTime);
         drawString(10, 110, "SUBDIVISION = %s", g_scheme==kBilinear ? "BILINEAR" : (g_scheme == kLoop ? "LOOP" : "CATMARK"));
         drawString(10, 130, "AVG VERT/MS = %4.f", g_vertPerMillisec);
+        drawString(10, 150, "MODEL = %s", g_defaultShapes[ g_currentShape ].name.c_str());
 
         drawString(10, g_height-30, "w:   toggle wireframe");
         drawString(10, g_height-50, "e:   display normal vector");
@@ -737,6 +750,9 @@ void mouse(int button, int state, int x, int y) {
 
 //------------------------------------------------------------------------------
 void quit() {
+#if BENCHMARKING
+    printf("\n");
+#endif
 
     if(g_osdmesh)
         delete g_osdmesh;
@@ -947,17 +963,21 @@ int main(int argc, char ** argv) {
     const char *filename = NULL;
 
     for (int i = 1; i < argc; ++i) {
-        if (!strcmp(argv[i], "-d"))
+        if (!strcmp(argv[i], "-l") || !strcmp(argv[i], "--level"))
             g_level = atoi(argv[++i]);
-        else if (!strcmp(argv[i], "-c"))
+        else if (!strcmp(argv[i], "-c") || !strcmp(argv[i], "--count"))
             g_repeatCount = atoi(argv[++i]);
+        else if (!strcmp(argv[i], "-m") || !strcmp(argv[i], "--model"))
+            g_currentShape = atoi(argv[++i]);
+        else if (!strcmp(argv[i], "-k") || !strcmp(argv[i], "--kernel"))
+            g_kernel = atoi(argv[++i]);
         else
             filename = argv[i];
     }
 
     glGenBuffers(1, &g_indexBuffer);
 
-    modelMenu(0);
+    modelMenu(g_currentShape);
 
     glutIdleFunc(idle);
     glutMainLoop();

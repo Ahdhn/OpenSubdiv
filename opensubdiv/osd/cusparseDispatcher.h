@@ -49,7 +49,6 @@ public:
     virtual void PushMatrix();
     virtual void FinalizeMatrix();
     virtual bool MatrixReady();
-    virtual void WriteMatrix() { };
     virtual void PrintReport();
     virtual void Synchronize();
 

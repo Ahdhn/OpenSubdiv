@@ -20,7 +20,6 @@ public:
     virtual void PushMatrix();
     virtual void FinalizeMatrix();
     virtual void ApplyMatrix(int offset);
-    virtual void WriteMatrix();
     virtual bool MatrixReady();
     virtual void PrintReport();
 

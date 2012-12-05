@@ -53,7 +53,7 @@ OsdMklKernelDispatcher::PushMatrix()
     /* if no M exists, create one from A */
     if (M == NULL) {
 
-        printf("PushMatrix set %d-%d\n", S->size1(), S->size2());
+        //printf("PushMatrix set %d-%d\n", S->size1(), S->size2());
         M = new csr_matrix1(*S);
 
     } else {
@@ -111,10 +111,10 @@ OsdMklKernelDispatcher::PushMatrix()
         int info = 0; // output info flag
 
         /* perform SpM*SpM */
-        printf("PushMatrix mul %d-%d = %d-%d * %d-%d\n",
-                (int) C->size1(), (int) C->size2(),
-                (int) A.size1(),  (int) A.size2(),
-                (int) M->size1(), (int) M->size2());
+        //printf("PushMatrix mul %d-%d = %d-%d * %d-%d\n",
+        //        (int) C->size1(), (int) C->size2(),
+        //        (int) A.size1(),  (int) A.size2(),
+        //        (int) M->size1(), (int) M->size2());
         mkl_scsrmultcsr(&trans, &request, &sort,
                 &m, &n, &k, a, ja, ia, b, jb, ib,
                 c, jc, ic, &nzmax, &info);
@@ -153,12 +153,6 @@ OsdMklKernelDispatcher::ApplyMatrix(int offset)
     float* y = V_out;
 
     mkl_scsrgemv(&transa, &m, a, ia, ja, x, y);
-}
-
-void
-OsdMklKernelDispatcher::WriteMatrix()
-{
-    assert(!"WriteMatrix not implemented for MKL dispatcher.");
 }
 
 void
@@ -221,10 +215,16 @@ OsdMklKernelDispatcher::PrintReport()
     int size_in_bytes =  (int) (M_big->index2_data().capacity() +
                                 M_big->index1_data().capacity()) * sizeof(int)  +
                                 M_big->value_data().capacity() * sizeof(float);
+    double sparsity_factor = 100.0 * M_big->nnz() / M_big->size1() / M_big->size2();
+
+#if BENCHMARKING
+    printf(" nverts=%d", M->size1());
+    printf(" mem=%d", size_in_bytes);
+    printf(" sparsity=%f", sparsity_factor);
+#else
     printf("Subdiv matrix is %d-by-%d with %f%% nonzeroes, takes %d MB.\n",
-        M_big->size1(), M_big->size2(),
-        100.0 * M_big->nnz() / M_big->size1() / M_big->size2(),
-        size_in_bytes / 1024 / 1024);
+        M_big->size1(), M_big->size2(), sparsity_factor, size_in_bytes / 1024 / 1024);
+#endif
 }
 
 } // end namespace OPENSUBDIV_VERSION

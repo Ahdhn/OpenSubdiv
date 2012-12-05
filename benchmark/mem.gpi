@@ -1,0 +1,29 @@
+#!/bin/bash
+gnuplot << EOF
+
+# $1 output file
+# $2-$5 data files
+
+load "common.gpi"
+
+set title "Memory Usage for Subdivision Operator"
+set xlabel "Number of Vertices in Refined Mesh"
+set ylabel "Memory (bytes)"
+set output "$1"
+
+set key bottom right box
+set key autotitle columnhead
+set datafile missing "?"
+
+set logscale x 10
+set logscale y 2
+
+set format x "\$10^{%L}\$";
+set format y "\$2^{%L}\$";
+
+set grid back
+
+plot \
+    "$2" using 1:2 ls 1 with linespoint, \
+    "$3" using 1:2 ls 2 with linespoint, \
+    "$4" using 1:2 ls 3 with linespoint

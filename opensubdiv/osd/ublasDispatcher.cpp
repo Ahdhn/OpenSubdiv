@@ -102,27 +102,6 @@ OsdUBlasKernelDispatcher::ApplyMatrix(int offset)
         V_out[i] = vout(i);
 }
 
-void
-OsdUBlasKernelDispatcher::WriteMatrix()
-{
-    int Mlen = (int) M->size1() / 6;
-    int Nlen = (int) M->size2() / 6;
-    int nz = M->value_data().size();
-
-    FILE* ofile = fopen("subdiv_matrix.mm", "w");
-    assert(ofile != NULL);
-
-    printf("%%MatrixMarket matrix coordinate real general\n");
-    printf("%d %d %d\n", Mlen, Nlen, nz);
-
-    for(int i = 0; i < M->size1(); i++)
-        for(int j = 0; j < M->size2(); j++)
-            if ((*M)(i,j) != 0.0 && i%6==0 && j%6==0)
-                fprintf(ofile, "%d %d %10.3g\n", i/6+1, j/6+1, (float) (*M)(i,j));
-
-    fclose(ofile);
-}
-
 bool
 OsdUBlasKernelDispatcher::MatrixReady()
 {

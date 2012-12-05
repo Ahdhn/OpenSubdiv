@@ -8,3 +8,9 @@ build_xcode
 
 # vim swap files
 *.swp
+
+# sparse matrix files
+*.mm
+
+# OS X icon files
+.DS_Store

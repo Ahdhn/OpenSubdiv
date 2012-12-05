@@ -29,7 +29,6 @@ public:
     virtual void FinalizeMatrix();
     virtual void ApplyMatrix(int offset);
     virtual bool MatrixReady();
-    virtual void WriteMatrix() { };
     virtual void PrintReport() { };
 
 protected:
