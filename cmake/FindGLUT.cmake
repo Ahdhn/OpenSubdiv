@@ -132,6 +132,7 @@ else ()
             /usr/local/lib
             /usr/openwin/lib
             /usr/X11R6/lib
+            /usr/lib/x86_64-linux-gnu
         )
         find_library( GLUT_Xi_LIBRARY Xi
             ${GLUT_LOCATION}/lib
@@ -140,6 +141,7 @@ else ()
             /usr/local/lib
             /usr/openwin/lib
             /usr/X11R6/lib
+            /usr/lib/x86_64-linux-gnu
         )
         find_library( GLUT_Xmu_LIBRARY Xmu
             ${GLUT_LOCATION}/lib
@@ -148,6 +150,7 @@ else ()
             /usr/local/lib
             /usr/openwin/lib
             /usr/X11R6/lib
+            /usr/lib/x86_64-linux-gnu
         )
     endif (APPLE)
 endif (WIN32)

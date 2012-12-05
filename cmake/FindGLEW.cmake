@@ -100,6 +100,7 @@ if (${CMAKE_HOST_UNIX})
             /usr/local/include
             /sw/include
             /opt/local/include
+            /usr/lib/x86_64-linux-gnu
             NO_DEFAULT_PATH
             DOC "The directory where GL/glew.h resides"
     )
@@ -115,6 +116,7 @@ if (${CMAKE_HOST_UNIX})
             /usr/local/lib
             /sw/lib
             /opt/local/lib
+            /usr/lib/x86_64-linux-gnu
             NO_DEFAULT_PATH
             DOC "The GLEW library")
 endif ()

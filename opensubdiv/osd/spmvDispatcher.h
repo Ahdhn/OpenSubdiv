@@ -4,6 +4,7 @@
 #include "../version.h"
 #include "../osd/cpuDispatcher.h"
 
+#include <stdio.h>
 #include <sstream>
 
 #include <boost/numeric/ublas/matrix.hpp>
