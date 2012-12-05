@@ -80,6 +80,12 @@ if ( MKL_FOUND )
     include_directories( ${MKL_INCLUDE_PATH} )
 endif()
 
+if ( CUDA_FOUND )
+    list(APPEND PLATFORM_LIBRARIES
+        -L${CUDA_TOOLKIT_ROOT_DIR}/lib64 -lcusparse
+    )
+endif()
+
 #-------------------------------------------------------------------------------
 # Shader Stringification
 # We want to use preprocessor include directives to include GLSL and OpenCL

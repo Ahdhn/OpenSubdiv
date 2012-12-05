@@ -77,6 +77,12 @@ include_directories(
     ${PTEX_INCLUDE_DIR}
 )
 
+if ( CUDA_FOUND )
+    list(APPEND PLATFORM_LIBRARIES
+        -L${CUDA_TOOLKIT_ROOT_DIR}/lib64 -lcusparse
+    )
+endif()
+
 #-------------------------------------------------------------------------------
 # Shader Stringification
 # We want to use preprocessor include directives to include GLSL and OpenCL

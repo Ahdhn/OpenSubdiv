@@ -146,6 +146,9 @@ if( CUDA_FOUND )
     list(APPEND KERNEL_FILES
         cudaKernel.cu
     )
+    list(APPEND PLATFORM_LIBRARIES
+        -L${CUDA_TOOLKIT_ROOT_DIR}/lib64 -lcusparse
+    )
     if (UNIX)
         list( APPEND CUDA_NVCC_FLAGS -Xcompiler -fPIC )
     endif()
@@ -155,6 +158,7 @@ endif()
 
 target_link_libraries(osd_regression
     ${OSD_LINK_TARGET}
+    ${PLATFORM_LIBRARIES}
     ${OPENGL_LIBRARY}
     ${GLEW_LIBRARY}
     ${GLUT_LIBRARIES}
