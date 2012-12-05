@@ -16,14 +16,13 @@ def gen_dat_file(ofile, db):
     size_set = { r.nverts for r in db if r.nverts }
     kernel_list = sorted(kernel_set, key=lambda k: kernelNum[k])
     size_list = sorted(size_set)
-    print >>ofile, "nVerts", " ".join(kernel_list)
-    print size_list, " XX ", kernel_list
+    print >>ofile, "nVerts", " ".join(["%s %s-std" % (name, name) for name in kernel_list])
     for size in size_list:
         print >>ofile, size,
         for kernel in kernel_list:
             run_list = filter(lambda r: r.nverts == size and r.kernel == kernel, db)
             if len(run_list) == 1:
-                print >>ofile, " %f" % run_list[0].mean(),
+                print >>ofile, " %f %f" % (run_list[0].mean(), run_list[0].std()),
             if len(run_list) == 0:
                 print >>ofile, " ?",
         print >>ofile

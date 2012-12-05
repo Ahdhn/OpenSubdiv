@@ -610,10 +610,10 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme=kCatmark
     s.Stop();
 
 #if BENCHMARKING
+    printf(" ttff=%f",  float(s.GetElapsed() * 1000.0f));
     printf(" nverts=%d", g_osdmesh->GetFarMesh()->GetSubdivision()->GetNumVertices(level));
     printf(" level=%d", level);
     printf(" kernel=%s", getKernelName(g_kernel));
-    printf(" ttff=%f",  float(s.GetElapsed() * 1000.0f));
     printf(" model=%s", g_defaultShapes[ g_currentShape ].name.c_str());
 #endif
 }

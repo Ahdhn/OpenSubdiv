@@ -56,7 +56,10 @@ class Run(object):
                 setattr(self, key, val)
             else:
                 self.frame_times.append( float(token) )
-        self.frame_times = np.array(self.frame_times)
+        self.frame_times = np.array(self.frame_times).sort()
+
+    def timeofframe(frameid):
+        return self.ttff + sum(self.frame_times[:frameid])
 
     def __repr__(self):
         return "Run(model=%s, kernel=%s, level=%s, nverts=%s, ttff=%f, sparsity=%f, mean=%f, std=%f, nframe=%d)" % \
