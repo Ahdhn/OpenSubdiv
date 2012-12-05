@@ -187,14 +187,14 @@ void
 OsdCusparseKernelDispatcher::PushMatrix()
 {
     if (_deviceMatrix == NULL) {
-        printf("PushMatrix set %d-%d\n", S->size1(), S->size2());
+        //printf("PushMatrix set %d-%d\n", S->size1(), S->size2());
         csr_matrix S_csr(*S);
         _deviceMatrix = new device_csr_matrix_view(&S_csr);
     } else {
-        printf("PushMatrix mul %d-%d = %d-%d * %d-%d\n",
-                (int) S->size1(), (int) _deviceMatrix->n,
-                (int) S->size1(),  (int) S->size2(),
-                _deviceMatrix->m, _deviceMatrix->n);
+        //printf("PushMatrix mul %d-%d = %d-%d * %d-%d\n",
+        //        (int) S->size1(), (int) _deviceMatrix->n,
+        //        (int) S->size1(),  (int) S->size2(),
+        //        _deviceMatrix->m, _deviceMatrix->n);
         csr_matrix S_csr(*S);
         device_csr_matrix_view A (&S_csr);
         device_csr_matrix_view *C = A.times(_deviceMatrix);
@@ -255,10 +255,18 @@ OsdCusparseKernelDispatcher::PrintReport()
 {
     int size_in_bytes = (_deviceMatrixBig->nnz * 2 +
             _deviceMatrixBig->m + 1) * sizeof(float);
+    double sparsity_factor = 100.0 *
+        _deviceMatrixBig->nnz / _deviceMatrixBig->m / _deviceMatrixBig->n;
+
+#if BENCHMARKING
+    printf(" nverts=%d", _deviceMatrixBig->m / 6);
+    printf(" mem=%d", size_in_bytes);
+    printf(" sparsity=%f", sparsity_factor);
+#else
     printf("Subdiv matrix is %d-by-%d with %f%% nonzeroes, takes %d MB.\n",
         _deviceMatrixBig->m, _deviceMatrixBig->n,
-        100.0 * _deviceMatrixBig->nnz / _deviceMatrixBig->m / _deviceMatrixBig->n,
-        size_in_bytes / 1024 / 1024);
+        sparsity_factor, size_in_bytes / 1024 / 1024);
+#endif
 }
 
 void

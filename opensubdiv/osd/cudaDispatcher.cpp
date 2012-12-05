@@ -106,8 +106,6 @@ OsdCudaVertexBuffer::Map() {
     void *ptr;
 
     cudaGraphicsMapResources(1, &_cudaResource, 0);
-    cudaGraphicsResourceSetMapFlags(_cudaResource, CU_GRAPHICS_MAP_RESOURCE_FLAGS_WRITE_DISCARD);
-
     cudaGraphicsResourceGetMappedPointer(&ptr, &num_bytes, _cudaResource);
     return ptr;
 }
