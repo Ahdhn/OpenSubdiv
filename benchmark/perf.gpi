@@ -24,9 +24,8 @@ set format y "\$10^{%L}\$";
 set grid back
 
 plot \
-    "$2" using 1:2 with linespoint ls 1, \
-    "$2" using 1:3 with linespoint ls 2, \
-    "$2" using 1:4 with linespoint ls 3, \
-    "$2" using 1:5 with linespoint ls 4, \
-    "$2" using 1:6 with linespoint ls 6, \
-    "$2" using 1:7 with linespoint ls 7
+    "$2" using 1:2 w linespoint ls 1, \
+    "$2" using 1:4 w linespoint ls 2, \
+    "$2" using 1:6 w linespoint ls 3, \
+    "$2" using 1:8 w linespoint ls 4, \
+    "$2" using 1:10 w linespoint ls 5
