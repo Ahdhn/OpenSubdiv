@@ -114,7 +114,7 @@ _add_glut_executable(glutViewer
 )
 else()
 _add_glut_executable(glutViewer
-    viewer.cpp
+    viewer_compat.cpp
     ${SHADER_FILES}
     ${INC_FILES}
 )
