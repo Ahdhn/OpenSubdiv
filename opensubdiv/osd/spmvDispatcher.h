@@ -104,26 +104,8 @@ public:
      * Writes the subdivison matrix to a file. This step is helpful
      * for visualizing sparsity patterns.
      */
-    void WriteMatrix(coo_matrix1* M, std::string file_basename, int id=0) {
-        printf("Writing out matrix ... "); fflush(stdout);
-
-        std::ostringstream fname;
-        fname << file_basename << "_" << id << ".mm";
-        FILE* ofile = fopen(fname.str().c_str(), "w");
-        assert(ofile != NULL);
-
-        fprintf(ofile, "%%%%MatrixMarket matrix coordinate real general\n");
-        fprintf(ofile, "%d %d %d\n", M->size1(), M->size2(), M->nnz());
-
-        for(int i = 0; i < M->nnz(); i++)
-            fprintf(ofile, "%d %d %10.3g\n",
-                    M->index1_data()[i],
-                    M->index2_data()[i],
-                    M->value_data()[i]);
-
-        fclose(ofile);
-        printf("done.\n");
-    }
+    void WriteMatrix(coo_matrix1* M, std::string file_basename, int id=0);
+    void WriteMatrix(csr_matrix1* M, std::string file_basename, int id=0);
 
     /**
      * True if the subdivision matrix has been constructed and is

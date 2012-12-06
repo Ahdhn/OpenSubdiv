@@ -46,6 +46,34 @@ OsdSpMVKernelDispatcher::CopyNVerts(int nVerts, int dstIndex, int srcIndex) {
     return nVerts;
 }
 
+void
+OsdSpMVKernelDispatcher::WriteMatrix(coo_matrix1* M, std::string file_basename, int id) {
+    printf("Writing out matrix ... "); fflush(stdout);
+
+    std::ostringstream fname;
+    fname << file_basename << "_" << id << ".mm";
+    FILE* ofile = fopen(fname.str().c_str(), "w");
+    assert(ofile != NULL);
+
+    fprintf(ofile, "%%%%MatrixMarket matrix coordinate real general\n");
+    fprintf(ofile, "%d %d %d\n", M->size1(), M->size2(), M->nnz());
+
+    for(int i = 0; i < M->nnz(); i++)
+        fprintf(ofile, "%d %d %10.3g\n",
+                M->index1_data()[i],
+                M->index2_data()[i],
+                M->value_data()[i]);
+
+    fclose(ofile);
+    printf("done.\n");
+}
+
+void
+OsdSpMVKernelDispatcher::WriteMatrix(csr_matrix1* M, std::string file_basename, int id) {
+    csr_matrix1 Mcsr = csr_matrix1(*M);
+    this->WriteMatrix(&Mcsr, file_basename, id);
+}
+
 } // end namespace OPENSUBDIV_VERSION
 
 } // end namespace OpenSubdiv
