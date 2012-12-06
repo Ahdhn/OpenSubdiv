@@ -15,7 +15,7 @@ def main(argv):
 		with open(header_filename, 'w') as header:
 			print >>header, "static char const * %s =" % basename
 			for line in lines:
-				print >>header, '"%s"' % (line[:-2] + "\\n")
+				print >>header, '"%s"' % (line.rstrip('\n\r') + "\\n")
 			print >>header, ";"
 
 	print "done"

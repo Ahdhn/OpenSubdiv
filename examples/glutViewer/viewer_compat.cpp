@@ -128,6 +128,30 @@ int g_currentShape = 0;
 void
 initializeShapes( ) {
 
+#include <shapes/bigguy.h>
+    g_defaultShapes.push_back(SimpleShape(bigguy, "BigGuy", kCatmark));
+
+#include <shapes/al.h>
+    g_defaultShapes.push_back(SimpleShape(al, "Al", kCatmark));
+
+#include <shapes/bunny.h>
+    g_defaultShapes.push_back(SimpleShape(bunny, "Bunny", kLoop));
+
+#include <shapes/cupid.h>
+    g_defaultShapes.push_back(SimpleShape(cupid, "Cupid", kCatmark));
+
+#include <shapes/monsterfrog.h>
+    g_defaultShapes.push_back(SimpleShape(monsterfrog, "MonsterFrog", kCatmark));
+
+#include <shapes/torii.h>
+    g_defaultShapes.push_back(SimpleShape(torii, "Torii", kCatmark));
+
+#include <shapes/twist.h>
+    g_defaultShapes.push_back(SimpleShape(twist, "Twist", kLoop));
+
+#include <shapes/venus.h>
+    g_defaultShapes.push_back(SimpleShape(venus, "Venus", kLoop));
+
 #include <shapes/bilinear_cube.h>
     g_defaultShapes.push_back(SimpleShape(bilinear_cube, "bilinear_cube", kBilinear));
 
