@@ -37,7 +37,7 @@ find_path( MKL_LIBRARY_PATH
 set (MKL_FOUND "NO")
 if(MKL_INCLUDE_DIR)
   if(MKL_LIBRARY_PATH)
-    set (MKL_LIBRARIES "-Wl,--start-group  ${MKL_LIBRARY_PATH}/libmkl_intel_lp64.a ${MKL_LIBRARY_PATH}/libmkl_gnu_thread.a ${MKL_LIBRARY_PATH}/libmkl_core.a -Wl,--end-group -ldl -lpthread -lm")
+    set (MKL_LIBRARIES "-L${MKL_LIBRARY_PATH} -L/opt/intel/composerxe/lib/intel64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm")
     set (MKL_INCLUDE_PATH ${MKL_INCLUDE_DIR})
     set (MKL_FOUND "YES")
   endif(MKL_LIBRARY_PATH)

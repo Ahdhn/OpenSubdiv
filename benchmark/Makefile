@@ -1,8 +1,8 @@
-GLUT_VIEWER = /Users/driscoll/OpenSubdiv/build/bin/glutViewer
+GLUT_VIEWER = /home/driscoll/OpenSubdiv/build/bin/glutViewer
 MODELS = catmark_cube loop_icosahedron catmark_dart_edgecorner
 MEM_DATS := $(addprefix mem_, $(addsuffix .dat, $(MODELS)))
 PERF_TEXS := $(addprefix perf_, $(addsuffix .tex, $(MODELS)))
-INSTALL_PATH := /Users/driscoll/hpg2013/graphs
+INSTALL_PATH := /home/driscoll/hpg2013/graphs
 
 TEXFILES = mem.tex  $(PERF_TEXS)
 

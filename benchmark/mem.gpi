@@ -27,3 +27,5 @@ plot \
     "$2" using 1:2 ls 1 with linespoint, \
     "$3" using 1:2 ls 2 with linespoint, \
     "$4" using 1:2 ls 3 with linespoint
+
+EOF

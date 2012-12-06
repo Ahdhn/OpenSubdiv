@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/env python2.7
 
 import sys, os, shelve
 
@@ -8,7 +8,7 @@ def build_db(model):
     db = set()
     for k in activeKernels:
         for l in range(7):
-            db.add( do_run(frames=1000, model=model, kernel=k, level=l+1) )
+            db.add( do_run(frames=100, model=model, kernel=k, level=l+1) )
     return db
 
 def gen_dat_file(ofile, db):

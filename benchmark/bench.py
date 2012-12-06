@@ -4,7 +4,7 @@ import sys, re
 from subprocess import *
 import numpy as np
 
-GLUT_VIEWER_PATH = "/Users/driscoll/OpenSubdiv/build/bin/glutViewer"
+GLUT_VIEWER_PATH = "/home/driscoll/OpenSubdiv/build/bin/glutViewer"
 
 kernelNum = {
 	"CPU":        0,
@@ -22,10 +22,11 @@ kernelNum = {
 activeKernels = [
     "CPU",
     "OpenMP",
-    #"OpenCL",
     "Cuda",
+    "GLSL",
+    "OpenCL",
+    "MKL",
     "CuSPARSE",
-    "MKL"
 ]
 
 modelNum = {
@@ -54,9 +55,12 @@ class Run(object):
                 except ValueError:
                     pass
                 setattr(self, key, val)
-            else:
+            elif token:
                 self.frame_times.append( float(token) )
-        self.frame_times = np.array(self.frame_times).sort()
+	    else:
+		print "Bad token: <%s>" % token
+        self.frame_times = np.array(self.frame_times)
+	self.frame_times.sort()
 
     def timeofframe(frameid):
         return self.ttff + sum(self.frame_times[:frameid])
