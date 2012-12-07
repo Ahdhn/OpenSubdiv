@@ -212,9 +212,9 @@ OsdMklKernelDispatcher::MatrixReady()
 void
 OsdMklKernelDispatcher::PrintReport()
 {
-    int size_in_bytes =  (int) (M_big->index2_data().capacity() +
-                                M_big->index1_data().capacity()) * sizeof(int)  +
-                                M_big->value_data().capacity() * sizeof(float);
+    int size_in_bytes =  (int) (M_big->index2_data().size() +
+                                M_big->index1_data().size()) * sizeof(int)  +
+                                M_big->value_data().size() * sizeof(float);
     double sparsity_factor = 100.0 * M_big->nnz() / M_big->size1() / M_big->size2();
 
 #if BENCHMARKING
