@@ -7,8 +7,13 @@ from bench import *
 def build_db(model):
     db = set()
     for k in activeKernels:
-        for l in range(7):
-            db.add( do_run(frames=100, model=model, kernel=k, level=l+1) )
+        for l in range( modelMaxLevel[model] ):
+            try:
+		run = do_run(frames=1000, model=model, kernel=k, level=l+1)
+                db.add(run)
+	    except ExecutionError as e:
+		print "\tFailed with: %s" % e.message
+
     return db
 
 def gen_dat_file(ofile, db):

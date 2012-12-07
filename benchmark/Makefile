@@ -1,5 +1,5 @@
 GLUT_VIEWER = /home/driscoll/OpenSubdiv/build/bin/glutViewer
-MODELS = catmark_cube loop_icosahedron catmark_dart_edgecorner
+MODELS = BigGuy Bunny MonsterFrog Venus Cube Icosahedron
 MEM_DATS := $(addprefix mem_, $(addsuffix .dat, $(MODELS)))
 PERF_TEXS := $(addprefix perf_, $(addsuffix .tex, $(MODELS)))
 INSTALL_PATH := /home/driscoll/hpg2013/graphs
@@ -11,7 +11,7 @@ default:    all
 all:  $(TEXFILES)
 
 perf_%.tex: perf_%.dat
-	./perf.gpi $(INSTALL_PATH)/$@ $^
+	./perf.gpi $(INSTALL_PATH)/$@ $^ MODELNAME
 
 mem.tex: $(MEM_DATS)
 	./mem.gpi $(INSTALL_PATH)/$@ $^

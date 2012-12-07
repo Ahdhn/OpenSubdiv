@@ -3,10 +3,11 @@ gnuplot << EOF
 
 # $1 output file
 # $2 data file
+# $3 model name
 
 load "common.gpi"
 
-set title "Performance on 'XXX' Model"
+#set title "Performance on '$3' Model"
 set xlabel "Number of Vertices in Refined Mesh"
 set ylabel "Vertices per Microsecond"
 set output "$1"
@@ -15,6 +16,7 @@ set output "$1"
 set key bottom center outside maxrows 2
 set key autotitle columnhead
 
+set autoscale
 set logscale x 10
 set logscale y 10
 

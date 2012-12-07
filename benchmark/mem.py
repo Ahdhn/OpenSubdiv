@@ -6,7 +6,7 @@ from bench import *
 
 def build_db(model):
     db = set()
-    for l in range(7):
+    for l in range(4):
         db.add( do_run(frames=3, model=model, kernel='MKL', level=l+1) )
     return db
 

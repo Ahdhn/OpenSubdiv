@@ -30,10 +30,28 @@ activeKernels = [
 ]
 
 modelNum = {
-    "catmark_cube":       8,
-    "loop_icosahedron":     26,
-    "catmark_dart_edgecorner": 9
+    "BigGuy":		0,
+    "Bunny":		2,
+    "MonsterFrog":	4,
+    "Venus":		7,
+    "Cube":		16,
+    "Icosahedron":	34,
 }
+
+modelMaxLevel = {
+    "BigGuy":		5,
+    "Bunny":		5,
+    "MonsterFrog":	5,
+    "Venus":		4,
+    "Cube":		7,
+    "Icosahedron":	7,
+}
+
+class ExecutionError(Exception):
+    def __init__(self, message):
+        self.message = message
+    def __str__(self):
+        return repr(self.message)
 
 class Run(object):
     def __init__(self, line):
@@ -96,8 +114,10 @@ def do_run(model='cube', frames=1000, level=1, kernel='CPU'):
     print "Running: %s" % " ".join(cmd_line)
     osd = Popen(cmd_line, stdin=PIPE, stdout=PIPE, stderr=PIPE)
     stdout, stderr = osd.communicate()
-    assert stderr == "", "OpenSubdiv must exit cleanly, got: %s" % stderr
-    return Run(stdout)
+    if stderr != "":
+        raise ExecutionError(stderr)
+    else:
+        return Run(stdout)
 
 def main(argv):
     print "Benchmarking ..."
