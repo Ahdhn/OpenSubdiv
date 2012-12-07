@@ -411,17 +411,8 @@ updateGeom() {
         g_vertexBuffer = g_osdmesh->InitializeVertexBuffer(6);
     g_vertexBuffer->UpdateData(&vertex[0], nverts);
 
-    Stopwatch s;
-    s.Start();
-
-    g_osdmesh->Subdivide(g_vertexBuffer, NULL);
-
-    s.Stop();
-    g_cpuTime = float(s.GetElapsed() * 1000.0f);
-    s.Start();
-    g_osdmesh->Synchronize();
-    s.Stop();
-    g_gpuTime = float(s.GetElapsed() * 1000.0f);
+    g_cpuTime = (float) g_osdmesh->Subdivide(g_vertexBuffer, NULL) * 1000.0f;
+    g_gpuTime = (float) g_osdmesh->Synchronize() * 1000.0f;
 
     glBindBuffer(GL_ARRAY_BUFFER, g_vertexBuffer->GetGpuBuffer());
     glBindBuffer(GL_ARRAY_BUFFER, 0);

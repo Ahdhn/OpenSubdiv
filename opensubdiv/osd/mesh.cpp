@@ -58,6 +58,7 @@
 #include <string.h>
 
 #include "../version.h"
+#include "../examples/common/stopwatch.h"
 
 #include "../osd/mutex.h"
 
@@ -193,24 +194,38 @@ OsdMesh::CreatePtexCoordinatesTextureBuffer(int level) {
     return new OsdPtexCoordinatesTextureBuffer(_farMesh, level);
 }
 
-void
+double
 OsdMesh::Subdivide(OsdVertexBuffer *vertex, OsdVertexBuffer *varying) {
 
     _dispatcher->BindVertexBuffer(vertex, varying);
 
-    _dispatcher->OnKernelLaunch();
+    Stopwatch s;
+    s.Start();
+    {
+        _dispatcher->OnKernelLaunch();
 
-    _farMesh->Subdivide(_level+1, _dispatcher->GetStrategy());
+        _farMesh->Subdivide(_level+1, _dispatcher->GetStrategy());
 
-    _dispatcher->OnKernelFinish();
+        _dispatcher->OnKernelFinish();
+    }
+    s.Stop();
 
     _dispatcher->UnbindVertexBuffer();
+
+    return s.GetElapsed();
 }
 
-void
+double
 OsdMesh::Synchronize() {
 
-    _dispatcher->Synchronize();
+    Stopwatch s;
+    s.Start();
+    {
+        _dispatcher->Synchronize();
+    }
+    s.Stop();
+
+    return s.GetElapsed();
 }
 
 } // end namespace OPENSUBDIV_VERSION

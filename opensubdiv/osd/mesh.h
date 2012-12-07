@@ -110,15 +110,15 @@ public:
     // creates ptex-coordinates buffer for given level. Must call Creates() before calling this function.
     OsdPtexCoordinatesTextureBuffer * CreatePtexCoordinatesTextureBuffer(int level);
 
-    // for non-interleaved vertex data
-    void Subdivide(OsdVertexBuffer *vertex, OsdVertexBuffer *varying = NULL);
+    // for non-interleaved vertex data, returns time in seconds for execution
+    double Subdivide(OsdVertexBuffer *vertex, OsdVertexBuffer *varying = NULL);
 
 /*
     // for interleaved vertex data ?
     template <class T> void Subdivide(T *vertex) { }
 */
 
-    void Synchronize();
+    double Synchronize();
 
     int GetTotalVertices() const { return _farMesh->GetNumVertices(); }
 
