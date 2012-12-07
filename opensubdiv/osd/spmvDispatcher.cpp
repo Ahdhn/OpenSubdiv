@@ -5,6 +5,8 @@
 
 #include <stdio.h>
 
+bool osdSpMVKernel_DumpSpy = false;
+
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
@@ -70,8 +72,8 @@ OsdSpMVKernelDispatcher::WriteMatrix(coo_matrix1* M, std::string file_basename, 
 
 void
 OsdSpMVKernelDispatcher::WriteMatrix(csr_matrix1* M, std::string file_basename, int id) {
-    csr_matrix1 Mcsr = csr_matrix1(*M);
-    this->WriteMatrix(&Mcsr, file_basename, id);
+    coo_matrix1 Mcoo = csr_matrix1(*M);
+    this->WriteMatrix(&Mcoo, file_basename, id);
 }
 
 } // end namespace OPENSUBDIV_VERSION

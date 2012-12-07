@@ -56,7 +56,7 @@ device_csr_matrix_view::~device_csr_matrix_view() {
 void
 device_csr_matrix_view::report(std::string name) {
     printf("%s: %d-%d, %d nnz, r/c/v: 0%x 0%x 0%x\n",
-            name.c_str(), m, n, nnz, (void*) rows, (void*) cols, (void*) vals);
+            name.c_str(), m, n, nnz, (unsigned int*) rows, (unsigned int*) cols, (unsigned int*) vals);
 }
 
 void

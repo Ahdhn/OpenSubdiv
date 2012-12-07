@@ -201,6 +201,10 @@ OsdMklKernelDispatcher::FinalizeMatrix()
     }
 
     this->PrintReport();
+
+    if (osdSpMVKernel_DumpSpy == true) {
+	this->WriteMatrix(M, "mkl_subdiv_matrix");
+    }
 }
 
 bool
