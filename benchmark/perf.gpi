@@ -16,7 +16,9 @@ set output "$1"
 set key bottom center outside maxrows 2
 set key autotitle columnhead
 
-set autoscale
+set autoscale fix
+set offset .3, .3, .3, .3
+
 set logscale x 10
 set logscale y 10
 
