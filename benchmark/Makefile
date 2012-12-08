@@ -1,4 +1,3 @@
-GLUT_VIEWER = /home/driscoll/OpenSubdiv/build/bin/glutViewer
 MODELS = BigGuy Bunny MonsterFrog Venus Cube Icosahedron
 MEM_DATS := $(addprefix mem_, $(addsuffix .dat, $(MODELS)))
 PERF_TEXS := $(addprefix perf_, $(addsuffix .tex, $(MODELS)))
@@ -26,12 +25,12 @@ clean:
 
 .SECONDARY:
 
-perf_%.dat:	$(GLUT_VIEWER)
+perf_%.dat:
 	./perf.py $@
 
-mem_%.dat: $(GLUT_VIEWER)
+mem_%.dat:
 	./mem.py $@
 
-spy_%.mm: $(GLUT_VIEWER)
+spy_%.mm:
 	./spy.py $@
 
