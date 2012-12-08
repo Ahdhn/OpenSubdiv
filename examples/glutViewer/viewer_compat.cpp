@@ -987,8 +987,10 @@ int main(int argc, char ** argv) {
             g_currentShape = atoi(argv[++i]);
         else if (!strcmp(argv[i], "-k") || !strcmp(argv[i], "--kernel"))
             g_kernel = atoi(argv[++i]);
-        else if (!strcmp(argv[i], "-s") || !strcmp(argv[i], "--spy"))
+        else if (!strcmp(argv[i], "-s") || !strcmp(argv[i], "--spy")) {
             osdSpMVKernel_DumpSpy = true;
+            osdSpMVKernel_DumpSpy_FileName = std::string(argv[++i]);
+        }
         else
             filename = argv[i];
     }

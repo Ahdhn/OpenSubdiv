@@ -102,7 +102,7 @@ class Run(object):
 def escape_latex(string):
     return string.replace('_', '\\\\_')
 
-def do_run(model='cube', frames=1000, level=1, kernel='CPU'):
+def do_run(model='cube', frames=1000, level=1, kernel='CPU', spyfile=None):
     assert 0 < level <= 7, "Must select positive subdiv level from 1 to 7."
     cmd_line = [
         GLUT_VIEWER_PATH,
@@ -111,6 +111,8 @@ def do_run(model='cube', frames=1000, level=1, kernel='CPU'):
         "--level", str(level),
         "--model", str(modelNum[model])
     ]
+    if spyfile is not None:
+        cmd_line += ['--spy', spyfile]
     print "Running: %s" % " ".join(cmd_line)
     osd = Popen(cmd_line, stdin=PIPE, stdout=PIPE, stderr=PIPE)
     stdout, stderr = osd.communicate()

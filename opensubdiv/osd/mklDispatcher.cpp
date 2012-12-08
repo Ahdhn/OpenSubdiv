@@ -203,7 +203,7 @@ OsdMklKernelDispatcher::FinalizeMatrix()
     this->PrintReport();
 
     if (osdSpMVKernel_DumpSpy == true) {
-	this->WriteMatrix(M, "mkl_subdiv_matrix");
+	this->WriteMatrix(M, osdSpMVKernel_DumpSpy_FileName);
     }
 }
 

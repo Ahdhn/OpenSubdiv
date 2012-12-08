@@ -695,10 +695,9 @@ display() {
     glDisable(GL_LIGHTING);
     glColor3f(1, 1, 1);
     glBegin(GL_QUADS);
-    glColor3f(0.5f, 0.5f, 0.5f);
+    glColor3f(1, 1, 1);
     glVertex3f(-1, -1, 1);
     glVertex3f( 1, -1, 1);
-    glColor3f(0, 0, 0);
     glVertex3f( 1,  1, 1);
     glVertex3f(-1,  1, 1);
     glEnd();

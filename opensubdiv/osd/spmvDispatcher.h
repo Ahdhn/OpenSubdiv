@@ -6,11 +6,13 @@
 
 #include <stdio.h>
 #include <sstream>
+#include <string>
 
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 
 extern bool osdSpMVKernel_DumpSpy;
+extern std::string osdSpMVKernel_DumpSpy_FileName;
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
@@ -106,8 +108,8 @@ public:
      * Writes the subdivison matrix to a file. This step is helpful
      * for visualizing sparsity patterns.
      */
-    void WriteMatrix(coo_matrix1* M, std::string file_basename, int id=0);
-    void WriteMatrix(csr_matrix1* M, std::string file_basename, int id=0);
+    void WriteMatrix(coo_matrix1* M, std::string file_basename);
+    void WriteMatrix(csr_matrix1* M, std::string file_basename);
 
     /**
      * True if the subdivision matrix has been constructed and is

@@ -6,6 +6,7 @@
 #include <stdio.h>
 
 bool osdSpMVKernel_DumpSpy = false;
+std::string osdSpMVKernel_DumpSpy_FileName = "subdiv_matrix.mm";
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
@@ -49,12 +50,8 @@ OsdSpMVKernelDispatcher::CopyNVerts(int nVerts, int dstIndex, int srcIndex) {
 }
 
 void
-OsdSpMVKernelDispatcher::WriteMatrix(coo_matrix1* M, std::string file_basename, int id) {
-    printf("Writing out matrix ... "); fflush(stdout);
-
-    std::ostringstream fname;
-    fname << file_basename << "_" << id << ".mm";
-    FILE* ofile = fopen(fname.str().c_str(), "w");
+OsdSpMVKernelDispatcher::WriteMatrix(coo_matrix1* M, std::string filename) {
+    FILE* ofile = fopen(filename.c_str(), "w");
     assert(ofile != NULL);
 
     fprintf(ofile, "%%%%MatrixMarket matrix coordinate real general\n");
@@ -67,13 +64,29 @@ OsdSpMVKernelDispatcher::WriteMatrix(coo_matrix1* M, std::string file_basename, 
                 M->value_data()[i]);
 
     fclose(ofile);
-    printf("done.\n");
 }
 
 void
-OsdSpMVKernelDispatcher::WriteMatrix(csr_matrix1* M, std::string file_basename, int id) {
-    coo_matrix1 Mcoo = csr_matrix1(*M);
-    this->WriteMatrix(&Mcoo, file_basename, id);
+OsdSpMVKernelDispatcher::WriteMatrix(csr_matrix1* M, std::string filename) {
+    FILE* ofile = fopen(filename.c_str(), "w");
+    assert(ofile != NULL);
+
+    fprintf(ofile, "%%%%MatrixMarket matrix coordinate real general\n");
+    fprintf(ofile, "%d %d %d\n", M->size1(), M->size2()+1, M->nnz());
+
+    int* rows = &M->index1_data()[0];
+    int* cols = &M->index2_data()[0];
+    float* vals = &M->value_data()[0];
+
+    for(int r = 0; r < M->size1(); r++) {
+        for(int offset = rows[r]; offset < rows[r+1]; offset++) {
+	    int c      = cols[offset];
+            float val  = vals[offset];
+            fprintf(ofile, "%d %d %10.3g\n", r+1, c+1, val);
+        }
+    }
+
+    fclose(ofile);
 }
 
 } // end namespace OPENSUBDIV_VERSION

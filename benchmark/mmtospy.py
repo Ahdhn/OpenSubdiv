@@ -1,3 +1,5 @@
+#!/usr/bin/env python2.7
+
 """
 Plot the sparsity pattern of arrays
 """
@@ -18,7 +20,7 @@ def swap(A, i, j):
     A[j] = tmp
 
 def main(argv):
-    assert len(argv) == 2, "Usage: python %s matrix.mm" % argv[0]
+    assert len(argv) == 2, "Usage: ./%s NAME.mm" % argv[0]
     mm_filename = argv[1]
     x = mmread(mm_filename)
 
@@ -41,7 +43,7 @@ def main(argv):
     ax.yaxis.set_visible(False)
 
     extent = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
-    fig.savefig("spy_%s.pdf" % mm_filename[:-3], bbox_inches=extent)
+    fig.savefig("%s.pdf" % mm_filename[:-3], bbox_inches=extent)
 
 if __name__ == '__main__':
     import sys
