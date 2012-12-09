@@ -4,8 +4,8 @@ import sys, os, shelve
 
 from bench import *
 
-NSAMPLES = 4
-NFRAMESPERSAMPLE = 4
+NSAMPLES = 100
+NFRAMESPERSAMPLE = 100
 
 modelTtffLevel = {
     "BigGuy":       4,
@@ -14,13 +14,6 @@ modelTtffLevel = {
     "Venus":        4,
     "Cube":         7,
     "Icosahedron":  7,
-}
-
-activeKernels = {
-    "CPU",
-    "OpenMP",
-    "OpenCL",
-    "MKL",
 }
 
 def print_at_index(ofile, r0, ri, i, n):
@@ -37,7 +30,7 @@ def build_db(model):
     for k in activeKernels:
         for sample in range(NSAMPLES):
             level=modelTtffLevel[model]
-            db.append( do_run(frames=NSAMPLES, model=model, kernel=k, level=level) )
+            db.append( do_run(frames=NFRAMESPERSAMPLE, model=model, kernel=k, level=level) )
     return db
 
 def gen_dat_file(ofile, db):
@@ -51,7 +44,7 @@ def gen_dat_file(ofile, db):
         ttff_in_ms = np.mean([r.ttff for r in run_list])
         cumulative_verts = 0
         xs, ys = [], []
-        for ms in range(1,NSAMPLES):
+        for ms in range(1,NFRAMESPERSAMPLE):
             cumulative_verts += np.mean([ r.frame_times[ms] for r in run_list ])
             xs.append(ttff_in_ms+ms)
             ys.append(cumulative_verts)
