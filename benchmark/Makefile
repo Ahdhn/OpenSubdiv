@@ -3,8 +3,9 @@ MEM_DATS := $(addprefix mem_, $(addsuffix .dat, $(MODELS)))
 SPARSITY_DATS := $(addprefix sparsity_, $(addsuffix .dat, $(MODELS)))
 PERF_TEXS := $(addprefix perf_, $(addsuffix .tex, $(MODELS)))
 TTFF_TEXS := $(addprefix ttff_, $(addsuffix .tex, $(MODELS)))
-#INSTALL_PATH := /home/driscoll/hpg2013/graphs
-INSTALL_PATH := /Users/mbdriscoll/cs284/hpg2013/graphs
+BUILD_PATH : ./graphs
+INSTALL_PATH := /home/driscoll/hpg2013/graphs
+#INSTALL_PATH := /Users/mbdriscoll/cs284/hpg2013/graphs
 
 TEXFILES = mem.tex sparsity.tex $(PERF_TEXS) $(TTFF_TEXS)
 SPYFILES = $(addprefix spy_, $(addsuffix .pdf, $(MODELS)))
@@ -14,16 +15,20 @@ default:    all
 all:  $(SPYFILES) $(TEXFILES)
 
 perf_%.tex: perf_%.dat
-	./perf.gpi $(INSTALL_PATH)/$@ $^ MODELNAME
+	./perf.gpi $(BUILD_PATH)/$@ $^ MODELNAME
+	cp $(BUILD_PATH)/$@ $(INSTALL_PATH)/$@
 
 ttff_%.tex: ttff_%.dat
-	./ttff.gpi $(INSTALL_PATH)/$@ $^ MODELNAME
+	./ttff.gpi $(BUILD_PATH)/$@ $^ MODELNAME
+	cp $(BUILD_PATH)/$@ $(INSTALL_PATH)/$@
 
 mem.tex: $(MEM_DATS)
-	./mem.gpi $(INSTALL_PATH)/$@ $^
+	./mem.gpi $(BUILD__PATH)/$@ $^
+	cp $(BUILD_PATH)/$@ $(INSTALL_PATH)/$@
 
 sparsity.tex: $(SPARSITY_DATS)
-	./sparsity.gpi $(INSTALL_PATH)/$@ $^
+	./sparsity.gpi $(BUILD_PATH)/$@ $^
+	cp $(BUILD_PATH)/$@ $(INSTALL_PATH)/$@
 
 spy_%.pdf: spy_%.mm
 	./mmtospy.py $^
