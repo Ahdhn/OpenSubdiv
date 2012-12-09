@@ -3,7 +3,7 @@ MEM_DATS := $(addprefix mem_, $(addsuffix .dat, $(MODELS)))
 SPARSITY_DATS := $(addprefix sparsity_, $(addsuffix .dat, $(MODELS)))
 PERF_TEXS := $(addprefix perf_, $(addsuffix .tex, $(MODELS)))
 TTFF_TEXS := $(addprefix ttff_, $(addsuffix .tex, $(MODELS)))
-BUILD_PATH : ./graphs
+BUILD_PATH := ./graphs
 INSTALL_PATH := /home/driscoll/hpg2013/graphs
 #INSTALL_PATH := /Users/mbdriscoll/cs284/hpg2013/graphs
 
@@ -23,7 +23,7 @@ ttff_%.tex: ttff_%.dat
 	cp $(BUILD_PATH)/$@ $(INSTALL_PATH)/$@
 
 mem.tex: $(MEM_DATS)
-	./mem.gpi $(BUILD__PATH)/$@ $^
+	./mem.gpi $(BUILD_PATH)/$@ $^
 	cp $(BUILD_PATH)/$@ $(INSTALL_PATH)/$@
 
 sparsity.tex: $(SPARSITY_DATS)
