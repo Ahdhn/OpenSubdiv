@@ -9,11 +9,10 @@ def build_db(model):
     for k in activeKernels:
         for l in range( modelMaxLevel[model] ):
             try:
-		run = do_run(frames=1000, model=model, kernel=k, level=l+1)
+		        run = do_run(frames=1000, model=model, kernel=k, level=l+1)
                 db.add(run)
 	    except ExecutionError as e:
-		print "\tFailed with: %s" % e.message
-
+		    print "\tFailed with: %s" % e.message
     return db
 
 def gen_dat_file(ofile, db):

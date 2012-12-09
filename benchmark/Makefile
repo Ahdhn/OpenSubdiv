@@ -47,7 +47,6 @@ perf_%.dat:
 	./perf.py $@
 
 ttff_%.dat:
-	rm -f fit.log
 	./ttff.py $@
 
 mem_%.dat:
