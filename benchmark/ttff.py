@@ -4,26 +4,67 @@ import sys, os, shelve
 
 from bench import *
 
-NFRAMES = 100
+NSAMPLES = 4
+NFRAMESPERSAMPLE = 4
+
+modelTtffLevel = {
+    "BigGuy":       4,
+    "Bunny":        5,
+    "MonsterFrog":  5,
+    "Venus":        4,
+    "Cube":         7,
+    "Icosahedron":  7,
+}
+
+activeKernels = {
+    "CPU",
+    "OpenMP",
+    "OpenCL",
+    "MKL",
+}
+
+def print_at_index(ofile, r0, ri, i, n):
+    print >>ofile, r0,
+    for k in range(n):
+        if k == i:
+            print >>ofile, ri,
+        else:
+            print >>ofile, "?",
+    print >>ofile
 
 def build_db(model):
-    db = set()
+    db = []
     for k in activeKernels:
-        for l in range(7):
-            db.add( do_run(frames=NFRAMES, model=model, kernel=k, level=l+1) )
+        for sample in range(NSAMPLES):
+            level=modelTtffLevel[model]
+            db.append( do_run(frames=NSAMPLES, model=model, kernel=k, level=level) )
     return db
 
 def gen_dat_file(ofile, db):
-    kernel_set = { r.kernel for r in db if r.kernel }
+    kernel_list = list({ r.kernel for r in db })
     size_set = { r.nverts for r in db if r.nverts }
-    kernel_list = sorted(kernel_set, key=lambda k: kernelNum[k])
     size_list = sorted(size_set)
-    print >>ofile, "time", " ".join(kernel_list)
-
+    fxns = {}
     for k in range(len(kernel_list)):
         kernel = kernel_list[k]
-        for f in range(NFRAMES):
+        run_list = filter(lambda r: r.kernel == kernel, db)
+        ttff_in_ms = np.mean([r.ttff for r in run_list])
+        cumulative_verts = 0
+        xs, ys = [], []
+        for ms in range(1,NSAMPLES):
+            cumulative_verts += np.mean([ r.frame_times[ms] for r in run_list ])
+            xs.append(ttff_in_ms+ms)
+            ys.append(cumulative_verts)
+        x = np.array(xs)
+        y = np.array(ys)
+        A = np.vstack([x, np.ones(len(x))]).T
+        m, c = np.linalg.lstsq(A, y)[0]
+        fxns[kernel] = lambda x: x*m + c
+        print >>ofile, "%s(x) = %f * x + %f" % (kernel, m, c)
 
+    xmax = max([r.ttff for r in db]) * 2
+    ymax = max([fxns[k](xmax) for k in fxns]) * 1.05
+    print >>ofile, "# xmax = %f, ymax = %f" % (xmax, ymax)
 
 def main(argv):
     model = argv[1][5:-4]

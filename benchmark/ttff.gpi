@@ -1,0 +1,48 @@
+#!/bin/bash
+gnuplot << EOF
+
+# $1 output file
+# $2 data file
+# $3 model name
+
+set term epslatex dashed color
+
+set style line 1 lw 5 lt rgb "dark-red"
+set style line 2 lw 5 lt rgb "dark-orange"
+set style line 3 lw 5 lt rgb "dark-yellow"
+set style line 4 lw 5 lt rgb "dark-green"
+set style line 5 lw 5 lt rgb "dark-blue"
+set style line 6 lw 5 lt rgb "dark-violet"
+set style line 7 lw 5 lt rgb "black"
+
+#set title "Performance on '$3' Model"
+set xlabel "Elapsed Time"
+set ylabel "Cumulative Subdivided Vertices"
+set output "$1"
+#set size 1, 0.80
+
+set key top left
+set grid back
+set offset .3, .3, .3, .3
+
+xmax = system("grep -oE 'xmax = [0-9]+.[0-9]+' $2 | grep -oE '[0-9]+.[0-9]+'")
+ymax = system("grep -oE 'ymax = [0-9]+.[0-9]+' $2 | grep -oE '[0-9]+.[0-9]+'")
+
+load "$2"
+
+Cuda(x) = 0
+GLSL(x) = 0
+CuSPARSE(x) = 0
+
+set samples xmax/1000
+
+plot [0:xmax][0:ymax] \
+    CPU(x)      ls 1 t "CPU", \
+    OpenMP(x)   ls 2 t "OpenMP", \
+    Cuda(x)     ls 3 t "Cuda", \
+    GLSL(x)     ls 4 t "GLSL", \
+    OpenCL(x)   ls 5 t "OpenCL", \
+    MKL(x)      ls 6 t "MKL", \
+    CuSPARSE(x) ls 7 t "CuSPARSE"
+
+EOF
