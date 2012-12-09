@@ -9,9 +9,9 @@ NFRAMESPERSAMPLE = 100
 
 modelTtffLevel = {
     "BigGuy":       4,
-    "Bunny":        5,
-    "MonsterFrog":  5,
-    "Venus":        4,
+    "Bunny":        4,
+    "MonsterFrog":  4,
+    "Venus":        3,
     "Cube":         7,
     "Icosahedron":  7,
 }
