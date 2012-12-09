@@ -11,7 +11,7 @@ spyplotLevel = {
     "Venus":            2,
     "Cube":             5,
     "Icosahedron":      5,
-}   
+}
 
 
 def main(argv):

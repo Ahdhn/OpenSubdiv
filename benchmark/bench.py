@@ -4,7 +4,10 @@ import sys, re
 from subprocess import *
 import numpy as np
 
-GLUT_VIEWER_PATH = "/home/driscoll/OpenSubdiv/build/bin/glutViewer"
+if sys.platform == 'darwin':
+    GLUT_VIEWER_PATH = "/Users/mbdriscoll/cs284/OpenSubdiv/build/bin/glutViewer"
+else:
+    GLUT_VIEWER_PATH = "/home/driscoll/OpenSubdiv/build/bin/glutViewer"
 
 kernelNum = {
 	"CPU":        0,
@@ -30,21 +33,21 @@ activeKernels = [
 ]
 
 modelNum = {
-    "BigGuy":		0,
-    "Bunny":		2,
-    "MonsterFrog":	4,
-    "Venus":		7,
-    "Cube":		16,
-    "Icosahedron":	34,
+    "BigGuy":      0,
+    "Bunny":       2,
+    "MonsterFrog": 4,
+    "Venus":       7,
+    "Cube":        16,
+    "Icosahedron": 34,
 }
 
 modelMaxLevel = {
-    "BigGuy":		4,
-    "Bunny":		5,
-    "MonsterFrog":	5,
-    "Venus":		4,
-    "Cube":		7,
-    "Icosahedron":	7,
+    "BigGuy":       4,
+    "Bunny":        5,
+    "MonsterFrog":  5,
+    "Venus":        4,
+    "Cube":         7,
+    "Icosahedron":  7,
 }
 
 class ExecutionError(Exception):
@@ -98,6 +101,10 @@ class Run(object):
 
     def kernel_id(self):
         return kernelNum[ self.kernel ]
+
+    def framerate(self):
+        avgVperMs = self.mean()
+        return avgVperMs / self.nverts
 
 def escape_latex(string):
     return string.replace('_', '\\\\_')
