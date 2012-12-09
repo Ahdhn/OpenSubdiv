@@ -20,6 +20,7 @@ set autoscale fix
 set offset .3, .3, .3, .3
 
 set logscale x 10
+set logscale y 10
 set format x "\$10^{%L}\$";
 
 set grid back

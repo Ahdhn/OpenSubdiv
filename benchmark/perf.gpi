@@ -9,7 +9,7 @@ load "common.gpi"
 
 #set title "Performance on '$3' Model"
 set xlabel "Number of Vertices in Refined Mesh"
-set ylabel "Vertices per Microsecond"
+set ylabel "Vertices per Millisecond"
 set output "$1"
 #set size 1, 0.80
 
