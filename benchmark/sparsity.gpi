@@ -8,10 +8,10 @@ load "common.gpi"
 
 set title "Sparsity Factor of Subdivision Operator"
 set xlabel "Number of Vertices in Refined Mesh"
-set ylabel "Sparsity Factor"
+set ylabel "Sparsity Factor" offset 3
 set output "$1"
 
-set key bottom left box
+set key bottom left width -4
 set key autotitle columnhead
 set datafile missing "?"
 

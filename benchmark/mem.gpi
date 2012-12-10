@@ -11,7 +11,7 @@ set xlabel "Number of Vertices in Refined Mesh"
 set ylabel "Memory (bytes)"
 set output "$1"
 
-set key bottom right box
+set key bottom right samplen 2 width -2
 set key autotitle columnhead
 set datafile missing "?"
 

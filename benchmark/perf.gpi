@@ -7,17 +7,18 @@ gnuplot << EOF
 
 load "common.gpi"
 
-#set title "Performance on '$3' Model"
+set title "Sustained Performance on \\\`$3' Model"
 set xlabel "Number of Vertices in Refined Mesh"
-set ylabel "Vertices per Millisecond"
+set ylabel "Vertices Subdivided per Millisecond" offset 1
 set output "$1"
 #set size 1, 0.80
 
-set key bottom center outside maxrows 2
+set key bottom center maxrows 2
 set key autotitle columnhead
+set key samplen 2 width -2
 
 set autoscale fix
-set offset .3, .3, .3, .3
+set offset .3, .3, .3, .7
 
 set logscale x 10
 set logscale y 10

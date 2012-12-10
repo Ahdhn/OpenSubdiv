@@ -4,8 +4,8 @@ SPARSITY_DATS := $(addprefix sparsity_, $(addsuffix .dat, $(MODELS)))
 PERF_TEXS := $(addprefix perf_, $(addsuffix .tex, $(MODELS)))
 TTFF_TEXS := $(addprefix ttff_, $(addsuffix .tex, $(MODELS)))
 BUILD_PATH := ./graphs
-INSTALL_PATH := /home/driscoll/hpg2013/graphs
-#INSTALL_PATH := /Users/mbdriscoll/cs284/hpg2013/graphs
+#INSTALL_PATH := /home/driscoll/hpg2013/graphs
+INSTALL_PATH := /Users/mbdriscoll/cs284/hpg2013/graphs
 
 TEXFILES = mem.tex sparsity.tex $(PERF_TEXS) $(TTFF_TEXS)
 SPYFILES = $(addprefix spy_, $(addsuffix .pdf, $(MODELS)))
@@ -15,12 +15,12 @@ default:    all
 all:  $(SPYFILES) $(TEXFILES)
 
 perf_%.tex: perf_%.dat
-	./perf.gpi $(BUILD_PATH)/$@ $^ MODELNAME
+	./perf.gpi $(BUILD_PATH)/$@ $^ $*
 	cp $(BUILD_PATH)/$@ $(INSTALL_PATH)/$@
 	cp $(BUILD_PATH)/$(patsubst %.tex,%.eps, $@) $(INSTALL_PATH)/
 
 ttff_%.tex: ttff_%.dat
-	./ttff.gpi $(BUILD_PATH)/$@ $^ MODELNAME
+	./ttff.gpi $(BUILD_PATH)/$@ $^ $*
 	cp $(BUILD_PATH)/$@ $(INSTALL_PATH)/$@
 	cp $(BUILD_PATH)/$(patsubst %.tex,%.eps, $@) $(INSTALL_PATH)/
 
