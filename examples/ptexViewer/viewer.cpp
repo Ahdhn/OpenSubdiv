@@ -56,6 +56,7 @@
 //
 
 #if defined(__APPLE__)
+    #include <GL/glew.h>
     #include <GLUT/glut.h>
 #else
     #include <GL/glew.h>
@@ -72,12 +73,15 @@
 #include <osd/vertex.h>
 #include <osd/mesh.h>
 #include <osd/cpuDispatcher.h>
-#include <osd/glslDispatcher.h>
 #include <osd/pTexture.h>
 #include <osd/elementArrayBuffer.h>
 #include <osd/ptexCoordinatesTextureBuffer.h>
 
 #include "../common/stopwatch.h"
+
+#ifdef OPENSUBDIV_HAS_GLSL
+    #include <osd/glslDispatcher.h>
+#endif
 
 #ifdef OPENSUBDIV_HAS_OPENCL
     #include <osd/clDispatcher.h>
@@ -943,7 +947,10 @@ int main(int argc, char ** argv) {
 
     // Register Osd compute kernels
     OpenSubdiv::OsdCpuKernelDispatcher::Register();
+
+#if OPENSUBDIV_HAS_GLSL
     OpenSubdiv::OsdGlslKernelDispatcher::Register();
+#endif
 
 #if OPENSUBDIV_HAS_OPENCL
     OpenSubdiv::OsdClKernelDispatcher::Register();
