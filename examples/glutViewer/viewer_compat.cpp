@@ -298,6 +298,12 @@ std::vector<float> g_coarseVertexSharpness;
 OpenSubdiv::OsdMesh * g_osdmesh = 0;
 OpenSubdiv::OsdVertexBuffer * g_vertexBuffer = 0;
 
+#if REGRESSION
+OpenSubdiv::OsdMesh * g_cpu_osdmesh = 0;
+OpenSubdiv::OsdVertexBuffer * g_cpu_vertexBuffer = 0;
+#define PRECISION 1e-6
+#endif
+
 //------------------------------------------------------------------------------
 inline void
 cross(float *n, const float *p0, const float *p1, const float *p2) {
@@ -424,6 +430,35 @@ updateGeom() {
 #if BENCHMARKING
     printf(" %f", frameVertsPerMillisecond);
 #endif
+
+#if REGRESSION
+    if (!g_cpu_vertexBuffer)
+        g_cpu_vertexBuffer = g_cpu_osdmesh->InitializeVertexBuffer(6);
+    g_cpu_vertexBuffer->UpdateData(&vertex[0], nverts);
+    g_cpuTime = (float) g_cpu_osdmesh->Subdivide(g_cpu_vertexBuffer, NULL) * 1000.0f;
+
+    int errors = 0;
+    float* expected = (float*) g_cpu_vertexBuffer->GetCpuBuffer();
+    float* actual = (float*) g_vertexBuffer->GetCpuBuffer();
+    for (int i = 0; i < nverts; i++)
+        if (fabs(expected[i] - actual[i]) > PRECISION)
+            errors += 1;
+    printf("\n\t%d errors in control cage.\n", errors);
+
+    // todo: figure out vertices vs vertex elems etc
+    int level = g_osdmesh->GetLevel();
+    int offset = g_osdmesh->GetFarMesh()->GetSubdivision()->GetFirstVertexOffset(std::max(level-1,0)) * g_vertexBuffer->GetNumElements();
+    int nfineverts = g_osdmesh->GetFarMesh()->GetSubdivision()->GetNumVertices(level);
+    errors = 0;
+    expected += offset;
+    actual += offset;
+    for (int i = 0; i < nfineverts; i++)
+        if (fabs(expected[i] - actual[i]) > PRECISION)
+            errors += 1;
+    printf("\t%d errors on surface.\n", errors);
+#endif
+
+
 }
 
 //-------------------------------------------------------------------------------
@@ -592,6 +627,16 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme=kCatmark
         delete g_vertexBuffer;
         g_vertexBuffer = NULL;
     }
+
+#if REGRESSION
+    if (g_cpu_osdmesh) delete g_cpu_osdmesh;
+    g_cpu_osdmesh = new OpenSubdiv::OsdMesh();
+    g_cpu_osdmesh->Create(hmesh, level, OpenSubdiv::OsdKernelDispatcher::kCPU);
+    if (g_cpu_vertexBuffer) {
+        delete g_cpu_vertexBuffer;
+        g_cpu_vertexBuffer = NULL;
+    }
+#endif
 
     // Hbr mesh can be deleted
     delete hmesh;
