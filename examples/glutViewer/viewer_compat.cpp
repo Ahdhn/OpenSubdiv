@@ -720,7 +720,7 @@ display() {
         drawString(10, 110, "SUBDIVISION = %s", g_scheme==kBilinear ? "BILINEAR" : (g_scheme == kLoop ? "LOOP" : "CATMARK"));
         drawString(10, 130, "AVG VERT/MS = %4.f", g_vertPerMillisec);
         drawString(10, 150, "MODEL = %s", g_defaultShapes[ g_currentShape ].name.c_str());
-        drawString(10, 170, "DUMP SPY = %d", osdSpMVKernel_DumpSpy);
+        drawString(10, 170, "DUMP SPY = %d", osdSpMVKernel_DumpSpy_FileName != NULL);
 
         drawString(10, g_height-30, "w:   toggle wireframe");
         drawString(10, g_height-50, "e:   display normal vector");
@@ -988,8 +988,7 @@ int main(int argc, char ** argv) {
         else if (!strcmp(argv[i], "-k") || !strcmp(argv[i], "--kernel"))
             g_kernel = atoi(argv[++i]);
         else if (!strcmp(argv[i], "-s") || !strcmp(argv[i], "--spy")) {
-            osdSpMVKernel_DumpSpy = true;
-            osdSpMVKernel_DumpSpy_FileName = std::string(argv[++i]);
+            osdSpMVKernel_DumpSpy_FileName = argv[++i];
         }
         else
             filename = argv[i];

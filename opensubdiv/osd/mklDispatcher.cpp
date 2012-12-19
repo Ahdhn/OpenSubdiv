@@ -202,8 +202,8 @@ OsdMklKernelDispatcher::FinalizeMatrix()
 
     this->PrintReport();
 
-    if (osdSpMVKernel_DumpSpy == true) {
-	this->WriteMatrix(M, osdSpMVKernel_DumpSpy_FileName);
+    if (osdSpMVKernel_DumpSpy_FileName != NULL) {
+        this->WriteMatrix(M, osdSpMVKernel_DumpSpy_FileName);
     }
 }
 

@@ -5,8 +5,7 @@
 
 #include <stdio.h>
 
-bool osdSpMVKernel_DumpSpy = false;
-std::string osdSpMVKernel_DumpSpy_FileName = "subdiv_matrix.mm";
+char* osdSpMVKernel_DumpSpy_FileName = NULL;
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {

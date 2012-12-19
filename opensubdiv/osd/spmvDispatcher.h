@@ -11,8 +11,7 @@
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 
-extern bool osdSpMVKernel_DumpSpy;
-extern std::string osdSpMVKernel_DumpSpy_FileName;
+extern char* osdSpMVKernel_DumpSpy_FileName;
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
