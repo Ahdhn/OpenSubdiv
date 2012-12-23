@@ -5,9 +5,9 @@ from subprocess import *
 import numpy as np
 
 if sys.platform == 'darwin':
-    GLUT_VIEWER_PATH = "/Users/mbdriscoll/cs284/OpenSubdiv/build/bin/glutViewer"
+    VIEWER_PATH = "/Users/mbdriscoll/cs284/OpenSubdiv/build/bin/headlessViewer"
 else:
-    GLUT_VIEWER_PATH = "/home/driscoll/OpenSubdiv/build/bin/glutViewer"
+    VIEWER_PATH = "/home/driscoll/OpenSubdiv/build/bin/headlessViewer"
 
 kernelNum = {
 	"CPU":        0,
@@ -112,7 +112,7 @@ def escape_latex(string):
 def do_run(model='cube', frames=1000, level=1, kernel='CPU', spyfile=None):
     assert 0 < level <= 7, "Must select positive subdiv level from 1 to 7."
     cmd_line = [
-        GLUT_VIEWER_PATH,
+        VIEWER_PATH,
         "--count", str(frames),
         "--kernel", str(kernelNum[kernel]),
         "--level", str(level),
