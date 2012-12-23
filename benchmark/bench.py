@@ -109,7 +109,7 @@ class Run(object):
 def escape_latex(string):
     return string.replace('_', '\\\\_')
 
-def do_run(model='cube', frames=1000, level=1, kernel='CPU', spyfile=None):
+def do_run(model='cube', frames=1000, level=1, kernel='CPU', spyfile=None, regression=False):
     assert 0 < level <= 7, "Must select positive subdiv level from 1 to 7."
     cmd_line = [
         VIEWER_PATH,
@@ -120,6 +120,8 @@ def do_run(model='cube', frames=1000, level=1, kernel='CPU', spyfile=None):
     ]
     if spyfile is not None:
         cmd_line += ['--spy', spyfile]
+    if regression:
+        cmd_line += ['--regression']
     print "Running: %s" % " ".join(cmd_line)
     osd = Popen(cmd_line, stdin=PIPE, stdout=PIPE, stderr=PIPE)
     stdout, stderr = osd.communicate()

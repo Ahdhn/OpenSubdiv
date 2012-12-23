@@ -17,7 +17,7 @@ def build_db(model):
     db = set()
     for l in range( modelLevel[model] ):
         try:
-            run = do_run(frames=2, model=model, kernel="MKL", level=l+1)
+            run = do_run(frames=2, model=model, kernel="MKL", level=l+1, regression=True)
             db.add(run)
         except ExecutionError as e:
             print "\tFailed with: %s" % e.message
