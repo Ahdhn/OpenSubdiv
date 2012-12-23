@@ -9,7 +9,17 @@
 #include <cuda_gl_interop.h>
 
 extern "C" {
-void OsdCusparseExpand(int src_m, int factor, int* dst_rows, int* dst_cols, float* dst_vals, int* src_rows, int* src_cols, float* src_vals);
+void
+OsdCusparseExpand(int src_m, int factor, int* dst_rows, int* dst_cols, float* dst_vals, int* src_rows, int* src_cols, float* src_vals);
+
+cusparseStatus_t
+my_cusparseScsrmv(cusparseHandle_t handle, cusparseOperation_t transA,
+    int m, int n, int nnz, float* alpha,
+    cusparseMatDescr_t descrA,
+    const float *csrValA,
+    const int *csrRowPtrA, const int *csrColIndA,
+    const float *x, float* beta,
+    float *y );
 }
 
 namespace OpenSubdiv {
