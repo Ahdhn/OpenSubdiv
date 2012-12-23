@@ -59,9 +59,21 @@ int   g_frame = 100,
       g_repeatCount = 0;
 int g_currentShape = 0;
 int g_level = 2;
+float g_cpuTime = 0;
+float g_gpuTime = 0;
+float g_moveScale = 1.0f;
+std::vector<float> g_orgPositions,
+                   g_positions,
+                   g_normals;
+Scheme             g_scheme;
 
 OpenSubdiv::OsdMesh * g_osdmesh = 0;
 OpenSubdiv::OsdVertexBuffer * g_vertexBuffer = 0;
+#if REGRESSION
+OpenSubdiv::OsdMesh * g_cpu_osdmesh = 0;
+OpenSubdiv::OsdVertexBuffer * g_cpu_vertexBuffer = 0;
+#define PRECISION 1e-6
+#endif
 
 const char *getKernelName(int kernel) {
 
@@ -209,6 +221,163 @@ initializeShapes( ) {
     g_defaultShapes.push_back(SimpleShape(loop_triangle_edgeonly, "loop_triangle_edgeonly", kLoop));
 }
 
+void
+updateGeom(bool reportMaxError=false) {
+    int nverts = (int)g_orgPositions.size() / 3;
+
+    std::vector<float> vertex;
+    vertex.reserve(nverts*6);
+
+    const float *p = &g_orgPositions[0];
+    const float *n = &g_normals[0];
+
+    float r = sin(g_frame*0.001f) * g_moveScale;
+    for (int i = 0; i < nverts; ++i) {
+        float ct = cos(p[2] * r);
+        float st = sin(p[2] * r);
+        g_positions[i*3+0] = p[0]*ct + p[1]*st;
+        g_positions[i*3+1] = -p[0]*st + p[1]*ct;
+        g_positions[i*3+2] = p[2];
+
+        p += 3;
+    }
+
+    p = &g_positions[0];
+    for (int i = 0; i < nverts; ++i) {
+        vertex.push_back(p[0]);
+        vertex.push_back(p[1]);
+        vertex.push_back(p[2]);
+        vertex.push_back(n[0]);
+        vertex.push_back(n[1]);
+        vertex.push_back(n[2]);
+
+        p += 3;
+        n += 3;
+    }
+
+    if (!g_vertexBuffer)
+        g_vertexBuffer = g_osdmesh->InitializeVertexBuffer(6);
+    g_vertexBuffer->UpdateData(&vertex[0], nverts);
+
+    g_cpuTime = (float) g_osdmesh->Subdivide(g_vertexBuffer, NULL) * 1000.0f;
+    g_gpuTime = (float) g_osdmesh->Synchronize() * 1000.0f;
+
+    double frameVertsPerMillisecond = g_osdmesh->GetFarMesh()->GetNumVertices() / (g_cpuTime+g_gpuTime);
+    printf(" %f", frameVertsPerMillisecond);
+
+#if REGRESSION
+    if (reportMaxError) {
+        if (!g_cpu_vertexBuffer)
+            g_cpu_vertexBuffer = g_cpu_osdmesh->InitializeVertexBuffer(6);
+        g_cpu_vertexBuffer->UpdateData(&vertex[0], nverts);
+        g_cpu_osdmesh->Subdivide(g_cpu_vertexBuffer, NULL) * 1000.0f;
+
+        float maxerror = 0.0;
+        int level = g_osdmesh->GetLevel();
+        int elemsPerVert = g_vertexBuffer->GetNumElements();
+        int offset = g_osdmesh->GetFarMesh()->GetSubdivision()->GetFirstVertexOffset(level) * elemsPerVert;
+        int nfineverts = g_osdmesh->GetFarMesh()->GetSubdivision()->GetNumVertices(level);
+
+        float* expected = (float*) g_cpu_vertexBuffer->GetCpuBuffer() + offset;
+        float* actual =   (float*) g_vertexBuffer->GetCpuBuffer()     + offset;
+
+        for (int i = 0; i < nfineverts*elemsPerVert; i++)
+            maxerror = fmaxf(maxerror, fabs(expected[i] - actual[i]));
+        printf(" maxerror=%e", maxerror);
+    }
+#endif
+
+}
+
+//------------------------------------------------------------------------------
+inline void
+cross(float *n, const float *p0, const float *p1, const float *p2) {
+
+    float a[3] = { p1[0]-p0[0], p1[1]-p0[1], p1[2]-p0[2] };
+    float b[3] = { p2[0]-p0[0], p2[1]-p0[1], p2[2]-p0[2] };
+    n[0] = a[1]*b[2]-a[2]*b[1];
+    n[1] = a[2]*b[0]-a[0]*b[2];
+    n[2] = a[0]*b[1]-a[1]*b[0];
+
+    float rn = 1.0f/sqrtf(n[0]*n[0] + n[1]*n[1] + n[2]*n[2]);
+    n[0] *= rn;
+    n[1] *= rn;
+    n[2] *= rn;
+}
+
+//------------------------------------------------------------------------------
+inline void
+normalize(float * p) {
+
+    float dist = sqrtf( p[0]*p[0] + p[1]*p[1]  + p[2]*p[2] );
+    p[0]/=dist;
+    p[1]/=dist;
+    p[2]/=dist;
+}
+
+
+//------------------------------------------------------------------------------
+static void
+calcNormals(OpenSubdiv::OsdHbrMesh * mesh, std::vector<float> const & pos, std::vector<float> & result ) {
+
+    // calc normal vectors
+    int nverts = (int)pos.size()/3;
+
+    int nfaces = mesh->GetNumCoarseFaces();
+    for (int i = 0; i < nfaces; ++i) {
+
+        OpenSubdiv::OsdHbrFace * f = mesh->GetFace(i);
+
+        float const * p0 = &pos[f->GetVertex(0)->GetID()*3],
+                    * p1 = &pos[f->GetVertex(1)->GetID()*3],
+                    * p2 = &pos[f->GetVertex(2)->GetID()*3];
+
+        float n[3];
+        cross( n, p0, p1, p2 );
+
+        for (int j = 0; j < f->GetNumVertices(); j++) {
+            int idx = f->GetVertex(j)->GetID() * 3;
+            result[idx  ] += n[0];
+            result[idx+1] += n[1];
+            result[idx+2] += n[2];
+        }
+    }
+    for (int i = 0; i < nverts; ++i)
+        normalize( &result[i*3] );
+}
+
+void
+createOsdMesh( const char * shape, int level, int kernel, Scheme scheme=kCatmark ) {
+    // start timer
+    Stopwatch s;
+    s.Start();
+
+    // generate Hbr representation from "obj" description
+    OpenSubdiv::OsdHbrMesh * hmesh = simpleHbr<OpenSubdiv::OsdVertex>(shape, scheme, g_orgPositions);
+
+    g_normals.resize(g_orgPositions.size(),0.0f);
+    g_positions.resize(g_orgPositions.size(),0.0f);
+    calcNormals( hmesh, g_orgPositions, g_normals );
+
+
+    // generate Osd mesh from Hbr mesh
+    if (g_osdmesh) delete g_osdmesh;
+    g_osdmesh = new OpenSubdiv::OsdMesh();
+    g_osdmesh->Create(hmesh, level, kernel);
+    if (g_vertexBuffer) {
+        delete g_vertexBuffer;
+        g_vertexBuffer = NULL;
+    }
+
+    // Hbr mesh can be deleted
+    delete hmesh;
+
+    updateGeom( /* reportMaxError = */ true );
+
+    s.Stop();
+    printf(" ttff=%f",  float(s.GetElapsed() * 1000.0f));
+}
+
 int main(int argc, char* argv[]) {
     std::string str;
     if (argc > 1) {
@@ -281,7 +450,13 @@ int main(int argc, char* argv[]) {
     printf(" kernel=%s", getKernelName(g_kernel));
     printf(" model=%s", g_defaultShapes[ g_currentShape ].name.c_str());
 
-    //printf(" nverts=%d", g_osdmesh->GetFarMesh()->GetSubdivision()->GetNumVertices(g_level));
+    createOsdMesh( g_defaultShapes[ g_currentShape ].data, g_level, g_kernel, g_defaultShapes[ g_currentShape ].scheme );
+    printf(" nverts=%d", g_osdmesh->GetFarMesh()->GetSubdivision()->GetNumVertices(g_level));
+
+    for(int frame = 0; frame < g_repeatCount; frame++) {
+        updateGeom();
+    }
 
     printf("\n");
+    return 0;
 }
