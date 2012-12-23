@@ -8,7 +8,7 @@ load "common.gpi"
 
 set title "Maximum Difference in Any Vertex Location"
 set xlabel "Number of Vertices in Refined Mesh"
-set ylabel "Maximum Distance from Table-Driven Solution" offset 2
+set ylabel "Maximum Distance from Table-Driven Solution" offset 1
 set output "$1"
 #set size 1, 0.80
 
@@ -22,6 +22,7 @@ set offset .3, .3, .3, .7
 set logscale x 10
 set logscale y 10
 set format x "\$10^{%L}\$";
+set format y "\$10^{%L}\$";
 
 set grid back
 
