@@ -379,7 +379,7 @@ calcNormals(OpenSubdiv::OsdHbrMesh * mesh, std::vector<float> const & pos, std::
 
 //------------------------------------------------------------------------------
 void
-updateGeom() {
+updateGeom(bool reportMaxError=false) {
 
     int nverts = (int)g_orgPositions.size() / 3;
 
@@ -432,32 +432,26 @@ updateGeom() {
 #endif
 
 #if REGRESSION
-    if (!g_cpu_vertexBuffer)
-        g_cpu_vertexBuffer = g_cpu_osdmesh->InitializeVertexBuffer(6);
-    g_cpu_vertexBuffer->UpdateData(&vertex[0], nverts);
-    g_cpuTime = (float) g_cpu_osdmesh->Subdivide(g_cpu_vertexBuffer, NULL) * 1000.0f;
+    if (reportMaxError) {
+        if (!g_cpu_vertexBuffer)
+            g_cpu_vertexBuffer = g_cpu_osdmesh->InitializeVertexBuffer(6);
+        g_cpu_vertexBuffer->UpdateData(&vertex[0], nverts);
+        g_cpu_osdmesh->Subdivide(g_cpu_vertexBuffer, NULL) * 1000.0f;
 
-    int errors = 0;
-    float* expected = (float*) g_cpu_vertexBuffer->GetCpuBuffer();
-    float* actual = (float*) g_vertexBuffer->GetCpuBuffer();
-    for (int i = 0; i < nverts; i++)
-        if (fabs(expected[i] - actual[i]) > PRECISION)
-            errors += 1;
-    printf("\n\t%d errors in control cage.\n", errors);
+        float maxerror = 0.0;
+        int level = g_osdmesh->GetLevel();
+        int elemsPerVert = g_vertexBuffer->GetNumElements();
+        int offset = g_osdmesh->GetFarMesh()->GetSubdivision()->GetFirstVertexOffset(level) * elemsPerVert;
+        int nfineverts = g_osdmesh->GetFarMesh()->GetSubdivision()->GetNumVertices(level);
 
-    // todo: figure out vertices vs vertex elems etc
-    int level = g_osdmesh->GetLevel();
-    int offset = g_osdmesh->GetFarMesh()->GetSubdivision()->GetFirstVertexOffset(std::max(level-1,0)) * g_vertexBuffer->GetNumElements();
-    int nfineverts = g_osdmesh->GetFarMesh()->GetSubdivision()->GetNumVertices(level);
-    errors = 0;
-    expected += offset;
-    actual += offset;
-    for (int i = 0; i < nfineverts; i++)
-        if (fabs(expected[i] - actual[i]) > PRECISION)
-            errors += 1;
-    printf("\t%d errors on surface.\n", errors);
+        float* expected = (float*) g_cpu_vertexBuffer->GetCpuBuffer() + offset;
+        float* actual =   (float*) g_vertexBuffer->GetCpuBuffer()     + offset;
+
+        for (int i = 0; i < nfineverts*elemsPerVert; i++)
+            maxerror = fmaxf(maxerror, fabs(expected[i] - actual[i]));
+        printf(" maxerror=%e", maxerror);
+    }
 #endif
-
 
 }
 
@@ -665,7 +659,7 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme=kCatmark
     }
     g_size = sqrtf(g_size);
 
-    updateGeom();
+    updateGeom( /* reportMaxError = */ true );
 
     s.Stop();
 
