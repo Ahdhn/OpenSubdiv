@@ -369,6 +369,16 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme=kCatmark
         g_vertexBuffer = NULL;
     }
 
+#if REGRESSION
+    if (g_cpu_osdmesh) delete g_cpu_osdmesh;
+    g_cpu_osdmesh = new OpenSubdiv::OsdMesh();
+    g_cpu_osdmesh->Create(hmesh, level, OpenSubdiv::OsdKernelDispatcher::kCPU);
+    if (g_cpu_vertexBuffer) {
+        delete g_cpu_vertexBuffer;
+        g_cpu_vertexBuffer = NULL;
+    }
+#endif
+
     // Hbr mesh can be deleted
     delete hmesh;
 
@@ -450,12 +460,14 @@ int main(int argc, char* argv[]) {
     printf(" kernel=%s", getKernelName(g_kernel));
     printf(" model=%s", g_defaultShapes[ g_currentShape ].name.c_str());
 
-    createOsdMesh( g_defaultShapes[ g_currentShape ].data, g_level, g_kernel, g_defaultShapes[ g_currentShape ].scheme );
+    createOsdMesh( g_defaultShapes[ g_currentShape ].data,
+                   g_level, g_kernel,
+                   g_defaultShapes[ g_currentShape ].scheme );
+
     printf(" nverts=%d", g_osdmesh->GetFarMesh()->GetSubdivision()->GetNumVertices(g_level));
 
-    for(int frame = 0; frame < g_repeatCount; frame++) {
+    for(int frame = 0; frame < g_repeatCount; frame++)
         updateGeom();
-    }
 
     printf("\n");
     return 0;
