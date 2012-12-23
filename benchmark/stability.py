@@ -13,18 +13,14 @@ modelLevel = {
     "Icosahedron":  7,
 }
 
-NSAMPLES = 10
-
 def build_db(model):
     db = set()
-    for k in activeKernels:
-        for l in range( modelLevel[model] ):
-            try:
-                for s in range(NSAMPLES):
-                    run = do_run(frames=2, model=model, kernel=k, level=l+1)
-                    db.add(run)
-            except ExecutionError as e:
-                print "\tFailed with: %s" % e.message
+    for l in range( modelLevel[model] ):
+        try:
+            run = do_run(frames=2, model=model, kernel="MKL", level=l)
+            db.add(run)
+        except ExecutionError as e:
+            print "\tFailed with: %s" % e.message
     return db
 
 def gen_dat_file(ofile, db):
@@ -37,15 +33,14 @@ def gen_dat_file(ofile, db):
         print >>ofile, size,
         for kernel in kernel_list:
             run_list = filter(lambda r: r.nverts == size and r.kernel == kernel, db)
-            if len(run_list) > 0:
-                maxerrors = np.array([r.maxerror for r in run_list])
-                print >>ofile, " %f %f" % (maxerrors.mean(), maxerrors.std()),
+            if len(run_list) == 1:
+                print >>ofile, " %f" % run_list[0].maxerror,
             if len(run_list) == 0:
                 print >>ofile, " ?",
         print >>ofile
 
 def main(argv):
-    model = argv[1][5:-4]
+    model = argv[1][10:-4]
     with open("stability_%s.dat" % model, 'w') as ofile:
         gen_dat_file(ofile, build_db(model))
 

@@ -1,13 +1,14 @@
 MODELS = BigGuy Bunny MonsterFrog Venus Cube Icosahedron
 MEM_DATS := $(addprefix mem_, $(addsuffix .dat, $(MODELS)))
 SPARSITY_DATS := $(addprefix sparsity_, $(addsuffix .dat, $(MODELS)))
+STABILITY_DATS := $(addprefix stability_, $(addsuffix .dat, $(MODELS)))
 PERF_TEXS := $(addprefix perf_, $(addsuffix .tex, $(MODELS)))
 TTFF_TEXS := $(addprefix ttff_, $(addsuffix .tex, $(MODELS)))
 BUILD_PATH := ./graphs
 #INSTALL_PATH := /home/driscoll/hpg2013/graphs
 INSTALL_PATH := /Users/mbdriscoll/cs284/hpg2013/graphs
 
-TEXFILES = mem.tex sparsity.tex $(PERF_TEXS) $(TTFF_TEXS)
+TEXFILES = mem.tex sparsity.tex stability.tex $(PERF_TEXS) $(TTFF_TEXS)
 SPYFILES = $(addprefix spy_, $(addsuffix .pdf, $(MODELS)))
 
 default:    all
@@ -31,6 +32,11 @@ mem.tex: $(MEM_DATS)
 
 sparsity.tex: $(SPARSITY_DATS)
 	./sparsity.gpi $(BUILD_PATH)/$@ $^
+	cp $(BUILD_PATH)/$@ $(INSTALL_PATH)/$@
+	cp $(BUILD_PATH)/$(patsubst %.tex,%.eps, $@) $(INSTALL_PATH)/
+
+stability.tex: $(STABILITY_DATS)
+	./stability.gpi $(BUILD_PATH)/$@ $^
 	cp $(BUILD_PATH)/$@ $(INSTALL_PATH)/$@
 	cp $(BUILD_PATH)/$(patsubst %.tex,%.eps, $@) $(INSTALL_PATH)/
 
@@ -58,3 +64,5 @@ spy_%.mm:
 sparsity_%.dat:
 	./sparsity.py $@
 
+stability_%.dat:
+	./stability.py $@

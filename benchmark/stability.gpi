@@ -2,12 +2,11 @@
 gnuplot << EOF
 
 # $1 output file
-# $2 data file
-# $3 model name
+# $2-7 data files
 
 load "common.gpi"
 
-set title "Maximum Difference in Any Vertex Location for \\\`$3' Model"
+set title "Maximum Difference in Any Vertex Location"
 set xlabel "Number of Vertices in Refined Mesh"
 set ylabel "Maximum Distance from Table-Driven Solution" offset 2
 set output "$1"
@@ -28,11 +27,10 @@ set grid back
 
 plot \
     "$2" using 1:2 w linespoint ls 1, \
-    "$2" using 1:4 w linespoint ls 2, \
-    "$2" using 1:6 w linespoint ls 3, \
-    "$2" using 1:8 w linespoint ls 4, \
-    "$2" using 1:10 w linespoint ls 5, \
-    "$2" using 1:12 w linespoint ls 6, \
-    "$2" using 1:14 w linespoint ls 7
+    "$3" using 1:2 w linespoint ls 2, \
+    "$4" using 1:2 w linespoint ls 3, \
+    "$5" using 1:2 w linespoint ls 4, \
+    "$6" using 1:2 w linespoint ls 5, \
+    "$7" using 1:2 w linespoint ls 6
 
 EOF
