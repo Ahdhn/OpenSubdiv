@@ -84,7 +84,6 @@ public:
 
     /// Compute the positions of refined vertices using the specified kernels
     virtual void Apply( int level, void * data=0 ) const;
-    virtual void ApplySpMV( int level, void * data=0 ) const;
 
     /// Face-vertices indexing table accessor
     FarTable<unsigned int> const & Get_F_IT( ) const { return _F_IT; }
@@ -137,6 +136,7 @@ FarCatmarkSubdivisionTables<U>::GetMemoryUsed() const {
         _F_IT.GetMemoryUsed();
 }
 
+#if 0 // REMOVEME
 template <class U> void
 FarCatmarkSubdivisionTables<U>::Apply( int level, void * clientdata ) const {
 
@@ -163,9 +163,10 @@ FarCatmarkSubdivisionTables<U>::Apply( int level, void * clientdata ) const {
     if (batch->kernelA2.first < batch->kernelA2.second)
         dispatch->ApplyCatmarkVertexVerticesKernelA(this->_mesh, offset, true, level, batch->kernelA2.first, batch->kernelA2.second, clientdata);
 }
+#endif
 
 template <class U> void
-FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const {
+FarCatmarkSubdivisionTables<U>::Apply( int level, void * clientdata ) const {
 
     assert(this->_mesh and level>0);
 

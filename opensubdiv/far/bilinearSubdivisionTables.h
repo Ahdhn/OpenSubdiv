@@ -83,7 +83,6 @@ public:
 
     /// Compute the positions of refined vertices using the specified kernels
     virtual void Apply( int level, void * data=0 ) const;
-    virtual void ApplySpMV( int level, void * data=0 ) const;
 
     /// Face-vertices indexing table accessor
     FarTable<unsigned int> const & Get_F_IT( ) const { return _F_IT; }
@@ -137,43 +136,17 @@ FarBilinearSubdivisionTables<U>::Apply( int level, void * clientdata ) const {
 
     typename FarSubdivisionTables<U>::VertexKernelBatch const * batch = & (this->_batches[level-1]);
 
-    FarDispatcher<U> const * dispatch = this->_mesh->GetDispatcher();
-    assert(dispatch);
-
-    int offset = this->GetFirstVertexOffset(level);
-    if (batch->kernelF>0)
-        dispatch->ApplyBilinearFaceVerticesKernel(this->_mesh, offset, level, 0, batch->kernelF, clientdata);
-
-    offset += this->GetNumFaceVertices(level);
-    if (batch->kernelE>0)
-        dispatch->ApplyBilinearEdgeVerticesKernel(this->_mesh, offset, level, 0, batch->kernelE, clientdata);
-
-    offset += this->GetNumEdgeVertices(level);
-    if (batch->kernelB.first < batch->kernelB.second)
-        dispatch->ApplyBilinearVertexVerticesKernel(this->_mesh, offset, level, batch->kernelB.first, batch->kernelB.second, clientdata);
-}
-
-template <class U> void
-FarBilinearSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const {
-
-    assert(this->_mesh and level>0);
-
-    typename FarSubdivisionTables<U>::VertexKernelBatch const * batch = & (this->_batches[level-1]);
-
     FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
     assert(dispatch);
 
-    int prevOffset = this->GetFirstVertexOffset(std::max(level-1,0));
-    int offset     = 0;
-    int nPrevVerts = this->GetNumVertices(level-1);
-    int nVerts     = this->GetNumVertices(level);
-
-    int iop, jop;
+    int prevLevel = std::max(level-1,0);
+    int prevOffset = this->GetFirstVertexOffset( prevLevel );
+    int offset =     this->GetFirstVertexOffset( level );
+    int jop = this->GetNumVertices( prevLevel);
+    int iop = this->GetNumVertices( level );
 
     dispatch->SetSrcOffset(prevOffset);
-
-    iop = nVerts;
-    jop = nPrevVerts,
+    dispatch->SetDstOffset(offset);
 
     dispatch->StageMatrix(iop, jop);
     {

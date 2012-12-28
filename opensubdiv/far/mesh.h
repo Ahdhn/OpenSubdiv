@@ -128,14 +128,9 @@ public:
 
     /// Apply the subdivision tables to compute the positions of the vertices up
     /// to 'level'
-    void Subdivide(int level=-1, Strategy s = AdHoc);
+    void Subdivide(int level=-1);
 
 private:
-
-    /// Apply the subdivision tables to compute the positions of the vertices up
-    /// to 'level' using the specific strategy
-    void SubdivideAdHoc(int level=-1);
-    void SubdivideSpMV(int level=-1);
 
     // Note : the vertex classes are renamed <X,Y> so as not to shadow the
     // declaration of the templated vertex class U.
@@ -199,36 +194,7 @@ FarMesh<U>::GetPtexCoordinates(int level) const {
 }
 
 template <class U> void
-FarMesh<U>::Subdivide(int maxlevel, Strategy s) {
-
-    assert(_subdivisionTables);
-
-    if ( (maxlevel < 0) )
-        maxlevel=_subdivisionTables->GetMaxLevel();
-    else
-        maxlevel = std::min(maxlevel, _subdivisionTables->GetMaxLevel());
-
-    switch(s) {
-        case AdHoc: SubdivideAdHoc(maxlevel); break;
-        case SpMV:  SubdivideSpMV(maxlevel);  break;
-        default: assert(!"unknown subdivision strategy");
-    }
-}
-
-template <class U> void
-FarMesh<U>::SubdivideAdHoc(int level) {
-
-    for (int i=1; i<level; ++i) {
-
-        _subdivisionTables->Apply(i);
-
-        if (_vertexEditTables)
-            _vertexEditTables->Apply(i);
-    }
-}
-
-template <class U> void
-FarMesh<U>::SubdivideSpMV(int level) {
+FarMesh<U>::Subdivide(int level) {
 
     if (_vertexEditTables != NULL) {
         std::cerr << "Warning: SpMV strategy doesn't support vertex edits." << std::endl;
@@ -238,11 +204,11 @@ FarMesh<U>::SubdivideSpMV(int level) {
     if (not _dispatcher->MatrixReady()) {
 
         for (int i=1; i<level; ++i)
-            _subdivisionTables->ApplySpMV(i);
+            _subdivisionTables->Apply(i);
 
         _dispatcher->FinalizeMatrix();
     }
-    assert(_dispatcher->MatrixReady());
+    //assert(_dispatcher->MatrixReady());
 
     int offset = _subdivisionTables->GetFirstVertexOffset(level-1);
     _dispatcher->ApplyMatrix(offset);

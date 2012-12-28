@@ -82,7 +82,6 @@ public:
 
     /// Compute the positions of refined vertices using the specified kernels
     virtual void Apply( int level, void * data=0 ) const;
-    virtual void ApplySpMV( int level, void * data=0 ) const;
 
 
 private:
@@ -108,6 +107,7 @@ FarLoopSubdivisionTables<U>::FarLoopSubdivisionTables( FarMesh<U> * mesh, int ma
     FarSubdivisionTables<U>(mesh, maxlevel)
 { }
 
+#if 0 // REMOVE ME
 template <class U> void
 FarLoopSubdivisionTables<U>::Apply( int level, void * clientdata ) const
 {
@@ -130,9 +130,10 @@ FarLoopSubdivisionTables<U>::Apply( int level, void * clientdata ) const
     if (batch->kernelA2.first < batch->kernelA2.second)
         dispatch->ApplyLoopVertexVerticesKernelA(this->_mesh, offset, true, level, batch->kernelA2.first, batch->kernelA2.second, clientdata);
 }
+#endif
 
 template <class U> void
-FarLoopSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const
+FarLoopSubdivisionTables<U>::Apply( int level, void * clientdata ) const
 {
     assert(this->_mesh and level>0);
 
