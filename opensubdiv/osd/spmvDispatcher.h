@@ -61,7 +61,7 @@ public:
     virtual void BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying);
     int GetElemsPerVertex() const { return _currentVertexBuffer ? _currentVertexBuffer->GetNumElements() : 0; }
     int GetElemsPerVarying() const { return _currentVaryingBuffer ? _currentVaryingBuffer->GetNumElements() : 0; }
-    int CopyNVerts(int nVerts, int dstIndex, int srcIndex);
+    int CopyNVerts(int nVerts, int index);
 
     // static OsdSpMVKernelDispatcher* Create(int levels) = 0;
     // static void Register() = 0;

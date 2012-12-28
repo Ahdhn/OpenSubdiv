@@ -42,9 +42,9 @@ OsdSpMVKernelDispatcher::BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuff
 }
 
 int
-OsdSpMVKernelDispatcher::CopyNVerts(int nVerts, int dstIndex, int srcIndex) {
+OsdSpMVKernelDispatcher::CopyNVerts(int nVerts, int index) {
     for (int i = 0; i < nVerts; i++)
-        _vdesc->AddWithWeight(NULL, dstIndex+i, srcIndex+i, 1.0);
+        _vdesc->AddWithWeight(NULL, index+i, index+i, 1.0);
     return nVerts;
 }
 

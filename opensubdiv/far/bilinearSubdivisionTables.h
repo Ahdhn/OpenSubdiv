@@ -142,7 +142,7 @@ FarBilinearSubdivisionTables<U>::Apply( int level, void * clientdata ) const {
     int prevLevel = std::max(level-1,0);
     int prevOffset = this->GetFirstVertexOffset( prevLevel );
     int offset =     this->GetFirstVertexOffset( level );
-    int jop = this->GetNumVertices( prevLevel);
+    int jop = this->GetNumVertices( prevLevel );
     int iop = this->GetNumVertices( level );
 
     dispatch->SetSrcOffset(prevOffset);

@@ -175,34 +175,35 @@ FarCatmarkSubdivisionTables<U>::Apply( int level, void * clientdata ) const {
     FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
     assert(dispatch);
 
-    int prevOffset = this->GetFirstVertexOffset(std::max(level-1,0));
-    int offset     = 0;
-    int nPrevVerts = this->GetNumVertices(level-1);
-    int nVerts     = this->GetNumVertices(level);
-
-    int iop, jop, iv, jv;
-    iop = (nPrevVerts+batch->kernelF),
-    jop = iv = nPrevVerts,
-    jv  = 1;
+    int prevLevel = std::max(level-1,0);
+    int prevOffset = this->GetFirstVertexOffset( prevLevel );
+    int offset =     this->GetFirstVertexOffset( level );
+    int jop = this->GetNumVertices(prevLevel);
+    int iop = this->GetNumVertices(prevLevel) + batch->kernelF;
 
     dispatch->SetSrcOffset(prevOffset);
+    dispatch->SetDstOffset(prevOffset);
+
     dispatch->StageMatrix(iop, jop);
     {
-        offset = dispatch->CopyNVerts(nPrevVerts, 0, prevOffset);
+        dispatch->CopyNVerts(jop, prevOffset);
 
         if (batch->kernelF>0)
             dispatch->ApplyCatmarkFaceVerticesKernel(this->_mesh, offset, level, 0, batch->kernelF, clientdata);
     }
     dispatch->PushMatrix();
 
-    iop = nVerts,
-    jop = iv = (nPrevVerts+batch->kernelF),
-    jv  = 1;
+    jop = this->GetNumVertices(prevLevel) + batch->kernelF;
+    iop = this->GetNumVertices(level);
+
+    dispatch->SetSrcOffset(prevOffset);
+    dispatch->SetDstOffset(offset);
 
     dispatch->StageMatrix(iop,jop);
     {
-        offset = dispatch->CopyNVerts(batch->kernelF, 0, nPrevVerts+prevOffset);
+        dispatch->CopyNVerts(batch->kernelF, offset);
 
+        offset += this->GetNumFaceVertices(level);
         if (batch->kernelE>0)
             dispatch->ApplyCatmarkEdgeVerticesKernel(this->_mesh, offset, level, 0, batch->kernelE, clientdata);
 
