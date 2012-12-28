@@ -27,12 +27,6 @@ public:
     cusparseMatDescr_t desc;
 };
 
-class OsdCusparseVertexBuffer : public OsdCudaVertexBuffer {
-public:
-    OsdCusparseVertexBuffer(int numElements, int numVertices) :
-        OsdCudaVertexBuffer(numElements, numVertices) { }
-};
-
 class OsdCusparseKernelDispatcher : public OsdSpMVKernelDispatcher
 {
 public:

@@ -137,10 +137,10 @@ void
 OsdCusparseKernelDispatcher::BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying)
 {
     _currentVertexBuffer = (vertex) ?
-        dynamic_cast<OsdCusparseVertexBuffer *>(vertex) : NULL;
+        dynamic_cast<OsdCudaVertexBuffer *>(vertex) : NULL;
 
     _currentVaryingBuffer = (varying) ?
-        dynamic_cast<OsdCusparseVertexBuffer *>(varying) : NULL;
+        dynamic_cast<OsdCudaVertexBuffer *>(varying) : NULL;
 
     _vdesc = new SpMVVertexDescriptor(this,
             _currentVertexBuffer  ? _currentVertexBuffer->GetNumElements()  : 0,
@@ -150,7 +150,7 @@ OsdCusparseKernelDispatcher::BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertex
 OsdVertexBuffer *
 OsdCusparseKernelDispatcher::InitializeVertexBuffer(int numElements, int numVertices)
 {
-    return new OsdCusparseVertexBuffer(numElements, numVertices);
+    return new OsdCudaVertexBuffer(numElements, numVertices);
 }
 
 OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher( int levels )
