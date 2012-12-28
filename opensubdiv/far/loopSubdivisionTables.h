@@ -142,16 +142,15 @@ FarLoopSubdivisionTables<U>::Apply( int level, void * clientdata ) const
     FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
     assert(dispatch);
 
-    int prevOffset = this->GetFirstVertexOffset(std::max(level-1,0));
-    int offset     = 0;
-    int nPrevVerts = this->GetNumVertices(level-1);
-    int nVerts     = this->GetNumVertices(level);
-
-    int iop, jop;
-    iop = nVerts,
-    jop = nPrevVerts,
+    int prevLevel = std::max(level-1,0);
+    int prevOffset = this->GetFirstVertexOffset( prevLevel );
+    int offset =     this->GetFirstVertexOffset( level );
+    int jop = this->GetNumVertices( prevLevel );
+    int iop = this->GetNumVertices( level );
 
     dispatch->SetSrcOffset(prevOffset);
+    dispatch->SetDstOffset(offset);
+
     dispatch->StageMatrix(iop, jop);
     {
         if (batch->kernelE>0)
