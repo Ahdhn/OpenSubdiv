@@ -208,7 +208,6 @@ FarMesh<U>::Subdivide(int level) {
 
         _dispatcher->FinalizeMatrix();
     }
-    //assert(_dispatcher->MatrixReady());
 
     int offset = _subdivisionTables->GetFirstVertexOffset(level-1);
     _dispatcher->ApplyMatrix(offset);
