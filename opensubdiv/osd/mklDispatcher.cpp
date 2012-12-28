@@ -140,8 +140,8 @@ void
 OsdMklKernelDispatcher::ApplyMatrix(int offset)
 {
     int numElems = _currentVertexBuffer->GetNumElements();
-    float* V_in = _currentVertexBuffer->GetCpuBuffer();
-    float* V_out = _currentVertexBuffer->GetCpuBuffer()
+    float* V_in = (float*) _currentVertexBuffer->Map();
+    float* V_out = (float*) _currentVertexBuffer->Map()
                    + offset * numElems;
 
     char transa = 'N';
