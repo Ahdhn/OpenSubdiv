@@ -26,6 +26,15 @@ CooMatrix::nnz() const {
     return vals.size();
 }
 
+CsrMatrix*
+CooMatrix::gemm(CsrMatrix* rhs) {
+    CsrMatrix* lhs = new CsrMatrix(this);
+    CsrMatrix* answer = lhs->gemm(rhs);
+    delete lhs;
+    return answer;
+}
+
+
 CsrMatrix::CsrMatrix(int m, int n, int nnz, int nve, mode_t mode) :
     m(m), n(n), nve(nve), mode(mode) {
     rows = (int*) malloc((m+1) * sizeof(int));
@@ -114,14 +123,6 @@ CsrMatrix::gemm(CsrMatrix* rhs) {
         assert(info == 0);
     }
     return C;
-}
-
-CsrMatrix*
-CsrMatrix::gemm(const CooMatrix* lhs) {
-    CsrMatrix* lhs_csr = new CsrMatrix(lhs);
-    CsrMatrix* answer = lhs_csr->gemm(this);
-    delete lhs_csr;
-    return answer;
 }
 
 void
@@ -226,7 +227,7 @@ OsdMklKernelDispatcher::PushMatrix()
         subdiv_operator = new CsrMatrix(StagedOp, nve);
         DEBUG_PRINTF("PushMatrix set %d-%d\n", subdiv_operator->m, subdiv_operator->n);
     } else {
-        CsrMatrix* new_subdiv_operator = subdiv_operator->gemm(StagedOp);
+        CsrMatrix* new_subdiv_operator = StagedOp->gemm(subdiv_operator);
         DEBUG_PRINTF("PushMatrix mul %d-%d = %d-%d * %d-%d\n",
                 (int) new_subdiv_operator->m, (int) new_subdiv_operator->n,
                 (int) StagedOp->m, (int) StagedOp->n,

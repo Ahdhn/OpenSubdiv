@@ -11,6 +11,8 @@ extern "C" {
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
+class CsrMatrix;
+
 class CooMatrix {
 public:
     int m, n;
@@ -20,6 +22,7 @@ public:
 
     CooMatrix(int m, int n);
     void append_element(int i, int j, float val);
+    CsrMatrix* gemm(CsrMatrix* rhs);
     int nnz() const;
 };
 
@@ -41,7 +44,6 @@ public:
     CsrMatrix(const CooMatrix* StagedOp, int nve=1, mode_t=VERTEX);
     void spmv(float* d_out, float* d_in);
     CsrMatrix* gemm(CsrMatrix* rhs);
-    CsrMatrix* gemm(const CooMatrix* rhs);
     virtual ~CsrMatrix();
     void expand();
     int nnz();
