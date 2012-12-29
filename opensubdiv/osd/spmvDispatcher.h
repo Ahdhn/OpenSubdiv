@@ -9,7 +9,7 @@
 #include <sstream>
 #include <string>
 
-extern char* osdSpMVKernel_DumpSpy_FileName;
+static char* osdSpMVKernel_DumpSpy_FileName = NULL;
 
 #define DEBUG_PRINTF(fmt, ...) \
   fprintf(stderr, "[info] "fmt, ##__VA_ARGS__);

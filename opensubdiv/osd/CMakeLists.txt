@@ -180,10 +180,7 @@ endif()
 
 #-------------------------------------------------------------------------------
 # SpMV Dispatchers code & dependencies
-if ( Boost_FOUND OR MKL_FOUND OR OPENCL_FOUND )
-    list(APPEND SOURCE_FILES
-        spmvDispatcher.cpp
-    )
+if ( MKL_FOUND OR CUDA_FOUND )
     list(APPEND PUBLIC_HEADER_FILES
         spmvDispatcher.h
     )
