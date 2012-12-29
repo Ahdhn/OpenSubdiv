@@ -84,7 +84,7 @@ public:
     ~FarMesh();
 
     /// Returns the subdivision method
-    FarSubdivisionTables<U> const * GetSubdivision() const { return _subdivisionTables; }
+    FarSubdivisionTables<U> * GetSubdivision() const { return _subdivisionTables; }
 
     /// Returns the compute dispatcher
     FarDispatcher<U> * GetDispatcher() { return _dispatcher; }

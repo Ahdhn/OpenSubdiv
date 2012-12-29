@@ -96,11 +96,11 @@ protected:
     virtual void Refine(FarMesh<U> * mesh, int maxlevel, void * clientdata=0) const;
 
 
-    virtual void ApplyBilinearFaceVerticesKernel(FarMesh<U> * mesh, int offset, int level, int start, int end, void * clientdata) const;
+    virtual void ApplyBilinearFaceVerticesKernel(FarMesh<U> * mesh, int offset, int level, int start, int end, void * clientdata);
 
-    virtual void ApplyBilinearEdgeVerticesKernel(FarMesh<U> * mesh, int offset, int level, int start, int end, void * clientdata) const;
+    virtual void ApplyBilinearEdgeVerticesKernel(FarMesh<U> * mesh, int offset, int level, int start, int end, void * clientdata);
 
-    virtual void ApplyBilinearVertexVerticesKernel(FarMesh<U> * mesh, int offset, int level, int start, int end, void * clientdata) const;
+    virtual void ApplyBilinearVertexVerticesKernel(FarMesh<U> * mesh, int offset, int level, int start, int end, void * clientdata);
 
 
     virtual void ApplyCatmarkFaceVerticesKernel(FarMesh<U> * mesh, int offset, int level, int start, int end, void * clientdata) const;
@@ -171,7 +171,7 @@ FarDispatcher<U>::Refine( FarMesh<U> * mesh, int maxlevel, void * data) const {
 }
 
 template <class U> void
-FarDispatcher<U>::ApplyBilinearFaceVerticesKernel(FarMesh<U> * mesh, int offset, int level, int start, int end, void * clientdata) const {
+FarDispatcher<U>::ApplyBilinearFaceVerticesKernel(FarMesh<U> * mesh, int offset, int level, int start, int end, void * clientdata) {
     FarBilinearSubdivisionTables<U> const * subdivision =
         dynamic_cast<FarBilinearSubdivisionTables<U> const *>(mesh->GetSubdivision());
     assert(subdivision);
@@ -179,7 +179,7 @@ FarDispatcher<U>::ApplyBilinearFaceVerticesKernel(FarMesh<U> * mesh, int offset,
 }
 
 template <class U> void
-FarDispatcher<U>::ApplyBilinearEdgeVerticesKernel(FarMesh<U> * mesh, int offset, int level, int start, int end, void * clientdata) const {
+FarDispatcher<U>::ApplyBilinearEdgeVerticesKernel(FarMesh<U> * mesh, int offset, int level, int start, int end, void * clientdata) {
     FarBilinearSubdivisionTables<U> const * subdivision =
         dynamic_cast<FarBilinearSubdivisionTables<U> const *>(mesh->GetSubdivision());
     assert(subdivision);
@@ -187,7 +187,7 @@ FarDispatcher<U>::ApplyBilinearEdgeVerticesKernel(FarMesh<U> * mesh, int offset,
 }
 
 template <class U> void
-FarDispatcher<U>::ApplyBilinearVertexVerticesKernel(FarMesh<U> * mesh, int offset, int level, int start, int end, void * clientdata) const {
+FarDispatcher<U>::ApplyBilinearVertexVerticesKernel(FarMesh<U> * mesh, int offset, int level, int start, int end, void * clientdata) {
     FarBilinearSubdivisionTables<U> const * subdivision =
         dynamic_cast<FarBilinearSubdivisionTables<U> const *>(mesh->GetSubdivision());
     assert(subdivision);

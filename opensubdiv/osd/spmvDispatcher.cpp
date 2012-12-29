@@ -88,6 +88,34 @@ OsdSpMVKernelDispatcher::WriteMatrix(csr_matrix1* M, std::string filename) {
     fclose(ofile);
 }
 
+void
+OsdSpMVKernelDispatcher::ApplyBilinearFaceVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) {
+    FarSubdivisionTables<OsdVertex>* table = mesh->GetSubdivision();
+    int prevLevel = std::max(level-1,0);
+    int prevOffset = table->GetFirstVertexOffset( prevLevel );
+    int jop = table->GetNumVertices( prevLevel );
+    int iop = table->GetNumVertices( level );
+
+    this->SetSrcOffset(prevOffset);
+    this->SetDstOffset(offset);
+    this->StageMatrix(iop, jop);
+
+    this->OsdCpuKernelDispatcher::ApplyBilinearFaceVerticesKernel(mesh, offset, level, start, end, data);
+}
+
+void
+OsdSpMVKernelDispatcher::ApplyBilinearEdgeVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) {
+    this->OsdCpuKernelDispatcher::ApplyBilinearEdgeVerticesKernel(mesh, offset, level, start, end, data);
+}
+
+void
+OsdSpMVKernelDispatcher::ApplyBilinearVertexVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) {
+    this->OsdCpuKernelDispatcher::ApplyBilinearVertexVerticesKernel(mesh, offset, level, start, end, data);
+
+    this->PushMatrix();
+}
+
+
 } // end namespace OPENSUBDIV_VERSION
 
 } // end namespace OpenSubdiv
