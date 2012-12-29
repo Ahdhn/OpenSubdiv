@@ -14,8 +14,9 @@ namespace OPENSUBDIV_VERSION {
 class CsrMatrix;
 
 class CooMatrix {
+    int _m, _n;
+
 public:
-    int m, n;
     std::vector<int> rows;
     std::vector<int> cols;
     std::vector<float> vals;
@@ -24,15 +25,18 @@ public:
     void append_element(int i, int j, float val);
     CsrMatrix* gemm(CsrMatrix* rhs);
     int nnz() const;
+    inline int m() const { return _m; }
+    inline int n() const { return _n; }
 };
 
 class CsrMatrix {
-public:
-    int m, n, nve;
+protected:
+    int _m, _n, nve;
     int* rows;
     int* cols;
     float* vals;
 
+public:
     typedef enum {
         VERTEX, // matrix indices refer to logical vertices
         ELEMENT // matrix indices refer to vertex elements
@@ -46,6 +50,8 @@ public:
     CsrMatrix* gemm(CsrMatrix* rhs);
     virtual ~CsrMatrix();
     void expand();
+    inline int m() const { return _m; }
+    inline int n() const { return _n; }
     int nnz();
     void dump(std::string ofilename);
 
