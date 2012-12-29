@@ -11,42 +11,100 @@ namespace OPENSUBDIV_VERSION {
 
 Matrix::Matrix(int m, int n, int nnz, int nve, mode_t mode) :
     m(m), n(n), nnz(nnz), nve(nve), mode(mode) {
-    this->rows = (int*) malloc(m * sizeof(int));
+    this->rows = (int*) malloc((m+1) * sizeof(int));
     this->cols = (int*) malloc(n * sizeof(int));
     this->vals = (float*) malloc(m * sizeof(float));
+    this->rows[m] = nnz;
 }
 
-Matrix::Matrix(const coo_matrix1& S, int nve) {
+Matrix::Matrix(const coo_matrix1* S, int nve, mode_t mode) :
+    nve(nve), mode(mode) {
+    m = S->size1();
+    n = S->size2();
+    nnz = S->nnz();
+
+    this->rows = (int*) malloc((m+1) * sizeof(int));
+    this->cols = (int*) malloc(n * sizeof(int));
+    this->vals = (float*) malloc(m * sizeof(float));
+
+    int job[] = {
+        2, // job(1)=2 (coo->csr with sorting)
+        1, // job(2)=1 (one-based indexing for csr matrix)
+        1, // job(3)=1 (one-based indexing for coo matrix)
+        0, // empty
+        nnz, // job(5)=nnz (sets nnz for csr matrix)
+        0  // job(6)=0 (all output arrays filled)
+    };
+    float* acoo = (float*) &S->value_data()[0];
+    int* rowind = (int*) &S->index1_data()[0];
+    int* colind = (int*) &S->index2_data()[0];
+    int info;
+
+    mkl_scsrcoo(job, &m, vals, cols, rows, &nnz, acoo, rowind, colind, &info);
+    assert(info == 0);
+
+    this->rows[m] = nnz;
 }
 
 int
 Matrix::NumBytes() const {
-    return 0;
+    return nnz*sizeof(float) + nnz*sizeof(int) + (m+1)*sizeof(int);
 }
 
 double
 Matrix::SparsityFactor() const {
-    return 0.0;
+    return (double) nnz / (double) (m * n);
 }
 
 void
-Matrix::spmv(float* d_out, const float* d_in) {
+Matrix::spmv(float* d_out, float* d_in) {
     if (mode == Matrix::VERTEX)
         expand();
+
+    char transa = 'N';
+    mkl_scsrgemv(&transa, &m, vals, rows, cols, d_in, d_out);
 }
 
 Matrix*
-Matrix::operator*(Matrix* rhs) {
+Matrix::gemm(Matrix* rhs) {
     if (rhs->mode != this->mode) {
         rhs->expand();
         this->expand();
     }
-    return NULL;
+
+    Matrix* A = this;
+    Matrix* B = rhs;
+
+    int nnz = std::min(A->m*B->n, (int)nnz*7); // XXX: shouldn't this be 4, not 7?
+    Matrix* C = new Matrix(A->m, B->n, C->nnz, nve, mode);
+
+    char trans = 'N'; // no transpose A
+    int request = 0; // output arrays pre allocated
+    int sort = 8; // reorder nonzeroes in C
+    int info = 0; // output info flag
+    assert(A->n == B->m);
+
+    /* perform SpM*SpM */
+    //printf("PushMatrix mul %d-%d = %d-%d * %d-%d\n",
+    //        (int) C->size1(), (int) C->size2(),
+    //        (int) A.size1(),  (int) A.size2(),
+    //        (int) M->size1(), (int) M->size2());
+    mkl_scsrmultcsr(&trans, &request, &sort,
+            &A->m, &A->n, &B->n, A->vals, A->cols, A->rows, B->vals, B->cols, B->rows,
+            C->vals, C->cols, C->rows, &C->nnz, &info);
+
+    if (info != 0) {
+        printf("Error: info returned %d\n", info);
+        assert(info == 0);
+    }
 }
 
 Matrix*
-Matrix::operator*(const coo_matrix1* rhs) {
-    return NULL;
+Matrix::gemm(const coo_matrix1* rhs) {
+    Matrix* rhs_csr = new Matrix(rhs);
+    Matrix* answer = this->gemm(rhs_csr);
+    delete rhs_csr;
+    return answer;
 }
 
 void
@@ -73,7 +131,10 @@ OsdMklKernelDispatcher::OsdMklKernelDispatcher( int levels )
 
 OsdMklKernelDispatcher::~OsdMklKernelDispatcher()
 {
-    if (S) delete S;
+    if (S != NULL)
+        delete S;
+    if (subdiv_operator != NULL)
+        delete subdiv_operator;
 }
 
 static OsdMklKernelDispatcher::OsdKernelDispatcher *
@@ -111,7 +172,7 @@ OsdMklKernelDispatcher::PushMatrix()
     if (subdiv_operator == NULL) {
 
         //printf("PushMatrix set %d-%d\n", S->size1(), S->size2());
-        subdiv_operator = new Matrix(*S);
+        subdiv_operator = new Matrix(S);
 
     } else {
 #if 0
@@ -187,7 +248,9 @@ OsdMklKernelDispatcher::PushMatrix()
         delete M;
         M = C;
 #endif
-        subdiv_operator = *subdiv_operator * S;
+        Matrix* new_subdiv_operator = subdiv_operator->gemm(S);
+        delete subdiv_operator;
+        subdiv_operator = new_subdiv_operator;
     }
 
     /* remove staged matrix */
@@ -284,14 +347,8 @@ OsdMklKernelDispatcher::MatrixReady()
 void
 OsdMklKernelDispatcher::PrintReport()
 {
-#if 0
-    int size_in_bytes =  (int) (M_big->index2_data().size() +
-                                M_big->index1_data().size()) * sizeof(int)  +
-                                M_big->value_data().size() * sizeof(float);
-    double sparsity_factor = 100.0 * M_big->nnz() / M_big->size1() / M_big->size2();
-#endif
     int size_in_bytes = subdiv_operator->NumBytes();
-    double sparsity_factor = subdiv_operator->SparsityFactor();
+    double sparsity_factor = 100.0 * subdiv_operator->SparsityFactor();
 
 #if BENCHMARKING
     printf(" nverts=%d", subdiv_operator->nnz);

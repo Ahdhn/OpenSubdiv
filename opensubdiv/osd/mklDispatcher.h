@@ -27,10 +27,10 @@ public:
     mode_t mode;
 
     Matrix(int m, int n, int nnz, int nve=1, Matrix::mode_t=VERTEX);
-    Matrix(const coo_matrix1& S, int nve=1);
-    void spmv(float* d_out, const float* d_in);
-    Matrix* operator*(Matrix* rhs);
-    Matrix* operator*(const coo_matrix1* rhs);
+    Matrix(const coo_matrix1* S, int nve=1, Matrix::mode_t=VERTEX);
+    void spmv(float* d_out, float* d_in);
+    Matrix* gemm(Matrix* rhs);
+    Matrix* gemm(const coo_matrix1* rhs);
     virtual ~Matrix();
     void expand();
     void report(std::string name);
