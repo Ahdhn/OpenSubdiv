@@ -66,7 +66,7 @@ Matrix::gemm(Matrix* rhs) {
     Matrix* B = rhs;
 
     int c_nnz = std::min(A->m*B->n, (int) B->nnz*7); // XXX: shouldn't this be 4, not 7?
-    Matrix* C = new Matrix(A->m, B->n, c_nnz, nve, mode);
+    Matrix* C = new Matrix(A->m, B->n, c_nnz, B->nve, mode);
 
     int request = 0; // output arrays pre allocated
     int sort = 8; // reorder nonzeroes in C
@@ -99,6 +99,37 @@ Matrix::gemm(const coo_matrix1* lhs) {
 void
 Matrix::expand() {
     if (mode == Matrix::VERTEX) {
+        int* new_rows = (int*) malloc((nve*m+1) * sizeof(int));
+        int* new_cols = (int*) malloc(nve*nnz * sizeof(int));
+        float* new_vals = (float*) malloc(nve*nnz * sizeof(float));
+
+        int new_i = 0;
+        for(int r = 0; r < m; r++) {
+            for(int k = 0; k < nve; k++) {
+                new_rows[r*nve + k] = new_i;
+                for(int i = rows[r]; i < rows[r+1]; i++) {
+                    int col = cols[i];
+                    float val = vals[i];
+                    new_cols[new_i] = col*nve + k;
+                    new_vals[new_i] = val;
+                    new_i++;
+                }
+            }
+        }
+        new_rows[m] = new_i;
+        nnz = new_i;
+        m = m*nve;
+        n = n*nve;
+
+        free(rows);
+        free(cols);
+        free(vals);
+        rows = new_rows;
+        cols = new_cols;
+        vals = new_vals;
+
+        printf("expanded nve is %d, i is %d, nnz is %d\n", nve, new_i, nnz);
+
         // call expander with nve
         mode = Matrix::ELEMENT;
     }
@@ -159,7 +190,8 @@ OsdMklKernelDispatcher::PushMatrix()
 {
     /* if no subdiv_operator exists, create one from A */
     if (subdiv_operator == NULL) {
-        subdiv_operator = new Matrix(S);
+        int nve = _currentVertexBuffer->GetNumElements();
+        subdiv_operator = new Matrix(S, nve);
 #if !BENCHMARKING
         printf("PushMatrix set %d-%d\n", subdiv_operator->m, subdiv_operator->n);
 #endif
