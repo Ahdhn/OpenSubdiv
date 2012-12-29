@@ -161,14 +161,16 @@ OsdMklKernelDispatcher::PushMatrix()
     /* if no subdiv_operator exists, create one from A */
     if (subdiv_operator == NULL) {
         subdiv_operator = new Matrix(S);
+#if !BENCHMARKING
         printf("PushMatrix set %d-%d\n", subdiv_operator->m, subdiv_operator->n);
+#endif
     } else {
         Matrix* new_subdiv_operator = subdiv_operator->gemm(S);
 #if !BENCHMARKING
-    printf("PushMatrix mul %d-%d = %d-%d * %d-%d\n",
-            (int) new_subdiv_operator->m, (int) new_subdiv_operator->n,
-            (int) S->size1(), (int) S->size2(),
-            (int) subdiv_operator->m, (int) subdiv_operator->n);
+        printf("PushMatrix mul %d-%d = %d-%d * %d-%d\n",
+                (int) new_subdiv_operator->m, (int) new_subdiv_operator->n,
+                (int) S->size1(), (int) S->size2(),
+                (int) subdiv_operator->m, (int) subdiv_operator->n);
 #endif
         delete subdiv_operator;
         subdiv_operator = new_subdiv_operator;
