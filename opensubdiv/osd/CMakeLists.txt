@@ -195,17 +195,6 @@ if ( Boost_FOUND OR MKL_FOUND OR OPENCL_FOUND )
 endif()
 
 #-------------------------------------------------------------------------------
-# SpMV Dispatchers code & dependencies
-if ( Boost_FOUND )
-    list(APPEND SOURCE_FILES
-        ublasDispatcher.cpp
-    )
-    list(APPEND PUBLIC_HEADER_FILES
-        ublasDispatcher.h
-    )
-endif()
-
-#-------------------------------------------------------------------------------
 # MKL code & dependencies
 if ( MKL_FOUND )
     list(APPEND SOURCE_FILES

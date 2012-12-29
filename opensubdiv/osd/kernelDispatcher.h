@@ -85,7 +85,6 @@ public:
                       kMKL = 5,
                       kCLSPMV = 6,
                       kCUSPARSE = 7,
-                      kUBLAS = 8,
                       kMAX };
 
 
@@ -193,7 +192,6 @@ protected:
         friend class OsdCpuKernelDispatcher;
         friend class OsdSpMVKernelDispatcher;
         friend class OsdClSpMVKernelDispatcher;
-        friend class OsdUBlasKernelDispatcher;
         friend class OsdMklKernelDispatcher;
         friend class OsdCusparseKernelDispatcher;
         friend class OsdGlslKernelDispatcher;
