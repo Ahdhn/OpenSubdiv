@@ -9,7 +9,7 @@ Matrix::Matrix(int m, int n, int nnz, int nve, mode_t mode) :
     rows = (int*) malloc((m+1) * sizeof(int));
     cols = (int*) malloc(nnz * sizeof(int));
     vals = (float*) malloc(nnz * sizeof(float));
-    rows[m] = nnz;
+    rows[m] = nnz+1;
 }
 
 Matrix::Matrix(const coo_matrix1* S, int nve, mode_t mode) :
@@ -35,7 +35,6 @@ Matrix::Matrix(const coo_matrix1* S, int nve, mode_t mode) :
 
     mkl_scsrcoo(job, &m, vals, cols, rows, &nnz, acoo, rowind, colind, &info);
     assert(info == 0);
-    this->rows[m] = nnz;
 }
 
 int
