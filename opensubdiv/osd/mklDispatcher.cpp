@@ -9,14 +9,71 @@ using namespace boost::numeric::ublas;
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
+Matrix::Matrix(int m, int n, int nnz, int nve, mode_t mode) :
+    m(m), n(n), nnz(nnz), nve(nve), mode(mode) {
+    this->rows = (int*) malloc(m * sizeof(int));
+    this->cols = (int*) malloc(n * sizeof(int));
+    this->vals = (float*) malloc(m * sizeof(float));
+}
+
+Matrix::Matrix(const coo_matrix1& S, int nve) {
+}
+
+int
+Matrix::NumBytes() const {
+    return 0;
+}
+
+double
+Matrix::SparsityFactor() const {
+    return 0.0;
+}
+
+void
+Matrix::spmv(float* d_out, const float* d_in) {
+    if (mode == Matrix::VERTEX)
+        expand();
+}
+
+Matrix*
+Matrix::operator*(Matrix* rhs) {
+    if (rhs->mode != this->mode) {
+        rhs->expand();
+        this->expand();
+    }
+    return NULL;
+}
+
+Matrix*
+Matrix::operator*(const coo_matrix1* rhs) {
+    return NULL;
+}
+
+void
+Matrix::expand() {
+    if (mode == Matrix::VERTEX) {
+        // call expander with nve
+        mode = Matrix::ELEMENT;
+    }
+}
+
+void
+Matrix::report(std::string name) {
+}
+
+Matrix::~Matrix() {
+    free(rows);
+    free(cols);
+    free(vals);
+}
+
 OsdMklKernelDispatcher::OsdMklKernelDispatcher( int levels )
-    : OsdSpMVKernelDispatcher(levels), S(NULL), M(NULL), M_big(NULL)
+    : OsdSpMVKernelDispatcher(levels), S(NULL)
 { }
 
 OsdMklKernelDispatcher::~OsdMklKernelDispatcher()
 {
     if (S) delete S;
-    if (M) delete M;
 }
 
 static OsdMklKernelDispatcher::OsdKernelDispatcher *
@@ -50,14 +107,14 @@ OsdMklKernelDispatcher::StageElem(int i, int j, float value)
 void
 OsdMklKernelDispatcher::PushMatrix()
 {
-    /* if no M exists, create one from A */
-    if (M == NULL) {
+    /* if no subdiv_operator exists, create one from A */
+    if (subdiv_operator == NULL) {
 
         //printf("PushMatrix set %d-%d\n", S->size1(), S->size2());
-        M = new csr_matrix1(*S);
+        subdiv_operator = new Matrix(*S);
 
     } else {
-
+#if 0
         /* convert S from COO to CSR format efficiently */
         csr_matrix1 A(S->size1(), S->size2(), S->nnz());
         {
@@ -129,6 +186,8 @@ OsdMklKernelDispatcher::PushMatrix()
 
         delete M;
         M = C;
+#endif
+        subdiv_operator = *subdiv_operator * S;
     }
 
     /* remove staged matrix */
@@ -144,6 +203,7 @@ OsdMklKernelDispatcher::ApplyMatrix(int offset)
     float* V_out = (float*) _currentVertexBuffer->Map()
                    + offset * numElems;
 
+#if 0
     char transa = 'N';
     int m = M_big->size1();
     float* a = &M_big->value_data()[0];
@@ -153,12 +213,17 @@ OsdMklKernelDispatcher::ApplyMatrix(int offset)
     float* y = V_out;
 
     mkl_scsrgemv(&transa, &m, a, ia, ja, x, y);
+#endif
+
+    subdiv_operator->spmv(V_out, V_in);
 }
 
 void
 OsdMklKernelDispatcher::FinalizeMatrix()
 {
     /* expand M to M_big if necessary */
+    subdiv_operator->expand();
+#if 0
     if (M_big == NULL) {
         int nve = _currentVertexBuffer->GetNumElements();
         coo_matrix1 M_big_coo(M->size1()*nve, M->size2()*nve, M->nnz()*nve);
@@ -199,35 +264,42 @@ OsdMklKernelDispatcher::FinalizeMatrix()
             M_big->set_filled(n+1, M_big->index1_data()[n] - 1);
         }
     }
+#endif
 
     this->PrintReport();
 
+#if 0
     if (osdSpMVKernel_DumpSpy_FileName != NULL) {
         this->WriteMatrix(M, osdSpMVKernel_DumpSpy_FileName);
     }
+#endif
 }
 
 bool
 OsdMklKernelDispatcher::MatrixReady()
 {
-    return (M_big != NULL);
+    return (subdiv_operator != NULL);
 }
 
 void
 OsdMklKernelDispatcher::PrintReport()
 {
+#if 0
     int size_in_bytes =  (int) (M_big->index2_data().size() +
                                 M_big->index1_data().size()) * sizeof(int)  +
                                 M_big->value_data().size() * sizeof(float);
     double sparsity_factor = 100.0 * M_big->nnz() / M_big->size1() / M_big->size2();
+#endif
+    int size_in_bytes = subdiv_operator->NumBytes();
+    double sparsity_factor = subdiv_operator->SparsityFactor();
 
 #if BENCHMARKING
-    printf(" nverts=%d", M->size1());
+    printf(" nverts=%d", subdiv_operator->nnz);
     printf(" mem=%d", size_in_bytes);
     printf(" sparsity=%f", sparsity_factor);
 #else
     printf("Subdiv matrix is %d-by-%d with %f%% nonzeroes, takes %d MB.\n",
-        M_big->size1(), M_big->size2(), sparsity_factor, size_in_bytes / 1024 / 1024);
+        subdiv_operator->m, subdiv_operator->n, sparsity_factor, size_in_bytes / 1024 / 1024);
 #endif
 }
 

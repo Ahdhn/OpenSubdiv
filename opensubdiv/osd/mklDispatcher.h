@@ -11,6 +11,34 @@ extern "C" {
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
+class Matrix {
+
+public:
+    int m, n, nnz, nve;
+    int* rows;
+    int* cols;
+    float* vals;
+
+    typedef enum {
+        VERTEX, // matrix indices refer to logical vertices
+        ELEMENT // matrix indices refer to vertex elements
+    } mode_t;
+
+    mode_t mode;
+
+    Matrix(int m, int n, int nnz, int nve=1, Matrix::mode_t=VERTEX);
+    Matrix(const coo_matrix1& S, int nve=1);
+    void spmv(float* d_out, const float* d_in);
+    Matrix* operator*(Matrix* rhs);
+    Matrix* operator*(const coo_matrix1* rhs);
+    virtual ~Matrix();
+    void expand();
+    void report(std::string name);
+
+    int NumBytes() const;
+    double SparsityFactor() const;
+};
+
 class OsdMklKernelDispatcher : public OsdSpMVKernelDispatcher
 {
 public:
@@ -28,8 +56,7 @@ public:
     virtual void PrintReport();
 
     coo_matrix1 *S;
-    csr_matrix1 *M;
-    csr_matrix1 *M_big;
+    Matrix* subdiv_operator;
 };
 
 } // end namespace OPENSUBDIV_VERSION
