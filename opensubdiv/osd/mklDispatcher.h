@@ -14,7 +14,7 @@ namespace OPENSUBDIV_VERSION {
 class Matrix {
 
 public:
-    int m, n, nnz, nve;
+    int m, n, nve;
     int* rows;
     int* cols;
     float* vals;
@@ -26,17 +26,18 @@ public:
 
     mode_t mode;
 
-    Matrix(int m, int n, int nnz, int nve=1, Matrix::mode_t=VERTEX);
-    Matrix(const coo_matrix1* S, int nve=1, Matrix::mode_t=VERTEX);
+    Matrix(int m, int n, int nnz, int nve=1, mode_t=VERTEX);
+    Matrix(const coo_matrix1* S, int nve=1, mode_t=VERTEX);
     void spmv(float* d_out, float* d_in);
     Matrix* gemm(Matrix* rhs);
     Matrix* gemm(const coo_matrix1* rhs);
     virtual ~Matrix();
     void expand();
-    void report(std::string name);
+    int nnz();
+    void dump(std::string ofilename);
 
-    int NumBytes() const;
-    double SparsityFactor() const;
+    int NumBytes();
+    double SparsityFactor();
 };
 
 class OsdMklKernelDispatcher : public OsdSpMVKernelDispatcher

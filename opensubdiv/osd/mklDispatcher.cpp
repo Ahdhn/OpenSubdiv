@@ -5,7 +5,7 @@ namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
 Matrix::Matrix(int m, int n, int nnz, int nve, mode_t mode) :
-    m(m), n(n), nnz(nnz), nve(nve), mode(mode) {
+    m(m), n(n), nve(nve), mode(mode) {
     rows = (int*) malloc((m+1) * sizeof(int));
     cols = (int*) malloc(nnz * sizeof(int));
     vals = (float*) malloc(nnz * sizeof(float));
@@ -13,18 +13,21 @@ Matrix::Matrix(int m, int n, int nnz, int nve, mode_t mode) :
 }
 
 Matrix::Matrix(const coo_matrix1* S, int nve, mode_t mode) :
-    m(S->size1()), n(S->size2()), nnz(S->nnz()), nve(nve), mode(mode) {
+    nve(nve), mode(mode) {
 
+    m = S->size1();
+    n = S->size2();
+    int numnz = S->nnz();
     rows = (int*) malloc((m+1) * sizeof(int));
-    cols = (int*) malloc(nnz * sizeof(int));
-    vals = (float*) malloc(nnz * sizeof(float));
+    cols = (int*) malloc(numnz * sizeof(int));
+    vals = (float*) malloc(numnz * sizeof(float));
 
     int job[] = {
         2, // job(1)=2 (coo->csr with sorting)
         1, // job(2)=1 (one-based indexing for csr matrix)
         1, // job(3)=1 (one-based indexing for coo matrix)
         0, // empty
-        nnz, // job(5)=nnz (sets nnz for csr matrix)
+        numnz, // job(5)=nnz (sets nnz for csr matrix)
         0  // job(6)=0 (all output arrays filled)
     };
 
@@ -33,26 +36,30 @@ Matrix::Matrix(const coo_matrix1* S, int nve, mode_t mode) :
     int* colind = (int*) &S->index2_data()[0];
     int info;
 
-    mkl_scsrcoo(job, &m, vals, cols, rows, &nnz, acoo, rowind, colind, &info);
+
+    mkl_scsrcoo(job, &m, vals, cols, rows, &numnz, acoo, rowind, colind, &info);
     assert(info == 0);
 }
 
 int
-Matrix::NumBytes() const {
-    return nnz*sizeof(float) + nnz*sizeof(int) + (m+1)*sizeof(int);
+Matrix::nnz() {
+    return this->rows[m];
+}
+
+int
+Matrix::NumBytes() {
+    return nnz()*sizeof(float) + nnz()*sizeof(int) + (m+1)*sizeof(int);
 }
 
 double
-Matrix::SparsityFactor() const {
-    return (double) nnz / (double) (m * n);
+Matrix::SparsityFactor() {
+    return (double) nnz() / (double) (m * n);
 }
 
 void
 Matrix::spmv(float* d_out, float* d_in) {
-    if (mode == Matrix::VERTEX)
-        expand();
-
-    mkl_scsrgemv("N", &m, vals, rows, cols, d_in, d_out);
+    assert(mode == Matrix::ELEMENT);
+    mkl_scsrgemv((char*)"N", &m, vals, rows, cols, d_in, d_out);
 }
 
 Matrix*
@@ -65,7 +72,7 @@ Matrix::gemm(Matrix* rhs) {
     Matrix* A = this;
     Matrix* B = rhs;
 
-    int c_nnz = std::min(A->m*B->n, (int) B->nnz*7); // XXX: shouldn't this be 4, not 7?
+    int c_nnz = std::min(A->m*B->n, (int) B->nnz()*7); // XXX: shouldn't this be 4, not 7?
     Matrix* C = new Matrix(A->m, B->n, c_nnz, B->nve, mode);
 
     int request = 0; // output arrays pre allocated
@@ -74,12 +81,12 @@ Matrix::gemm(Matrix* rhs) {
     assert(A->n == B->m);
 
     /* perform SpM*SpM */
-    mkl_scsrmultcsr("N", &request, &sort,
+    mkl_scsrmultcsr((char*)"N", &request, &sort,
             &A->m, &A->n, &B->n,
             A->vals, A->cols, A->rows,
             B->vals, B->cols, B->rows,
             C->vals, C->cols, C->rows,
-            &C->nnz, &info);
+            &c_nnz, &info);
 
     if (info != 0) {
         printf("Error: info returned %d\n", info);
@@ -99,41 +106,57 @@ Matrix::gemm(const coo_matrix1* lhs) {
 void
 Matrix::expand() {
     if (mode == Matrix::VERTEX) {
-        printf("Expanding %d-by-%d matrix with %d nnz.\n", m, n, nnz);
+        printf("Expanding %d-by-%d by %d matrix with %d nnz.\n", m, n, nve, nnz());
+
         int* new_rows = (int*) malloc((nve*m+1) * sizeof(int));
-        int* new_cols = (int*) malloc(nve*nnz * sizeof(int));
-        float* new_vals = (float*) malloc(nve*nnz * sizeof(float));
+        int* new_cols = (int*) malloc(nve*nnz() * sizeof(int));
+        float* new_vals = (float*) malloc(nve*nnz() * sizeof(float));
 
         int new_i = 0;
         for(int r = 0; r < m; r++) {
             for(int k = 0; k < nve; k++) {
-                new_rows[r*nve + k] = new_i;
-                for(int i = rows[r]; i < rows[r+1]; i++) {
-                    int col = cols[i];
-                    float val = vals[i];
-                    new_cols[new_i] = col*nve + k;
+                new_rows[r*nve + k] = new_i+1;
+                for(int i_one = rows[r]; i_one < rows[r+1]; i_one++) {
+                    int col_one = cols[i_one-1];
+                    float val = vals[i_one-1];
+                    new_cols[new_i] = ((col_one-1)*nve + k) + 1;
                     new_vals[new_i] = val;
                     new_i++;
                 }
             }
         }
-        new_rows[m] = new_i;
-        nnz = new_i;
-        m = m*nve;
-        n = n*nve;
 
         free(rows);
         free(cols);
         free(vals);
+
+        m = m*nve;
+        n = n*nve;
         rows = new_rows;
         cols = new_cols;
         vals = new_vals;
         mode = Matrix::ELEMENT;
+        new_rows[m] = new_i+1;
     }
 }
 
 void
-Matrix::report(std::string name) {
+Matrix::dump(std::string ofilename) {
+    FILE* ofile = fopen(ofilename.c_str(), "w");
+    assert(ofile != NULL);
+
+    fprintf(ofile, "%%%%MatrixMarket matrix coordinate real general\n");
+    fprintf(ofile, "%d %d %d\n", m, n, nnz());
+
+    for(int r = 0; r < m; r++) {
+        for(int i = rows[r]; i < rows[r+1]; i++) {
+            int col = cols[i-1];
+            float val = vals[i-1];
+            fprintf(ofile, "%d %d %10.3g\n", r+1, col, val);
+        }
+    }
+
+    fclose(ofile);
 }
 
 Matrix::~Matrix() {
@@ -223,15 +246,12 @@ OsdMklKernelDispatcher::ApplyMatrix(int offset)
 void
 OsdMklKernelDispatcher::FinalizeMatrix()
 {
-    /* expand M to M_big if necessary */
+    if (osdSpMVKernel_DumpSpy_FileName != NULL) {
+        subdiv_operator->dump(osdSpMVKernel_DumpSpy_FileName);
+    }
+
     subdiv_operator->expand();
     this->PrintReport();
-
-#if 0
-    if (osdSpMVKernel_DumpSpy_FileName != NULL) {
-        this->WriteMatrix(subdiv_operator, osdSpMVKernel_DumpSpy_FileName);
-    }
-#endif
 }
 
 bool
@@ -247,7 +267,7 @@ OsdMklKernelDispatcher::PrintReport()
     double sparsity_factor = 100.0 * subdiv_operator->SparsityFactor();
 
 #if BENCHMARKING
-    printf(" nverts=%d", subdiv_operator->nnz);
+    printf(" nverts=%d", subdiv_operator->nnz());
     printf(" mem=%d", size_in_bytes);
     printf(" sparsity=%f", sparsity_factor);
 #else
