@@ -139,15 +139,27 @@ FarBilinearSubdivisionTables<U>::Apply( int level, void * clientdata ) const {
     FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
     assert(dispatch);
 
-    int offset = this->GetFirstVertexOffset(level);
-    if (batch->kernelF>0)
-        dispatch->ApplyBilinearFaceVerticesKernel(this->_mesh, offset, level, 0, batch->kernelF, clientdata);
-    offset += this->GetNumFaceVertices(level);
-    if (batch->kernelE>0)
-        dispatch->ApplyBilinearEdgeVerticesKernel(this->_mesh, offset, level, 0, batch->kernelE, clientdata);
-    offset += this->GetNumEdgeVertices(level);
-    if (batch->kernelB.first < batch->kernelB.second)
-        dispatch->ApplyBilinearVertexVerticesKernel(this->_mesh, offset, level, batch->kernelB.first, batch->kernelB.second, clientdata);
+    int prevLevel = std::max(level-1,0);
+    int prevOffset = this->GetFirstVertexOffset( prevLevel );
+    int offset =     this->GetFirstVertexOffset( level );
+    int jop = this->GetNumVertices( prevLevel );
+    int iop = this->GetNumVertices( level );
+
+    dispatch->SetSrcOffset(prevOffset);
+    dispatch->SetDstOffset(offset);
+
+    dispatch->StageMatrix(iop, jop);
+    {
+        if (batch->kernelF>0)
+            dispatch->ApplyBilinearFaceVerticesKernel(this->_mesh, offset, level, 0, batch->kernelF, clientdata);
+        offset += this->GetNumFaceVertices(level);
+        if (batch->kernelE>0)
+            dispatch->ApplyBilinearEdgeVerticesKernel(this->_mesh, offset, level, 0, batch->kernelE, clientdata);
+        offset += this->GetNumEdgeVertices(level);
+        if (batch->kernelB.first < batch->kernelB.second)
+            dispatch->ApplyBilinearVertexVerticesKernel(this->_mesh, offset, level, batch->kernelB.first, batch->kernelB.second, clientdata);
+    }
+    dispatch->PushMatrix();
 }
 
 //

@@ -123,10 +123,6 @@ public:
      */
     virtual void PrintReport() = 0;
 
-    virtual void ApplyBilinearFaceVerticesKernel(FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data);
-    virtual void ApplyBilinearEdgeVerticesKernel(FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data);
-    virtual void ApplyBilinearVertexVerticesKernel(FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data);
-
     /**
      * Unique ID for each subdivision matrix.
      */

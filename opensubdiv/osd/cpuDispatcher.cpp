@@ -198,7 +198,7 @@ OsdCpuKernelDispatcher::Synchronize() { }
 
 
 void
-OsdCpuKernelDispatcher::ApplyBilinearFaceVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) {
+OsdCpuKernelDispatcher::ApplyBilinearFaceVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
 
     computeFace(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
                 (int*)_tables[F_IT].ptr + _tableOffsets[F_IT][level-1],
@@ -207,7 +207,7 @@ OsdCpuKernelDispatcher::ApplyBilinearFaceVerticesKernel( FarMesh<OsdVertex> * me
 }
 
 void
-OsdCpuKernelDispatcher::ApplyBilinearEdgeVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) {
+OsdCpuKernelDispatcher::ApplyBilinearEdgeVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
 
     computeBilinearEdge(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
                         (int*)_tables[E_IT].ptr + _tableOffsets[E_IT][level-1],
@@ -216,7 +216,7 @@ OsdCpuKernelDispatcher::ApplyBilinearEdgeVerticesKernel( FarMesh<OsdVertex> * me
 }
 
 void
-OsdCpuKernelDispatcher::ApplyBilinearVertexVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) {
+OsdCpuKernelDispatcher::ApplyBilinearVertexVerticesKernel( FarMesh<OsdVertex> * mesh, int offset, int level, int start, int end, void * data) const {
 
     computeBilinearVertex(_vdesc, GetVertexBuffer(), GetVaryingBuffer(),
                           (int*)_tables[V_ITa].ptr + _tableOffsets[V_ITa][level-1],
