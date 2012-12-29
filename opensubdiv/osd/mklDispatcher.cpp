@@ -99,6 +99,7 @@ Matrix::gemm(const coo_matrix1* lhs) {
 void
 Matrix::expand() {
     if (mode == Matrix::VERTEX) {
+        printf("Expanding %d-by-%d matrix with %d nnz.\n", m, n, nnz);
         int* new_rows = (int*) malloc((nve*m+1) * sizeof(int));
         int* new_cols = (int*) malloc(nve*nnz * sizeof(int));
         float* new_vals = (float*) malloc(nve*nnz * sizeof(float));
@@ -127,10 +128,6 @@ Matrix::expand() {
         rows = new_rows;
         cols = new_cols;
         vals = new_vals;
-
-        printf("expanded nve is %d, i is %d, nnz is %d\n", nve, new_i, nnz);
-
-        // call expander with nve
         mode = Matrix::ELEMENT;
     }
 }
