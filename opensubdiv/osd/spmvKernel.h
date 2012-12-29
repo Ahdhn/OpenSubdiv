@@ -2,7 +2,6 @@
 #define OSD_SPMV_KERNEL_H
 
 #include "../version.h"
-#include "osd/spmvDispatcher.h"
 #include "osd/cpuKernel.h"
 
 #include <stdio.h>

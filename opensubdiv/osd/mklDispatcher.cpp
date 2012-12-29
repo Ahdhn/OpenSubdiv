@@ -184,17 +184,10 @@ CsrMatrix::~CsrMatrix() {
     free(vals);
 }
 
-OsdMklKernelDispatcher::OsdMklKernelDispatcher( int levels )
-    : OsdSpMVKernelDispatcher(levels), StagedOp(NULL), subdiv_operator(NULL)
-{ }
 
-OsdMklKernelDispatcher::~OsdMklKernelDispatcher()
-{
-    if (StagedOp != NULL)
-        delete StagedOp;
-    if (subdiv_operator != NULL)
-        delete subdiv_operator;
-}
+OsdMklKernelDispatcher::OsdMklKernelDispatcher(int levels) :
+    OsdSpMVKernelDispatcher<CooMatrix,CsrMatrix>(levels)
+{ }
 
 static OsdMklKernelDispatcher::OsdKernelDispatcher *
 Create(int levels) {
@@ -204,85 +197,6 @@ Create(int levels) {
 void
 OsdMklKernelDispatcher::Register() {
     Factory::GetInstance().Register(Create, kMKL);
-}
-
-void
-OsdMklKernelDispatcher::StageMatrix(int i, int j)
-{
-    StagedOp = new CooMatrix(i,j);
-}
-
-inline void
-OsdMklKernelDispatcher::StageElem(int i, int j, float value)
-{
-    StagedOp->append_element(i, j, value);
-}
-
-void
-OsdMklKernelDispatcher::PushMatrix()
-{
-    /* if no subdiv_operator exists, create one from A */
-    if (subdiv_operator == NULL) {
-        int nve = _currentVertexBuffer->GetNumElements();
-        subdiv_operator = new CsrMatrix(StagedOp, nve);
-        DEBUG_PRINTF("PushMatrix set %d-%d\n", subdiv_operator->m, subdiv_operator->n);
-    } else {
-        CsrMatrix* new_subdiv_operator = StagedOp->gemm(subdiv_operator);
-        DEBUG_PRINTF("PushMatrix mul %d-%d = %d-%d * %d-%d\n",
-                (int) new_subdiv_operator->m, (int) new_subdiv_operator->n,
-                (int) StagedOp->m, (int) StagedOp->n,
-                (int) subdiv_operator->m, (int) subdiv_operator->n);
-        delete subdiv_operator;
-        subdiv_operator = new_subdiv_operator;
-    }
-
-    /* remove staged matrix */
-    delete StagedOp;
-    StagedOp = NULL;
-}
-
-void
-OsdMklKernelDispatcher::ApplyMatrix(int offset)
-{
-    int numElems = _currentVertexBuffer->GetNumElements();
-    float* V_in = (float*) _currentVertexBuffer->Map();
-    float* V_out = (float*) _currentVertexBuffer->Map()
-                   + offset * numElems;
-
-    subdiv_operator->spmv(V_out, V_in);
-}
-
-void
-OsdMklKernelDispatcher::FinalizeMatrix()
-{
-    if (osdSpMVKernel_DumpSpy_FileName != NULL) {
-        subdiv_operator->dump(osdSpMVKernel_DumpSpy_FileName);
-    }
-
-    subdiv_operator->expand();
-    this->PrintReport();
-}
-
-bool
-OsdMklKernelDispatcher::MatrixReady()
-{
-    return (subdiv_operator != NULL);
-}
-
-void
-OsdMklKernelDispatcher::PrintReport()
-{
-    int size_in_bytes = subdiv_operator->NumBytes();
-    double sparsity_factor = 100.0 * subdiv_operator->SparsityFactor();
-
-#if BENCHMARKING
-    printf(" nverts=%d", subdiv_operator->nnz());
-    printf(" mem=%d", size_in_bytes);
-    printf(" sparsity=%f", sparsity_factor);
-#endif
-
-    DEBUG_PRINTF("Subdiv matrix is %d-by-%d with %f%% nonzeroes, takes %d MB.\n",
-        subdiv_operator->m, subdiv_operator->n, sparsity_factor, size_in_bytes / 1024 / 1024);
 }
 
 } // end namespace OPENSUBDIV_VERSION

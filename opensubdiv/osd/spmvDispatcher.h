@@ -3,13 +3,11 @@
 
 #include "../version.h"
 #include "../osd/cpuDispatcher.h"
+#include "../osd/spmvKernel.h"
 
 #include <stdio.h>
 #include <sstream>
 #include <string>
-
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/matrix_sparse.hpp>
 
 extern char* osdSpMVKernel_DumpSpy_FileName;
 
@@ -19,55 +17,58 @@ extern char* osdSpMVKernel_DumpSpy_FileName;
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
-typedef boost::numeric::ublas::compressed_matrix<
-    float,
-    boost::numeric::ublas::basic_row_major<int,int>,
-    0,
-    std::vector<int>,
-    std::vector<float>
-> csr_matrix;
-
-typedef boost::numeric::ublas::coordinate_matrix<
-    float,
-    boost::numeric::ublas::basic_row_major<int,int>,
-    0,
-    boost::numeric::ublas::unbounded_array<int>,
-    boost::numeric::ublas::unbounded_array<float>
-> coo_matrix;
-
-typedef boost::numeric::ublas::compressed_matrix<
-    float,
-    boost::numeric::ublas::basic_row_major<int,int>,
-    1,
-    std::vector<int>,
-    std::vector<float>
-> csr_matrix1;
-
-typedef boost::numeric::ublas::coordinate_matrix<
-    float,
-    boost::numeric::ublas::basic_row_major<int,int>,
-    1,
-    boost::numeric::ublas::unbounded_array<int>,
-    boost::numeric::ublas::unbounded_array<float>
-> coo_matrix1;
-
+template <class CooMatrix_t, class CsrMatrix_t>
 class OsdSpMVKernelDispatcher : public OsdCpuKernelDispatcher
 {
 public:
-    OsdSpMVKernelDispatcher(int levels);
-    virtual ~OsdSpMVKernelDispatcher();
+    OsdSpMVKernelDispatcher( int levels )
+        : OsdCpuKernelDispatcher(levels), StagedOp(NULL), SubdivOp(NULL)
+    { }
+
+    /* desctructor */
+    virtual ~OsdSpMVKernelDispatcher() {
+        if (_vdesc)
+            delete _vdesc;
+        if (StagedOp != NULL)
+            delete StagedOp;
+        if (SubdivOp!= NULL)
+            delete SubdivOp;
+    }
 
     virtual FarMesh<OsdVertex>::Strategy GetStrategy() {
         return FarMesh<OsdVertex>::SpMV;
     }
 
-    virtual void BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying);
-    int GetElemsPerVertex() const { return _currentVertexBuffer ? _currentVertexBuffer->GetNumElements() : 0; }
-    int GetElemsPerVarying() const { return _currentVaryingBuffer ? _currentVaryingBuffer->GetNumElements() : 0; }
-    int CopyNVerts(int nVerts, int index);
+    virtual void BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying) {
+        if (vertex)
+            _currentVertexBuffer = dynamic_cast<OsdCpuVertexBuffer *>(vertex);
+        else
+            _currentVertexBuffer = NULL;
 
-    // static OsdSpMVKernelDispatcher* Create(int levels) = 0;
-    // static void Register() = 0;
+        if (varying)
+            _currentVaryingBuffer = dynamic_cast<OsdCpuVertexBuffer *>(varying);
+        else
+            _currentVaryingBuffer = NULL;
+
+        _vdesc = new SpMVVertexDescriptor(this,
+                _currentVertexBuffer  ? _currentVertexBuffer->GetNumElements()  : 0,
+                _currentVaryingBuffer ? _currentVaryingBuffer->GetNumElements() : 0);
+    }
+
+    int GetElemsPerVertex() const {
+        return _currentVertexBuffer ? _currentVertexBuffer->GetNumElements() : 0;
+    }
+
+    int GetElemsPerVarying() const {
+        return _currentVaryingBuffer ? _currentVaryingBuffer->GetNumElements() : 0;
+    }
+
+    int CopyNVerts(int nVerts, int index) {
+        for (int i = 0; i < nVerts; i++)
+            _vdesc->AddWithWeight(NULL, index+i, index+i, 1.0);
+        return nVerts;
+    }
+
 
     /**
      * Stage an i-by-j matrix with the dispatcher. The matrix will
@@ -75,14 +76,18 @@ public:
      * subdivision driver. In pseudocode:
      * S = new matrix(i,j)
      */
-    virtual void StageMatrix(int i, int j) = 0;
+    virtual void StageMatrix(int i, int j) {
+        StagedOp = new CooMatrix_t(i,j);
+    }
 
     /**
      * Insert an element of the given value at location (i,j) in
      * the staged matrix. In pseudocode:
      * S[i,j] = value
      */
-    virtual void StageElem(int i, int j, float value) = 0;
+    virtual void StageElem(int i, int j, float value) {
+        StagedOp->append_element(i, j, value);
+    }
 
     /**
      * Multiplies the current subdivision matrix by the staged
@@ -91,45 +96,82 @@ public:
      * In pseudocode:
      * M = S * M
      */
-    virtual void PushMatrix() = 0;
+    virtual void PushMatrix() {
+        /* if no SubdivOp exists, create one from A */
+        if (SubdivOp == NULL) {
+            int nve = _currentVertexBuffer->GetNumElements();
+            SubdivOp = new CsrMatrix_t(StagedOp, nve);
+            DEBUG_PRINTF("PushMatrix set %d-%d\n", SubdivOp->m, SubdivOp->n);
+        } else {
+            CsrMatrix_t* new_SubdivOp = StagedOp->gemm(SubdivOp);
+            DEBUG_PRINTF("PushMatrix mul %d-%d = %d-%d * %d-%d\n",
+                    (int) new_SubdivOp->m, (int) new_SubdivOp->n,
+                    (int) StagedOp->m, (int) StagedOp->n,
+                    (int) SubdivOp->m, (int) SubdivOp->n);
+            delete SubdivOp;
+            SubdivOp = new_SubdivOp;
+        }
+
+        /* remove staged matrix */
+        delete StagedOp;
+        StagedOp = NULL;
+    }
 
     /**
      * Called after all matrices have been pushed, and before
      * the matrix is applied to the vertices (ApplyMatrix).
      */
-    virtual void FinalizeMatrix() = 0;
+    virtual void FinalizeMatrix() {
+        if (osdSpMVKernel_DumpSpy_FileName != NULL)
+            SubdivOp->dump(osdSpMVKernel_DumpSpy_FileName);
+
+        SubdivOp->expand();
+        this->PrintReport();
+    }
 
     /**
      * Apply the subdivison matrix on the vertices at index 0,
      * and store the result at the given offset. In pseudocode:
      * v[offset:...] = M * v[0:...]
      */
-    virtual void ApplyMatrix(int offset) = 0;
+    virtual void ApplyMatrix(int offset) {
+        int numElems = _currentVertexBuffer->GetNumElements();
+        float* V_in = (float*) _currentVertexBuffer->Map();
+        float* V_out = (float*) _currentVertexBuffer->Map()
+            + offset * numElems;
 
-    /**
-     * Writes the subdivison matrix to a file. This step is helpful
-     * for visualizing sparsity patterns.
-     */
-    void WriteMatrix(coo_matrix1* M, std::string file_basename);
-    void WriteMatrix(csr_matrix1* M, std::string file_basename);
+        SubdivOp->spmv(V_out, V_in);
+    }
 
     /**
      * True if the subdivision matrix has been constructed and is
      * ready to be applied to the vector of vertices.
      */
-    virtual bool MatrixReady() = 0;
+    virtual bool MatrixReady() {
+        return (SubdivOp != NULL);
+    }
 
     /**
      * Print a report on stdout. This is called after the subdivision
      * matrix is constructed and is useful for displaying stats like
      * matrix dimensions, number of nonzeroes, memory usage, etc.
      */
-    virtual void PrintReport() = 0;
+    virtual void PrintReport() {
+        int size_in_bytes = SubdivOp->NumBytes();
+        double sparsity_factor = 100.0 * SubdivOp->SparsityFactor();
 
-    /**
-     * Unique ID for each subdivision matrix.
-     */
-    int matrix_id;
+        #if BENCHMARKING
+            printf(" nverts=%d", SubdivOp->nnz());
+            printf(" mem=%d", size_in_bytes);
+            printf(" sparsity=%f", sparsity_factor);
+        #endif
+
+        DEBUG_PRINTF("Subdiv matrix is %d-by-%d with %f%% nonzeroes, takes %d MB.\n",
+                SubdivOp->m, SubdivOp->n, sparsity_factor, size_in_bytes / 1024 / 1024);
+    }
+
+    CooMatrix_t* StagedOp;
+    CsrMatrix_t* SubdivOp;
 };
 
 } // end namespace OPENSUBDIV_VERSION

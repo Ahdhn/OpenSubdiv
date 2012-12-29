@@ -190,8 +190,7 @@ protected:
 
     protected:
         friend class OsdCpuKernelDispatcher;
-        friend class OsdSpMVKernelDispatcher;
-        friend class OsdClSpMVKernelDispatcher;
+        //friend class OsdSpMVKernelDispatcher;
         friend class OsdMklKernelDispatcher;
         friend class OsdCusparseKernelDispatcher;
         friend class OsdGlslKernelDispatcher;

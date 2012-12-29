@@ -53,24 +53,13 @@ public:
     double SparsityFactor();
 };
 
-class OsdMklKernelDispatcher : public OsdSpMVKernelDispatcher
+
+class OsdMklKernelDispatcher :
+    public OsdSpMVKernelDispatcher<CooMatrix,CsrMatrix>
 {
 public:
     OsdMklKernelDispatcher(int levels);
-    virtual ~OsdMklKernelDispatcher();
-
     static void Register();
-
-    virtual void StageMatrix(int i, int j);
-    virtual void StageElem(int i, int j, float value);
-    virtual void PushMatrix();
-    virtual void FinalizeMatrix();
-    virtual void ApplyMatrix(int offset);
-    virtual bool MatrixReady();
-    virtual void PrintReport();
-
-    CooMatrix* StagedOp;
-    CsrMatrix* subdiv_operator;
 };
 
 } // end namespace OPENSUBDIV_VERSION
