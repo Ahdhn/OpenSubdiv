@@ -186,7 +186,7 @@ CsrMatrix::~CsrMatrix() {
 
 
 OsdMklKernelDispatcher::OsdMklKernelDispatcher(int levels) :
-    OsdSpMVKernelDispatcher<CooMatrix,CsrMatrix>(levels)
+    OsdSpMVKernelDispatcher<CooMatrix,CsrMatrix,OsdCpuVertexBuffer>(levels)
 { }
 
 static OsdMklKernelDispatcher::OsdKernelDispatcher *

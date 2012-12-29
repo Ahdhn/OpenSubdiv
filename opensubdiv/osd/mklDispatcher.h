@@ -55,7 +55,7 @@ public:
 
 
 class OsdMklKernelDispatcher :
-    public OsdSpMVKernelDispatcher<CooMatrix,CsrMatrix>
+    public OsdSpMVKernelDispatcher<CooMatrix,CsrMatrix,OsdCpuVertexBuffer>
 {
 public:
     OsdMklKernelDispatcher(int levels);

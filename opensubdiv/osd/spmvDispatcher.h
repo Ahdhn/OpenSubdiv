@@ -17,7 +17,7 @@ static char* osdSpMVKernel_DumpSpy_FileName = NULL;
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
-template <class CooMatrix_t, class CsrMatrix_t>
+template <class CooMatrix_t, class CsrMatrix_t, class VertexBuffer_t>
 class OsdSpMVKernelDispatcher : public OsdCpuKernelDispatcher
 {
 public:
@@ -25,7 +25,6 @@ public:
         : OsdCpuKernelDispatcher(levels), StagedOp(NULL), SubdivOp(NULL)
     { }
 
-    /* desctructor */
     virtual ~OsdSpMVKernelDispatcher() {
         if (_vdesc)
             delete _vdesc;
@@ -35,18 +34,14 @@ public:
             delete SubdivOp;
     }
 
-    virtual FarMesh<OsdVertex>::Strategy GetStrategy() {
-        return FarMesh<OsdVertex>::SpMV;
-    }
-
     virtual void BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying) {
         if (vertex)
-            _currentVertexBuffer = dynamic_cast<OsdCpuVertexBuffer *>(vertex);
+            _currentVertexBuffer = dynamic_cast<VertexBuffer_t *>(vertex);
         else
             _currentVertexBuffer = NULL;
 
         if (varying)
-            _currentVaryingBuffer = dynamic_cast<OsdCpuVertexBuffer *>(varying);
+            _currentVaryingBuffer = dynamic_cast<VertexBuffer_t *>(varying);
         else
             _currentVaryingBuffer = NULL;
 
