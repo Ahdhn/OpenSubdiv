@@ -224,17 +224,13 @@ OsdMklKernelDispatcher::PushMatrix()
     if (subdiv_operator == NULL) {
         int nve = _currentVertexBuffer->GetNumElements();
         subdiv_operator = new CsrMatrix(StagedOp, nve);
-#if !BENCHMARKING
-        printf("PushMatrix set %d-%d\n", subdiv_operator->m, subdiv_operator->n);
-#endif
+        DEBUG_PRINTF("PushMatrix set %d-%d\n", subdiv_operator->m, subdiv_operator->n);
     } else {
         CsrMatrix* new_subdiv_operator = subdiv_operator->gemm(StagedOp);
-#if !BENCHMARKING
-        printf("PushMatrix mul %d-%d = %d-%d * %d-%d\n",
+        DEBUG_PRINTF("PushMatrix mul %d-%d = %d-%d * %d-%d\n",
                 (int) new_subdiv_operator->m, (int) new_subdiv_operator->n,
                 (int) StagedOp->m, (int) StagedOp->n,
                 (int) subdiv_operator->m, (int) subdiv_operator->n);
-#endif
         delete subdiv_operator;
         subdiv_operator = new_subdiv_operator;
     }
@@ -282,10 +278,10 @@ OsdMklKernelDispatcher::PrintReport()
     printf(" nverts=%d", subdiv_operator->nnz());
     printf(" mem=%d", size_in_bytes);
     printf(" sparsity=%f", sparsity_factor);
-#else
-    printf("Subdiv matrix is %d-by-%d with %f%% nonzeroes, takes %d MB.\n",
-        subdiv_operator->m, subdiv_operator->n, sparsity_factor, size_in_bytes / 1024 / 1024);
 #endif
+
+    DEBUG_PRINTF("Subdiv matrix is %d-by-%d with %f%% nonzeroes, takes %d MB.\n",
+        subdiv_operator->m, subdiv_operator->n, sparsity_factor, size_in_bytes / 1024 / 1024);
 }
 
 } // end namespace OPENSUBDIV_VERSION

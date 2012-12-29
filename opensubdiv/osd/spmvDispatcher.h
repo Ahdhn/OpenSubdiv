@@ -13,6 +13,9 @@
 
 extern char* osdSpMVKernel_DumpSpy_FileName;
 
+#define DEBUG_PRINTF(fmt, ...) \
+  fprintf(stderr, "[info] "fmt, ##__VA_ARGS__);
+
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
