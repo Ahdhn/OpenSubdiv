@@ -4,7 +4,7 @@
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
-Matrix::Matrix(int m, int n, int nnz, int nve, mode_t mode) :
+CsrMatrix::CsrMatrix(int m, int n, int nnz, int nve, mode_t mode) :
     m(m), n(n), nve(nve), mode(mode) {
     rows = (int*) malloc((m+1) * sizeof(int));
     cols = (int*) malloc(nnz * sizeof(int));
@@ -12,7 +12,7 @@ Matrix::Matrix(int m, int n, int nnz, int nve, mode_t mode) :
     rows[m] = nnz+1;
 }
 
-Matrix::Matrix(const coo_matrix1* S, int nve, mode_t mode) :
+CsrMatrix::CsrMatrix(const coo_matrix1* S, int nve, mode_t mode) :
     nve(nve), mode(mode) {
 
     m = S->size1();
@@ -42,38 +42,38 @@ Matrix::Matrix(const coo_matrix1* S, int nve, mode_t mode) :
 }
 
 int
-Matrix::nnz() {
+CsrMatrix::nnz() {
     return this->rows[m];
 }
 
 int
-Matrix::NumBytes() {
+CsrMatrix::NumBytes() {
     return nnz()*sizeof(float) + nnz()*sizeof(int) + (m+1)*sizeof(int);
 }
 
 double
-Matrix::SparsityFactor() {
+CsrMatrix::SparsityFactor() {
     return (double) nnz() / (double) (m * n);
 }
 
 void
-Matrix::spmv(float* d_out, float* d_in) {
-    assert(mode == Matrix::ELEMENT);
+CsrMatrix::spmv(float* d_out, float* d_in) {
+    assert(mode == CsrMatrix::ELEMENT);
     mkl_scsrgemv((char*)"N", &m, vals, rows, cols, d_in, d_out);
 }
 
-Matrix*
-Matrix::gemm(Matrix* rhs) {
+CsrMatrix*
+CsrMatrix::gemm(CsrMatrix* rhs) {
     if (rhs->mode != this->mode) {
         rhs->expand();
         this->expand();
     }
 
-    Matrix* A = this;
-    Matrix* B = rhs;
+    CsrMatrix* A = this;
+    CsrMatrix* B = rhs;
 
     int c_nnz = std::min(A->m*B->n, (int) B->nnz()*7); // XXX: shouldn't this be 4, not 7?
-    Matrix* C = new Matrix(A->m, B->n, c_nnz, B->nve, mode);
+    CsrMatrix* C = new CsrMatrix(A->m, B->n, c_nnz, B->nve, mode);
 
     int request = 0; // output arrays pre allocated
     int sort = 8; // reorder nonzeroes in C
@@ -95,19 +95,17 @@ Matrix::gemm(Matrix* rhs) {
     return C;
 }
 
-Matrix*
-Matrix::gemm(const coo_matrix1* lhs) {
-    Matrix* lhs_csr = new Matrix(lhs);
-    Matrix* answer = lhs_csr->gemm(this);
+CsrMatrix*
+CsrMatrix::gemm(const coo_matrix1* lhs) {
+    CsrMatrix* lhs_csr = new CsrMatrix(lhs);
+    CsrMatrix* answer = lhs_csr->gemm(this);
     delete lhs_csr;
     return answer;
 }
 
 void
-Matrix::expand() {
-    if (mode == Matrix::VERTEX) {
-        printf("Expanding %d-by-%d by %d matrix with %d nnz.\n", m, n, nve, nnz());
-
+CsrMatrix::expand() {
+    if (mode == CsrMatrix::VERTEX) {
         int* new_rows = (int*) malloc((nve*m+1) * sizeof(int));
         int* new_cols = (int*) malloc(nve*nnz() * sizeof(int));
         float* new_vals = (float*) malloc(nve*nnz() * sizeof(float));
@@ -135,13 +133,13 @@ Matrix::expand() {
         rows = new_rows;
         cols = new_cols;
         vals = new_vals;
-        mode = Matrix::ELEMENT;
+        mode = CsrMatrix::ELEMENT;
         new_rows[m] = new_i+1;
     }
 }
 
 void
-Matrix::dump(std::string ofilename) {
+CsrMatrix::dump(std::string ofilename) {
     FILE* ofile = fopen(ofilename.c_str(), "w");
     assert(ofile != NULL);
 
@@ -159,7 +157,7 @@ Matrix::dump(std::string ofilename) {
     fclose(ofile);
 }
 
-Matrix::~Matrix() {
+CsrMatrix::~CsrMatrix() {
     free(rows);
     free(cols);
     free(vals);
@@ -211,12 +209,12 @@ OsdMklKernelDispatcher::PushMatrix()
     /* if no subdiv_operator exists, create one from A */
     if (subdiv_operator == NULL) {
         int nve = _currentVertexBuffer->GetNumElements();
-        subdiv_operator = new Matrix(S, nve);
+        subdiv_operator = new CsrMatrix(S, nve);
 #if !BENCHMARKING
         printf("PushMatrix set %d-%d\n", subdiv_operator->m, subdiv_operator->n);
 #endif
     } else {
-        Matrix* new_subdiv_operator = subdiv_operator->gemm(S);
+        CsrMatrix* new_subdiv_operator = subdiv_operator->gemm(S);
 #if !BENCHMARKING
         printf("PushMatrix mul %d-%d = %d-%d * %d-%d\n",
                 (int) new_subdiv_operator->m, (int) new_subdiv_operator->n,
