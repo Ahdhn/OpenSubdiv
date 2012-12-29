@@ -4,16 +4,16 @@
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
-CooMatrix::CooMatrix(int m, int n) : _m(m), _n(n)
+CooMatrix::CooMatrix(int m, int n) : m(m), n(n)
 { }
 
 void
 CooMatrix::append_element(int i, int j, float val) {
 #ifdef DEBUG
     assert(0 <= i);
-    assert(i < StagedOp->m());
+    assert(i < StagedOp->m);
     assert(0 <= j);
-    assert(j < StagedOp->n());
+    assert(j < StagedOp->n);
 #endif
 
     rows.push_back(i+1); // one-based indexing
@@ -36,7 +36,7 @@ CooMatrix::gemm(CsrMatrix* rhs) {
 
 
 CsrMatrix::CsrMatrix(int m, int n, int nnz, int nve, mode_t mode) :
-    _m(m), _n(n), nve(nve), mode(mode) {
+    m(m), n(n), nve(nve), mode(mode) {
     rows = (int*) malloc((m+1) * sizeof(int));
     cols = (int*) malloc(nnz * sizeof(int));
     vals = (float*) malloc(nnz * sizeof(float));
@@ -46,10 +46,10 @@ CsrMatrix::CsrMatrix(int m, int n, int nnz, int nve, mode_t mode) :
 CsrMatrix::CsrMatrix(const CooMatrix* StagedOp, int nve, mode_t mode) :
     nve(nve), mode(mode) {
 
-    _m = StagedOp->m();
-    _n = StagedOp->n();
+    m = StagedOp->m;
+    n = StagedOp->n;
     int numnz = StagedOp->nnz();
-    rows = (int*) malloc((_m+1) * sizeof(int));
+    rows = (int*) malloc((m+1) * sizeof(int));
     cols = (int*) malloc(numnz * sizeof(int));
     vals = (float*) malloc(numnz * sizeof(float));
 
@@ -67,29 +67,29 @@ CsrMatrix::CsrMatrix(const CooMatrix* StagedOp, int nve, mode_t mode) :
     int* colind = (int*) &StagedOp->cols[0];
     int info;
 
-    mkl_scsrcoo(job, &_m, vals, cols, rows, &numnz, acoo, rowind, colind, &info);
+    mkl_scsrcoo(job, &m, vals, cols, rows, &numnz, acoo, rowind, colind, &info);
     assert(info == 0);
 }
 
 int
 CsrMatrix::nnz() {
-    return this->rows[_m];
+    return this->rows[m];
 }
 
 int
 CsrMatrix::NumBytes() {
-    return nnz()*sizeof(float) + nnz()*sizeof(int) + (_m+1)*sizeof(int);
+    return nnz()*sizeof(float) + nnz()*sizeof(int) + (m+1)*sizeof(int);
 }
 
 double
 CsrMatrix::SparsityFactor() {
-    return (double) nnz() / (double) (_m * _n);
+    return (double) nnz() / (double) (m * n);
 }
 
 void
 CsrMatrix::spmv(float* d_out, float* d_in) {
     assert(mode == CsrMatrix::ELEMENT);
-    mkl_scsrgemv((char*)"N", &_m, vals, rows, cols, d_in, d_out);
+    mkl_scsrgemv((char*)"N", &m, vals, rows, cols, d_in, d_out);
 }
 
 CsrMatrix*
@@ -102,17 +102,17 @@ CsrMatrix::gemm(CsrMatrix* rhs) {
     CsrMatrix* A = this;
     CsrMatrix* B = rhs;
 
-    int c_nnz = std::min(A->m()*B->n(), (int) B->nnz()*7); // XXX: shouldn't this be 4, not 7?
-    CsrMatrix* C = new CsrMatrix(A->m(), B->n(), c_nnz, B->nve, mode);
+    int c_nnz = std::min(A->m*B->n, (int) B->nnz()*7); // XXX: shouldn't this be 4, not 7?
+    CsrMatrix* C = new CsrMatrix(A->m, B->n, c_nnz, B->nve, mode);
 
     int request = 0; // output arrays pre allocated
     int sort = 8; // reorder nonzeroes in C
     int info = 0; // output info flag
-    assert(A->n() == B->m());
+    assert(A->n == B->m);
 
     /* perform SpM*SpM */
     mkl_scsrmultcsr((char*)"N", &request, &sort,
-            &A->_m, &A->_n, &B->_n,
+            &A->m, &A->n, &B->n,
             A->vals, A->cols, A->rows,
             B->vals, B->cols, B->rows,
             C->vals, C->cols, C->rows,
@@ -128,12 +128,12 @@ CsrMatrix::gemm(CsrMatrix* rhs) {
 void
 CsrMatrix::expand() {
     if (mode == CsrMatrix::VERTEX) {
-        int* new_rows = (int*) malloc((nve*_m+1) * sizeof(int));
+        int* new_rows = (int*) malloc((nve*m+1) * sizeof(int));
         int* new_cols = (int*) malloc(nve*nnz() * sizeof(int));
         float* new_vals = (float*) malloc(nve*nnz() * sizeof(float));
 
         int new_i = 0;
-        for(int r = 0; r < _m; r++) {
+        for(int r = 0; r < m; r++) {
             for(int k = 0; k < nve; k++) {
                 new_rows[r*nve + k] = new_i+1;
                 for(int i = rows[r]; i < rows[r+1]; i++, new_i++) {
@@ -149,13 +149,13 @@ CsrMatrix::expand() {
         free(cols);
         free(vals);
 
-        _m = _m*nve;
-        _n = _n*nve;
+        m = m*nve;
+        n = n*nve;
         rows = new_rows;
         cols = new_cols;
         vals = new_vals;
         mode = CsrMatrix::ELEMENT;
-        new_rows[_m] = new_i+1;
+        new_rows[m] = new_i+1;
     }
 }
 
@@ -165,9 +165,9 @@ CsrMatrix::dump(std::string ofilename) {
     assert(ofile != NULL);
 
     fprintf(ofile, "%%%%MatrixMarket matrix coordinate real general\n");
-    fprintf(ofile, "%d %d %d\n", _m, _n, nnz());
+    fprintf(ofile, "%d %d %d\n", m, n, nnz());
 
-    for(int r = 0; r < _m; r++) {
+    for(int r = 0; r < m; r++) {
         for(int i = rows[r]; i < rows[r+1]; i++) {
             int col = cols[i-1];
             float val = vals[i-1];

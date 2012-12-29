@@ -96,13 +96,13 @@ public:
         if (SubdivOp == NULL) {
             int nve = _currentVertexBuffer->GetNumElements();
             SubdivOp = new CsrMatrix_t(StagedOp, nve);
-            DEBUG_PRINTF("PushMatrix set %d-%d\n", SubdivOp->m(), SubdivOp->n());
+            DEBUG_PRINTF("PushMatrix set %d-%d\n", SubdivOp->m, SubdivOp->n);
         } else {
             CsrMatrix_t* new_SubdivOp = StagedOp->gemm(SubdivOp);
             DEBUG_PRINTF("PushMatrix mul %d-%d = %d-%d * %d-%d\n",
-                    (int) new_SubdivOp->m(), (int) new_SubdivOp->n(),
-                    (int) StagedOp->m(), (int) StagedOp->n(),
-                    (int) SubdivOp->m(), (int) SubdivOp->n());
+                    (int) new_SubdivOp->m, (int) new_SubdivOp->n,
+                    (int) StagedOp->m, (int) StagedOp->n,
+                    (int) SubdivOp->m, (int) SubdivOp->n);
             delete SubdivOp;
             SubdivOp = new_SubdivOp;
         }
@@ -162,7 +162,7 @@ public:
         #endif
 
         DEBUG_PRINTF("Subdiv matrix is %d-by-%d with %f%% nonzeroes, takes %d MB.\n",
-                SubdivOp->m(), SubdivOp->n(), sparsity_factor, size_in_bytes / 1024 / 1024);
+                SubdivOp->m, SubdivOp->n, sparsity_factor, size_in_bytes / 1024 / 1024);
     }
 
     CooMatrix_t* StagedOp;
