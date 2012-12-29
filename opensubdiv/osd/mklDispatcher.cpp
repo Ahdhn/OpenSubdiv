@@ -9,6 +9,13 @@ CooMatrix::CooMatrix(int m, int n) : m(m), n(n)
 
 void
 CooMatrix::append_element(int i, int j, float val) {
+#ifdef DEBUG
+    assert(0 <= i);
+    assert(i < StagedOp->m);
+    assert(0 <= j);
+    assert(j < StagedOp->n);
+#endif
+
     rows.push_back(i+1); // one-based indexing
     cols.push_back(j+1);
     vals.push_back(val);
@@ -208,12 +215,6 @@ OsdMklKernelDispatcher::StageMatrix(int i, int j)
 inline void
 OsdMklKernelDispatcher::StageElem(int i, int j, float value)
 {
-#ifdef DEBUG
-    assert(0 <= i);
-    assert(i < StagedOp->m);
-    assert(0 <= j);
-    assert(j < StagedOp->n);
-#endif
     StagedOp->append_element(i, j, value);
 }
 
