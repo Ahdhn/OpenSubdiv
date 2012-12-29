@@ -4,6 +4,21 @@
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
+CooMatrix::CooMatrix(int m, int n) : m(m), n(n)
+{ }
+
+void
+CooMatrix::append_element(int i, int j, float val) {
+    rows.push_back(i+1); // one-based indexing
+    cols.push_back(j+1);
+    vals.push_back(val);
+}
+
+int
+CooMatrix::nnz() const {
+    return vals.size();
+}
+
 CsrMatrix::CsrMatrix(int m, int n, int nnz, int nve, mode_t mode) :
     m(m), n(n), nve(nve), mode(mode) {
     rows = (int*) malloc((m+1) * sizeof(int));
@@ -12,11 +27,11 @@ CsrMatrix::CsrMatrix(int m, int n, int nnz, int nve, mode_t mode) :
     rows[m] = nnz+1;
 }
 
-CsrMatrix::CsrMatrix(const coo_matrix1* S, int nve, mode_t mode) :
+CsrMatrix::CsrMatrix(const CooMatrix* S, int nve, mode_t mode) :
     nve(nve), mode(mode) {
 
-    m = S->size1();
-    n = S->size2();
+    m = S->m;
+    n = S->n;
     int numnz = S->nnz();
     rows = (int*) malloc((m+1) * sizeof(int));
     cols = (int*) malloc(numnz * sizeof(int));
@@ -31,11 +46,10 @@ CsrMatrix::CsrMatrix(const coo_matrix1* S, int nve, mode_t mode) :
         0  // job(6)=0 (all output arrays filled)
     };
 
-    float* acoo = (float*) &S->value_data()[0];
-    int* rowind = (int*) &S->index1_data()[0];
-    int* colind = (int*) &S->index2_data()[0];
+    float* acoo = (float*) &S->vals[0];
+    int* rowind = (int*) &S->rows[0];
+    int* colind = (int*) &S->cols[0];
     int info;
-
 
     mkl_scsrcoo(job, &m, vals, cols, rows, &numnz, acoo, rowind, colind, &info);
     assert(info == 0);
@@ -96,7 +110,7 @@ CsrMatrix::gemm(CsrMatrix* rhs) {
 }
 
 CsrMatrix*
-CsrMatrix::gemm(const coo_matrix1* lhs) {
+CsrMatrix::gemm(const CooMatrix* lhs) {
     CsrMatrix* lhs_csr = new CsrMatrix(lhs);
     CsrMatrix* answer = lhs_csr->gemm(this);
     delete lhs_csr;
@@ -188,7 +202,7 @@ OsdMklKernelDispatcher::Register() {
 void
 OsdMklKernelDispatcher::StageMatrix(int i, int j)
 {
-    S = new coo_matrix1(i,j);
+    S = new CooMatrix(i,j);
 }
 
 inline void
@@ -196,9 +210,9 @@ OsdMklKernelDispatcher::StageElem(int i, int j, float value)
 {
 #ifdef DEBUG
     assert(0 <= i);
-    assert(i < S->size1());
+    assert(i < S->m);
     assert(0 <= j);
-    assert(j < S->size2());
+    assert(j < S->n);
 #endif
     S->append_element(i, j, value);
 }
@@ -218,7 +232,7 @@ OsdMklKernelDispatcher::PushMatrix()
 #if !BENCHMARKING
         printf("PushMatrix mul %d-%d = %d-%d * %d-%d\n",
                 (int) new_subdiv_operator->m, (int) new_subdiv_operator->n,
-                (int) S->size1(), (int) S->size2(),
+                (int) S->m, (int) S->n,
                 (int) subdiv_operator->m, (int) subdiv_operator->n);
 #endif
         delete subdiv_operator;

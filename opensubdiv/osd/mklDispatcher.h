@@ -11,8 +11,19 @@ extern "C" {
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
-class CsrMatrix {
+class CooMatrix {
+public:
+    int m, n;
+    std::vector<int> rows;
+    std::vector<int> cols;
+    std::vector<float> vals;
 
+    CooMatrix(int m, int n);
+    void append_element(int i, int j, float val);
+    int nnz() const;
+};
+
+class CsrMatrix {
 public:
     int m, n, nve;
     int* rows;
@@ -27,10 +38,10 @@ public:
     mode_t mode;
 
     CsrMatrix(int m, int n, int nnz, int nve=1, mode_t=VERTEX);
-    CsrMatrix(const coo_matrix1* S, int nve=1, mode_t=VERTEX);
+    CsrMatrix(const CooMatrix* S, int nve=1, mode_t=VERTEX);
     void spmv(float* d_out, float* d_in);
     CsrMatrix* gemm(CsrMatrix* rhs);
-    CsrMatrix* gemm(const coo_matrix1* rhs);
+    CsrMatrix* gemm(const CooMatrix* rhs);
     virtual ~CsrMatrix();
     void expand();
     int nnz();
@@ -56,7 +67,7 @@ public:
     virtual bool MatrixReady();
     virtual void PrintReport();
 
-    coo_matrix1 *S;
+    CooMatrix* S;
     CsrMatrix* subdiv_operator;
 };
 
