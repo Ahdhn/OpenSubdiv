@@ -38,7 +38,7 @@ public:
     mode_t mode;
 
     CsrMatrix(int m, int n, int nnz, int nve=1, mode_t=VERTEX);
-    CsrMatrix(const CooMatrix* S, int nve=1, mode_t=VERTEX);
+    CsrMatrix(const CooMatrix* StagedOp, int nve=1, mode_t=VERTEX);
     void spmv(float* d_out, float* d_in);
     CsrMatrix* gemm(CsrMatrix* rhs);
     CsrMatrix* gemm(const CooMatrix* rhs);
@@ -67,7 +67,7 @@ public:
     virtual bool MatrixReady();
     virtual void PrintReport();
 
-    CooMatrix* S;
+    CooMatrix* StagedOp;
     CsrMatrix* subdiv_operator;
 };
 

@@ -27,12 +27,12 @@ CsrMatrix::CsrMatrix(int m, int n, int nnz, int nve, mode_t mode) :
     rows[m] = nnz+1;
 }
 
-CsrMatrix::CsrMatrix(const CooMatrix* S, int nve, mode_t mode) :
+CsrMatrix::CsrMatrix(const CooMatrix* StagedOp, int nve, mode_t mode) :
     nve(nve), mode(mode) {
 
-    m = S->m;
-    n = S->n;
-    int numnz = S->nnz();
+    m = StagedOp->m;
+    n = StagedOp->n;
+    int numnz = StagedOp->nnz();
     rows = (int*) malloc((m+1) * sizeof(int));
     cols = (int*) malloc(numnz * sizeof(int));
     vals = (float*) malloc(numnz * sizeof(float));
@@ -46,9 +46,9 @@ CsrMatrix::CsrMatrix(const CooMatrix* S, int nve, mode_t mode) :
         0  // job(6)=0 (all output arrays filled)
     };
 
-    float* acoo = (float*) &S->vals[0];
-    int* rowind = (int*) &S->rows[0];
-    int* colind = (int*) &S->cols[0];
+    float* acoo = (float*) &StagedOp->vals[0];
+    int* rowind = (int*) &StagedOp->rows[0];
+    int* colind = (int*) &StagedOp->cols[0];
     int info;
 
     mkl_scsrcoo(job, &m, vals, cols, rows, &numnz, acoo, rowind, colind, &info);
@@ -178,13 +178,13 @@ CsrMatrix::~CsrMatrix() {
 }
 
 OsdMklKernelDispatcher::OsdMklKernelDispatcher( int levels )
-    : OsdSpMVKernelDispatcher(levels), S(NULL), subdiv_operator(NULL)
+    : OsdSpMVKernelDispatcher(levels), StagedOp(NULL), subdiv_operator(NULL)
 { }
 
 OsdMklKernelDispatcher::~OsdMklKernelDispatcher()
 {
-    if (S != NULL)
-        delete S;
+    if (StagedOp != NULL)
+        delete StagedOp;
     if (subdiv_operator != NULL)
         delete subdiv_operator;
 }
@@ -202,7 +202,7 @@ OsdMklKernelDispatcher::Register() {
 void
 OsdMklKernelDispatcher::StageMatrix(int i, int j)
 {
-    S = new CooMatrix(i,j);
+    StagedOp = new CooMatrix(i,j);
 }
 
 inline void
@@ -210,11 +210,11 @@ OsdMklKernelDispatcher::StageElem(int i, int j, float value)
 {
 #ifdef DEBUG
     assert(0 <= i);
-    assert(i < S->m);
+    assert(i < StagedOp->m);
     assert(0 <= j);
-    assert(j < S->n);
+    assert(j < StagedOp->n);
 #endif
-    S->append_element(i, j, value);
+    StagedOp->append_element(i, j, value);
 }
 
 void
@@ -223,16 +223,16 @@ OsdMklKernelDispatcher::PushMatrix()
     /* if no subdiv_operator exists, create one from A */
     if (subdiv_operator == NULL) {
         int nve = _currentVertexBuffer->GetNumElements();
-        subdiv_operator = new CsrMatrix(S, nve);
+        subdiv_operator = new CsrMatrix(StagedOp, nve);
 #if !BENCHMARKING
         printf("PushMatrix set %d-%d\n", subdiv_operator->m, subdiv_operator->n);
 #endif
     } else {
-        CsrMatrix* new_subdiv_operator = subdiv_operator->gemm(S);
+        CsrMatrix* new_subdiv_operator = subdiv_operator->gemm(StagedOp);
 #if !BENCHMARKING
         printf("PushMatrix mul %d-%d = %d-%d * %d-%d\n",
                 (int) new_subdiv_operator->m, (int) new_subdiv_operator->n,
-                (int) S->m, (int) S->n,
+                (int) StagedOp->m, (int) StagedOp->n,
                 (int) subdiv_operator->m, (int) subdiv_operator->n);
 #endif
         delete subdiv_operator;
@@ -240,8 +240,8 @@ OsdMklKernelDispatcher::PushMatrix()
     }
 
     /* remove staged matrix */
-    delete S;
-    S = NULL;
+    delete StagedOp;
+    StagedOp = NULL;
 }
 
 void
