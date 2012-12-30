@@ -129,14 +129,3 @@ def do_run(model='cube', frames=1000, level=1, kernel='CPU', spyfile=None, regre
         raise ExecutionError(stderr)
     else:
         return Run(stdout)
-
-def main(argv):
-    print "Benchmarking ..."
-    by_level = set()
-    for k in activeKernels:
-       for l in range(3):
-           by_level.add( do_run(kernel=k, level=l+1) )
-    print by_level
-
-if __name__ == '__main__':
-    main(sys.argv)
