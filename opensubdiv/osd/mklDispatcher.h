@@ -1,6 +1,8 @@
 #ifndef OSD_MKL_DISPATCHER_H
 #define OSD_MKL_DISPATCHER_H
 
+#include <stdlib.h>
+
 #include "../version.h"
 #include "../osd/spmvDispatcher.h"
 
