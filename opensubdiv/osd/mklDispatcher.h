@@ -11,25 +11,55 @@ extern "C" {
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
-class OsdMklKernelDispatcher : public OsdSpMVKernelDispatcher
+class CsrMatrix;
+
+class CooMatrix {
+public:
+    int m, n;
+    std::vector<int> rows;
+    std::vector<int> cols;
+    std::vector<float> vals;
+
+    CooMatrix(int m, int n);
+    void append_element(int i, int j, float val);
+    CsrMatrix* gemm(CsrMatrix* rhs);
+    int nnz() const;
+};
+
+class CsrMatrix {
+public:
+    int m, n, nve;
+    int* rows;
+    int* cols;
+    float* vals;
+
+    typedef enum {
+        VERTEX, // matrix indices refer to logical vertices
+        ELEMENT // matrix indices refer to vertex elements
+    } mode_t;
+
+    mode_t mode;
+
+    CsrMatrix(int m, int n, int nnz, int nve=1, mode_t=VERTEX);
+    CsrMatrix(const CooMatrix* StagedOp, int nve=1, mode_t=VERTEX);
+    void spmv(float* d_out, float* d_in);
+    CsrMatrix* gemm(CsrMatrix* rhs);
+    virtual ~CsrMatrix();
+    void expand();
+    int nnz();
+    void dump(std::string ofilename);
+
+    int NumBytes();
+    double SparsityFactor();
+};
+
+
+class OsdMklKernelDispatcher :
+    public OsdSpMVKernelDispatcher<CooMatrix,CsrMatrix,OsdCpuVertexBuffer>
 {
 public:
     OsdMklKernelDispatcher(int levels);
-    virtual ~OsdMklKernelDispatcher();
-
     static void Register();
-
-    virtual void StageMatrix(int i, int j);
-    virtual void StageElem(int i, int j, float value);
-    virtual void PushMatrix();
-    virtual void FinalizeMatrix();
-    virtual void ApplyMatrix(int offset);
-    virtual bool MatrixReady();
-    virtual void PrintReport();
-
-    coo_matrix1 *S;
-    csr_matrix1 *M;
-    csr_matrix1 *M_big;
 };
 
 } // end namespace OPENSUBDIV_VERSION

@@ -2,7 +2,6 @@
 #define OSD_SPMV_KERNEL_H
 
 #include "../version.h"
-#include "osd/spmvDispatcher.h"
 #include "osd/cpuKernel.h"
 
 #include <stdio.h>
@@ -20,9 +19,8 @@ public:
     virtual void Clear(float *vertex, float *varying, int index) const { }
 
     virtual void AddWithWeight(float *vertex, int dstIndex, int srcIndex, float weight) const {
-        int srcOffset = _dispatcher->srcOffset;
-        int d = dstIndex;
-        int s = (srcIndex-srcOffset);
+        int d = dstIndex - _dispatcher->dstOffset;
+        int s = srcIndex - _dispatcher->srcOffset;
         _dispatcher->StageElem(d,s,weight);
     }
 

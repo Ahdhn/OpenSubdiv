@@ -204,7 +204,7 @@ OsdMesh::Subdivide(OsdVertexBuffer *vertex, OsdVertexBuffer *varying) {
     {
         _dispatcher->OnKernelLaunch();
 
-        _farMesh->Subdivide(_level+1, _dispatcher->GetStrategy());
+        _farMesh->Subdivide(_level+1);
 
         _dispatcher->OnKernelFinish();
     }

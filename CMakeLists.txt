@@ -105,10 +105,8 @@ find_package(GLUT)
 find_package(PTex)
 find_package(MKL)
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBENCHMARKING -DREGRESSION -g -ggdb3")
-
-set(Boost_ADDITIONAL_VERSIONS "1.52.0")
-find_package(Boost 1.52.0 )
+#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBENCHMARKING -DREGRESSION -g -ggdb3")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -ggdb3")
 
 find_package(GLEW)
 
@@ -155,15 +153,7 @@ else()
         "please refer to the FindOpenCL.cmake in ${PROJECT_SOURCE_DIR}/cmake.")
 endif()
 
-if(Boost_FOUND)
-    include_directories(${Boost_INCLUDE_DIRS})
-    add_definitions(
-            -DOPENSUBDIV_HAS_BOOST
-    )
-endif(Boost_FOUND)
-
 if(MKL_FOUND)
-    find_package(Boost REQUIRED)
     add_definitions(
         -DOPENSUBDIV_HAS_MKL
     )

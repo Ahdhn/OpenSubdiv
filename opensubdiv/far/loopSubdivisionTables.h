@@ -82,7 +82,6 @@ public:
 
     /// Compute the positions of refined vertices using the specified kernels
     virtual void Apply( int level, void * data=0 ) const;
-    virtual void ApplySpMV( int level, void * data=0 ) const;
 
 
 private:
@@ -108,6 +107,7 @@ FarLoopSubdivisionTables<U>::FarLoopSubdivisionTables( FarMesh<U> * mesh, int ma
     FarSubdivisionTables<U>(mesh, maxlevel)
 { }
 
+#if 0 // REMOVE ME
 template <class U> void
 FarLoopSubdivisionTables<U>::Apply( int level, void * clientdata ) const
 {
@@ -130,9 +130,10 @@ FarLoopSubdivisionTables<U>::Apply( int level, void * clientdata ) const
     if (batch->kernelA2.first < batch->kernelA2.second)
         dispatch->ApplyLoopVertexVerticesKernelA(this->_mesh, offset, true, level, batch->kernelA2.first, batch->kernelA2.second, clientdata);
 }
+#endif
 
 template <class U> void
-FarLoopSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const
+FarLoopSubdivisionTables<U>::Apply( int level, void * clientdata ) const
 {
     assert(this->_mesh and level>0);
 
@@ -141,16 +142,15 @@ FarLoopSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const
     FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
     assert(dispatch);
 
-    int prevOffset = this->GetFirstVertexOffset(std::max(level-1,0));
-    int offset     = 0;
-    int nPrevVerts = this->GetNumVertices(level-1);
-    int nVerts     = this->GetNumVertices(level);
-
-    int iop, jop;
-    iop = nVerts,
-    jop = nPrevVerts,
+    int prevLevel = std::max(level-1,0);
+    int prevOffset = this->GetFirstVertexOffset( prevLevel );
+    int offset =     this->GetFirstVertexOffset( level );
+    int jop = this->GetNumVertices( prevLevel );
+    int iop = this->GetNumVertices( level );
 
     dispatch->SetSrcOffset(prevOffset);
+    dispatch->SetDstOffset(offset);
+
     dispatch->StageMatrix(iop, jop);
     {
         if (batch->kernelE>0)

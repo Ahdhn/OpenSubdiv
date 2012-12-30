@@ -134,13 +134,17 @@ device_csr_matrix_view::device_csr_matrix_view(int m, int n, int nnz) :
 }
 
 void
+device_csr_matrix_view::expand(int factor) {
+}
+
+void
 OsdCusparseKernelDispatcher::BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying)
 {
     _currentVertexBuffer = (vertex) ?
-        dynamic_cast<OsdCusparseVertexBuffer *>(vertex) : NULL;
+        dynamic_cast<OsdCudaVertexBuffer *>(vertex) : NULL;
 
     _currentVaryingBuffer = (varying) ?
-        dynamic_cast<OsdCusparseVertexBuffer *>(varying) : NULL;
+        dynamic_cast<OsdCudaVertexBuffer *>(varying) : NULL;
 
     _vdesc = new SpMVVertexDescriptor(this,
             _currentVertexBuffer  ? _currentVertexBuffer->GetNumElements()  : 0,
@@ -150,7 +154,7 @@ OsdCusparseKernelDispatcher::BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertex
 OsdVertexBuffer *
 OsdCusparseKernelDispatcher::InitializeVertexBuffer(int numElements, int numVertices)
 {
-    return new OsdCusparseVertexBuffer(numElements, numVertices);
+    return new OsdCudaVertexBuffer(numElements, numVertices);
 }
 
 OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher( int levels )
@@ -223,6 +227,7 @@ void
 OsdCusparseKernelDispatcher::FinalizeMatrix()
 {
     int nve = _currentVertexBuffer->GetNumElements();
+    //_deviceMatrix->expand(nve);
     device_csr_matrix_view* M_src = _deviceMatrix;
     device_csr_matrix_view* M_dst =
         new device_csr_matrix_view(nve*M_src->m, nve*M_src->n, nve*M_src->nnz);

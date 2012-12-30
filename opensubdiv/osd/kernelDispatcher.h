@@ -85,7 +85,6 @@ public:
                       kMKL = 5,
                       kCLSPMV = 6,
                       kCUSPARSE = 7,
-                      kUBLAS = 8,
                       kMAX };
 
 
@@ -108,10 +107,6 @@ public:
     virtual void UnbindVertexBuffer() = 0;
 
     virtual void Synchronize() = 0;
-
-    virtual FarMesh<OsdVertex>::Strategy GetStrategy() {
-        return FarMesh<OsdVertex>::AdHoc;
-    }
 
     template<class T> void UpdateTable(int tableIndex, const T & table) {
 
@@ -191,9 +186,7 @@ protected:
 
     protected:
         friend class OsdCpuKernelDispatcher;
-        friend class OsdSpMVKernelDispatcher;
-        friend class OsdClSpMVKernelDispatcher;
-        friend class OsdUBlasKernelDispatcher;
+        //friend class OsdSpMVKernelDispatcher;
         friend class OsdMklKernelDispatcher;
         friend class OsdCusparseKernelDispatcher;
         friend class OsdGlslKernelDispatcher;

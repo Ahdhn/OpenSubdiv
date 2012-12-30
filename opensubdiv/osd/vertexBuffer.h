@@ -130,6 +130,11 @@ public:
         return _cpuVbo;
     }
 
+    virtual void* Map() {
+        return _cpuVbo;
+    }
+    virtual void Unmap() { }
+
     virtual GLuint GetGpuBuffer();
 
 protected:

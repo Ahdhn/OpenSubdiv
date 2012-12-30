@@ -1,23 +1,193 @@
 #include "../version.h"
-#include "../osd/mutex.h"
 #include "../osd/mklDispatcher.h"
-
-#include <stdio.h>
-
-using namespace boost::numeric::ublas;
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
-OsdMklKernelDispatcher::OsdMklKernelDispatcher( int levels )
-    : OsdSpMVKernelDispatcher(levels), S(NULL), M(NULL), M_big(NULL)
+CooMatrix::CooMatrix(int m, int n) : m(m), n(n)
 { }
 
-OsdMklKernelDispatcher::~OsdMklKernelDispatcher()
-{
-    if (S) delete S;
-    if (M) delete M;
+void
+CooMatrix::append_element(int i, int j, float val) {
+#ifdef DEBUG
+    assert(0 <= i);
+    assert(i < StagedOp->m);
+    assert(0 <= j);
+    assert(j < StagedOp->n);
+#endif
+
+    rows.push_back(i+1); // one-based indexing
+    cols.push_back(j+1);
+    vals.push_back(val);
 }
+
+int
+CooMatrix::nnz() const {
+    return vals.size();
+}
+
+CsrMatrix*
+CooMatrix::gemm(CsrMatrix* rhs) {
+    CsrMatrix* lhs = new CsrMatrix(this);
+    CsrMatrix* answer = lhs->gemm(rhs);
+    delete lhs;
+    return answer;
+}
+
+
+CsrMatrix::CsrMatrix(int m, int n, int nnz, int nve, mode_t mode) :
+    m(m), n(n), nve(nve), mode(mode) {
+    rows = (int*) malloc((m+1) * sizeof(int));
+    cols = (int*) malloc(nnz * sizeof(int));
+    vals = (float*) malloc(nnz * sizeof(float));
+    rows[m] = nnz+1;
+}
+
+CsrMatrix::CsrMatrix(const CooMatrix* StagedOp, int nve, mode_t mode) :
+    nve(nve), mode(mode) {
+
+    m = StagedOp->m;
+    n = StagedOp->n;
+    int numnz = StagedOp->nnz();
+    rows = (int*) malloc((m+1) * sizeof(int));
+    cols = (int*) malloc(numnz * sizeof(int));
+    vals = (float*) malloc(numnz * sizeof(float));
+
+    int job[] = {
+        2, // job(1)=2 (coo->csr with sorting)
+        1, // job(2)=1 (one-based indexing for csr matrix)
+        1, // job(3)=1 (one-based indexing for coo matrix)
+        0, // empty
+        numnz, // job(5)=nnz (sets nnz for csr matrix)
+        0  // job(6)=0 (all output arrays filled)
+    };
+
+    float* acoo = (float*) &StagedOp->vals[0];
+    int* rowind = (int*) &StagedOp->rows[0];
+    int* colind = (int*) &StagedOp->cols[0];
+    int info;
+
+    mkl_scsrcoo(job, &m, vals, cols, rows, &numnz, acoo, rowind, colind, &info);
+    assert(info == 0);
+}
+
+int
+CsrMatrix::nnz() {
+    return this->rows[m];
+}
+
+int
+CsrMatrix::NumBytes() {
+    return nnz()*sizeof(float) + nnz()*sizeof(int) + (m+1)*sizeof(int);
+}
+
+double
+CsrMatrix::SparsityFactor() {
+    return (double) nnz() / (double) (m * n);
+}
+
+void
+CsrMatrix::spmv(float* d_out, float* d_in) {
+    assert(mode == CsrMatrix::ELEMENT);
+    mkl_scsrgemv((char*)"N", &m, vals, rows, cols, d_in, d_out);
+}
+
+CsrMatrix*
+CsrMatrix::gemm(CsrMatrix* rhs) {
+    if (rhs->mode != this->mode) {
+        rhs->expand();
+        this->expand();
+    }
+
+    CsrMatrix* A = this;
+    CsrMatrix* B = rhs;
+
+    int c_nnz = std::min(A->m*B->n, (int) B->nnz()*7); // XXX: shouldn't this be 4, not 7?
+    CsrMatrix* C = new CsrMatrix(A->m, B->n, c_nnz, B->nve, mode);
+
+    int request = 0; // output arrays pre allocated
+    int sort = 8; // reorder nonzeroes in C
+    int info = 0; // output info flag
+    assert(A->n == B->m);
+
+    /* perform SpM*SpM */
+    mkl_scsrmultcsr((char*)"N", &request, &sort,
+            &A->m, &A->n, &B->n,
+            A->vals, A->cols, A->rows,
+            B->vals, B->cols, B->rows,
+            C->vals, C->cols, C->rows,
+            &c_nnz, &info);
+
+    if (info != 0) {
+        printf("Error: info returned %d\n", info);
+        assert(info == 0);
+    }
+    return C;
+}
+
+void
+CsrMatrix::expand() {
+    if (mode == CsrMatrix::VERTEX) {
+        int* new_rows = (int*) malloc((nve*m+1) * sizeof(int));
+        int* new_cols = (int*) malloc(nve*nnz() * sizeof(int));
+        float* new_vals = (float*) malloc(nve*nnz() * sizeof(float));
+
+        int new_i = 0;
+        for(int r = 0; r < m; r++) {
+            for(int k = 0; k < nve; k++) {
+                new_rows[r*nve + k] = new_i+1;
+                for(int i = rows[r]; i < rows[r+1]; i++, new_i++) {
+                    int col_one = cols[i-1];
+                    float val = vals[i-1];
+                    new_cols[new_i] = ((col_one-1)*nve + k) + 1;
+                    new_vals[new_i] = val;
+                }
+            }
+        }
+
+        free(rows);
+        free(cols);
+        free(vals);
+
+        m = m*nve;
+        n = n*nve;
+        rows = new_rows;
+        cols = new_cols;
+        vals = new_vals;
+        mode = CsrMatrix::ELEMENT;
+        new_rows[m] = new_i+1;
+    }
+}
+
+void
+CsrMatrix::dump(std::string ofilename) {
+    FILE* ofile = fopen(ofilename.c_str(), "w");
+    assert(ofile != NULL);
+
+    fprintf(ofile, "%%%%MatrixMarket matrix coordinate real general\n");
+    fprintf(ofile, "%d %d %d\n", m, n, nnz());
+
+    for(int r = 0; r < m; r++) {
+        for(int i = rows[r]; i < rows[r+1]; i++) {
+            int col = cols[i-1];
+            float val = vals[i-1];
+            fprintf(ofile, "%d %d %10.3g\n", r+1, col, val);
+        }
+    }
+
+    fclose(ofile);
+}
+
+CsrMatrix::~CsrMatrix() {
+    free(rows);
+    free(cols);
+    free(vals);
+}
+
+
+OsdMklKernelDispatcher::OsdMklKernelDispatcher(int levels) :
+    OsdSpMVKernelDispatcher<CooMatrix,CsrMatrix,OsdCpuVertexBuffer>(levels)
+{ }
 
 static OsdMklKernelDispatcher::OsdKernelDispatcher *
 Create(int levels) {
@@ -27,208 +197,6 @@ Create(int levels) {
 void
 OsdMklKernelDispatcher::Register() {
     Factory::GetInstance().Register(Create, kMKL);
-}
-
-void
-OsdMklKernelDispatcher::StageMatrix(int i, int j)
-{
-    S = new coo_matrix1(i,j);
-}
-
-inline void
-OsdMklKernelDispatcher::StageElem(int i, int j, float value)
-{
-#ifdef DEBUG
-    assert(0 <= i);
-    assert(i < S->size1());
-    assert(0 <= j);
-    assert(j < S->size2());
-#endif
-    S->append_element(i, j, value);
-}
-
-void
-OsdMklKernelDispatcher::PushMatrix()
-{
-    /* if no M exists, create one from A */
-    if (M == NULL) {
-
-        //printf("PushMatrix set %d-%d\n", S->size1(), S->size2());
-        M = new csr_matrix1(*S);
-
-    } else {
-
-        /* convert S from COO to CSR format efficiently */
-        csr_matrix1 A(S->size1(), S->size2(), S->nnz());
-        {
-            int nnz = S->nnz();
-            int job[] = {
-                2, // job(1)=2 (coo->csr with sorting)
-                1, // job(2)=1 (one-based indexing for csr matrix)
-                1, // job(3)=1 (one-based indexing for coo matrix)
-                0, // empty
-                nnz, // job(5)=nnz (sets nnz for csr matrix)
-                0  // job(6)=0 (all output arrays filled)
-            };
-            int n = A.size1();
-            float* acsr = &A.value_data()[0];
-            int* ja = &A.index2_data()[0];
-            int* ia = &A.index1_data()[0];
-            float* acoo = &S->value_data()[0];
-            int* rowind = &S->index1_data()[0];
-            int* colind = &S->index2_data()[0];
-            int info;
-            mkl_scsrcoo(job, &n, acsr, ja, ia, &nnz, acoo, rowind, colind, &info);
-            assert(info == 0);
-            A.set_filled(n+1, A.index1_data()[n] - 1);
-        }
-
-        int i = A.size1(),
-            j = M->size2(),
-            nnz = std::min(i*j, (int) M->nnz() * 7); // XXX: shouldn't this be 4?
-        csr_matrix1 *C = new csr_matrix1(i, j, nnz);
-
-        char trans = 'N'; // no transpose A
-        int request = 0; // output arrays pre allocated
-        int sort = 8; // reorder nonzeroes in C
-        int m = A.size1(); // rows of A
-        int n = A.size2(); // cols of A
-        int k = M->size2(); // cols of B
-        assert(A.size2() == M->size1());
-
-        float* a = &A.value_data()[0]; // A values
-        int* ja = &A.index2_data()[0]; // A col indices
-        int* ia = &A.index1_data()[0]; // A row ptrs
-
-        float* b = &M->value_data()[0]; // B values
-        int* jb = &M->index2_data()[0]; // B col indices
-        int* ib = &M->index1_data()[0]; // B row ptrs
-
-        int nzmax = C->value_data().size(); // max number of nonzeroes
-        float* c = &C->value_data()[0];
-        int* jc = &C->index2_data()[0];
-        int* ic = &C->index1_data()[0];
-        int info = 0; // output info flag
-
-        /* perform SpM*SpM */
-        //printf("PushMatrix mul %d-%d = %d-%d * %d-%d\n",
-        //        (int) C->size1(), (int) C->size2(),
-        //        (int) A.size1(),  (int) A.size2(),
-        //        (int) M->size1(), (int) M->size2());
-        mkl_scsrmultcsr(&trans, &request, &sort,
-                &m, &n, &k, a, ja, ia, b, jb, ib,
-                c, jc, ic, &nzmax, &info);
-
-        if (info != 0) {
-            printf("Error: info returned %d\n", info);
-            assert(info == 0);
-        }
-
-        /* update csr_mutrix1 state to reflect mkl writes */
-        C->set_filled(i+1, C->index1_data()[i] - 1);
-
-        delete M;
-        M = C;
-    }
-
-    /* remove staged matrix */
-    delete S;
-    S = NULL;
-}
-
-void
-OsdMklKernelDispatcher::ApplyMatrix(int offset)
-{
-    int numElems = _currentVertexBuffer->GetNumElements();
-    float* V_in = _currentVertexBuffer->GetCpuBuffer();
-    float* V_out = _currentVertexBuffer->GetCpuBuffer()
-                   + offset * numElems;
-
-    char transa = 'N';
-    int m = M_big->size1();
-    float* a = &M_big->value_data()[0];
-    int* ia = &M_big->index1_data()[0];
-    int* ja = &M_big->index2_data()[0];
-    float* x = V_in;
-    float* y = V_out;
-
-    mkl_scsrgemv(&transa, &m, a, ia, ja, x, y);
-}
-
-void
-OsdMklKernelDispatcher::FinalizeMatrix()
-{
-    /* expand M to M_big if necessary */
-    if (M_big == NULL) {
-        int nve = _currentVertexBuffer->GetNumElements();
-        coo_matrix1 M_big_coo(M->size1()*nve, M->size2()*nve, M->nnz()*nve);
-
-        /* build M_big_coo matrix from M */
-        for(int i = 0; i < M->size1(); i++) {
-            for( int j = M->index1_data()[i]; j < M->index1_data()[i+1]; j++ ) {
-                float factor = M->value_data()[ j-1 ];
-                int ii = i;
-                int jj = M->index2_data()[ j-1 ] - 1;
-                for(int k = 0; k < nve; k++)
-                    M_big_coo.append_element(ii*nve+k, jj*nve+k, factor);
-            }
-        }
-
-        /* convert M_big_coo from COO to CSR format efficiently */
-        M_big = new csr_matrix1(M_big_coo.size1(), M_big_coo.size2(), M_big_coo.nnz());
-        {
-            int nnz = M_big_coo.nnz();
-            int job[] = {
-                2, // job(1)=2 (coo->csr with sorting)
-                1, // job(2)=1 (one-based indexing for csr matrix)
-                1, // job(3)=1 (one-based indexing for coo matrix)
-                0, // empty
-                nnz, // job(5)=nnz (sets nnz for csr matrix)
-                0  // job(6)=0 (all output arrays filled)
-            };
-            int n = M_big->size1();
-            float* acsr = &M_big->value_data()[0];
-            int* ja = &M_big->index2_data()[0];
-            int* ia = &M_big->index1_data()[0];
-            float* acoo = &M_big_coo.value_data()[0];
-            int* rowind = &M_big_coo.index1_data()[0];
-            int* colind = &M_big_coo.index2_data()[0];
-            int info;
-            mkl_scsrcoo(job, &n, acsr, ja, ia, &nnz, acoo, rowind, colind, &info);
-            assert(info == 0);
-            M_big->set_filled(n+1, M_big->index1_data()[n] - 1);
-        }
-    }
-
-    this->PrintReport();
-
-    if (osdSpMVKernel_DumpSpy_FileName != NULL) {
-        this->WriteMatrix(M, osdSpMVKernel_DumpSpy_FileName);
-    }
-}
-
-bool
-OsdMklKernelDispatcher::MatrixReady()
-{
-    return (M_big != NULL);
-}
-
-void
-OsdMklKernelDispatcher::PrintReport()
-{
-    int size_in_bytes =  (int) (M_big->index2_data().size() +
-                                M_big->index1_data().size()) * sizeof(int)  +
-                                M_big->value_data().size() * sizeof(float);
-    double sparsity_factor = 100.0 * M_big->nnz() / M_big->size1() / M_big->size2();
-
-#if BENCHMARKING
-    printf(" nverts=%d", M->size1());
-    printf(" mem=%d", size_in_bytes);
-    printf(" sparsity=%f", sparsity_factor);
-#else
-    printf("Subdiv matrix is %d-by-%d with %f%% nonzeroes, takes %d MB.\n",
-        M_big->size1(), M_big->size2(), sparsity_factor, size_in_bytes / 1024 / 1024);
-#endif
 }
 
 } // end namespace OPENSUBDIV_VERSION

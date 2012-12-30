@@ -84,7 +84,6 @@ public:
 
     /// Compute the positions of refined vertices using the specified kernels
     virtual void Apply( int level, void * data=0 ) const;
-    virtual void ApplySpMV( int level, void * data=0 ) const;
 
     /// Face-vertices indexing table accessor
     FarTable<unsigned int> const & Get_F_IT( ) const { return _F_IT; }
@@ -137,6 +136,7 @@ FarCatmarkSubdivisionTables<U>::GetMemoryUsed() const {
         _F_IT.GetMemoryUsed();
 }
 
+#if 0 // REMOVEME
 template <class U> void
 FarCatmarkSubdivisionTables<U>::Apply( int level, void * clientdata ) const {
 
@@ -163,9 +163,10 @@ FarCatmarkSubdivisionTables<U>::Apply( int level, void * clientdata ) const {
     if (batch->kernelA2.first < batch->kernelA2.second)
         dispatch->ApplyCatmarkVertexVerticesKernelA(this->_mesh, offset, true, level, batch->kernelA2.first, batch->kernelA2.second, clientdata);
 }
+#endif
 
 template <class U> void
-FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const {
+FarCatmarkSubdivisionTables<U>::Apply( int level, void * clientdata ) const {
 
     assert(this->_mesh and level>0);
 
@@ -174,34 +175,35 @@ FarCatmarkSubdivisionTables<U>::ApplySpMV( int level, void * clientdata ) const 
     FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
     assert(dispatch);
 
-    int prevOffset = this->GetFirstVertexOffset(std::max(level-1,0));
-    int offset     = 0;
-    int nPrevVerts = this->GetNumVertices(level-1);
-    int nVerts     = this->GetNumVertices(level);
-
-    int iop, jop, iv, jv;
-    iop = (nPrevVerts+batch->kernelF),
-    jop = iv = nPrevVerts,
-    jv  = 1;
+    int prevLevel = std::max(level-1,0);
+    int prevOffset = this->GetFirstVertexOffset( prevLevel );
+    int offset =     this->GetFirstVertexOffset( level );
+    int jop = this->GetNumVertices(prevLevel);
+    int iop = this->GetNumVertices(prevLevel) + batch->kernelF;
 
     dispatch->SetSrcOffset(prevOffset);
+    dispatch->SetDstOffset(prevOffset);
+
     dispatch->StageMatrix(iop, jop);
     {
-        offset = dispatch->CopyNVerts(nPrevVerts, 0, prevOffset);
+        dispatch->CopyNVerts(jop, prevOffset);
 
         if (batch->kernelF>0)
             dispatch->ApplyCatmarkFaceVerticesKernel(this->_mesh, offset, level, 0, batch->kernelF, clientdata);
     }
     dispatch->PushMatrix();
 
-    iop = nVerts,
-    jop = iv = (nPrevVerts+batch->kernelF),
-    jv  = 1;
+    jop = this->GetNumVertices(prevLevel) + batch->kernelF;
+    iop = this->GetNumVertices(level);
+
+    dispatch->SetSrcOffset(prevOffset);
+    dispatch->SetDstOffset(offset);
 
     dispatch->StageMatrix(iop,jop);
     {
-        offset = dispatch->CopyNVerts(batch->kernelF, 0, nPrevVerts+prevOffset);
+        dispatch->CopyNVerts(batch->kernelF, offset);
 
+        offset += this->GetNumFaceVertices(level);
         if (batch->kernelE>0)
             dispatch->ApplyCatmarkEdgeVerticesKernel(this->_mesh, offset, level, 0, batch->kernelE, clientdata);
 

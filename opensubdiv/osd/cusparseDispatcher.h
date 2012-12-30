@@ -18,6 +18,7 @@ public:
     device_csr_matrix_view* times(device_csr_matrix_view* rhs);
     virtual ~device_csr_matrix_view();
     void report(std::string name);
+    void expand(int factor);
 
     int m, n, nnz;
     int* rows;
@@ -25,12 +26,6 @@ public:
     float* vals;
 
     cusparseMatDescr_t desc;
-};
-
-class OsdCusparseVertexBuffer : public OsdCudaVertexBuffer {
-public:
-    OsdCusparseVertexBuffer(int numElements, int numVertices) :
-        OsdCudaVertexBuffer(numElements, numVertices) { }
 };
 
 class OsdCusparseKernelDispatcher : public OsdSpMVKernelDispatcher

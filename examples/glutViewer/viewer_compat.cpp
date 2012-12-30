@@ -79,15 +79,10 @@
 
 #ifdef OPENSUBDIV_HAS_OPENCL
     #include <osd/clDispatcher.h>
-    #include <osd/clspmvDispatcher.h>
 #endif
 
 #ifdef OPENSUBDIV_HAS_MKL
     #include <osd/mklDispatcher.h>
-#endif
-
-#ifdef OPENSUBDIV_HAS_BOOST
-    #include <osd/ublasDispatcher.h>
 #endif
 
 #ifdef OPENSUBDIV_HAS_CUDA
@@ -497,12 +492,8 @@ const char *getKernelName(int kernel) {
         return "OpenCL";
     else if (kernel == OpenSubdiv::OsdKernelDispatcher::kMKL)
         return "MKL";
-    else if (kernel == OpenSubdiv::OsdKernelDispatcher::kCLSPMV)
-        return "ClSpMV";
     else if (kernel == OpenSubdiv::OsdKernelDispatcher::kCUSPARSE)
         return "CuSPARSE";
-    else if (kernel == OpenSubdiv::OsdKernelDispatcher::kUBLAS)
-        return "uBLAS";
     return "Unknown";
 }
 
@@ -971,15 +962,10 @@ int main(int argc, char ** argv) {
 
 #if OPENSUBDIV_HAS_OPENCL
     OpenSubdiv::OsdClKernelDispatcher::Register();
-    OpenSubdiv::OsdClSpMVKernelDispatcher::Register();
 #endif
 
 #if OPENSUBDIV_HAS_MKL
     OpenSubdiv::OsdMklKernelDispatcher::Register();
-#endif
-
-#if OPENSUBDIV_HAS_BOOST
-    OpenSubdiv::OsdUBlasKernelDispatcher::Register();
 #endif
 
 #if OPENSUBDIV_HAS_CUDA

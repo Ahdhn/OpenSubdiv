@@ -128,14 +128,15 @@ public:
     virtual void FinalizeMatrix() { };
     virtual void ApplyMatrix(int offset) { };
     void SetSrcOffset(int srcOffset) { this->srcOffset = srcOffset; };
-    virtual int CopyNVerts(int nVerts, int dstIndex, int srcIndex) { return 0; };
+    void SetDstOffset(int dstOffset) { this->dstOffset = dstOffset; };
+    virtual int CopyNVerts(int nVerts, int index) { return 0; };
     virtual bool MatrixReady() { return false; }
     virtual void PrintReport() { }
 
     virtual int GetElemsPerVertex() const { return -1; }
     virtual int GetElemsPerVarying() const { return -1; }
 
-    int srcOffset;
+    int srcOffset, dstOffset;
 
 private:
     static FarDispatcher _DefaultDispatcher;
