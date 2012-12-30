@@ -2,11 +2,15 @@
 
 set(PLATFORM_LIBRARIES
     ${OSD_LINK_TARGET}
+    ${GLEW_LIBRARY}
+    ${GLUT_LIBRARIES}
 )
 
 include_directories(
     ${PROJECT_SOURCE_DIR}/opensubdiv
     ${PROJECT_SOURCE_DIR}/regression
+    ${GLEW_INCLUDE_DIR}
+    ${GLUT_INCLUDE_DIR}
 )
 
 if ( MKL_FOUND )
@@ -42,8 +46,10 @@ foreach(shader_file ${SHADER_FILES})
     )
 endforeach()
 
-_add_possibly_cuda_executable(headlessViewer
+_add_glut_executable(headlessViewer
     viewer.cpp
+    ${SHADER_FILES}
+    ${INC_FILES}
 )
 
 target_link_libraries(headlessViewer

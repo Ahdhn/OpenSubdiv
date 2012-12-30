@@ -1,3 +1,12 @@
+#if defined(__APPLE__)
+    #include <OpenGL/gl3.h>
+    #include <GLUT/glut.h>
+#else
+    #include <stdlib.h>
+    #include <GL/glew.h>
+    #include <GL/glut.h>
+#endif
+
 #include <osd/mutex.h>
 
 #include <hbr/mesh.h>
@@ -66,14 +75,15 @@ std::vector<float> g_orgPositions,
                    g_positions,
                    g_normals;
 Scheme             g_scheme;
+bool g_regression = false;
 
 OpenSubdiv::OsdMesh * g_osdmesh = 0;
 OpenSubdiv::OsdVertexBuffer * g_vertexBuffer = 0;
-#if REGRESSION
+
+/* for regression check */
 OpenSubdiv::OsdMesh * g_cpu_osdmesh = 0;
 OpenSubdiv::OsdVertexBuffer * g_cpu_vertexBuffer = 0;
 #define PRECISION 1e-6
-#endif
 
 const char *getKernelName(int kernel) {
 
@@ -265,8 +275,7 @@ updateGeom(bool reportMaxError=false) {
     double frameVertsPerMillisecond = g_osdmesh->GetFarMesh()->GetNumVertices() / (g_cpuTime+g_gpuTime);
     printf(" %f", frameVertsPerMillisecond);
 
-#if REGRESSION
-    if (reportMaxError) {
+    if (g_regression and reportMaxError) {
         if (!g_cpu_vertexBuffer)
             g_cpu_vertexBuffer = g_cpu_osdmesh->InitializeVertexBuffer(6);
         g_cpu_vertexBuffer->UpdateData(&vertex[0], nverts);
@@ -285,8 +294,6 @@ updateGeom(bool reportMaxError=false) {
             maxerror = fmaxf(maxerror, fabs(expected[i] - actual[i]));
         printf(" maxerror=%e", maxerror);
     }
-#endif
-
 }
 
 //------------------------------------------------------------------------------
@@ -369,15 +376,15 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme=kCatmark
         g_vertexBuffer = NULL;
     }
 
-#if REGRESSION
-    if (g_cpu_osdmesh) delete g_cpu_osdmesh;
-    g_cpu_osdmesh = new OpenSubdiv::OsdMesh();
-    g_cpu_osdmesh->Create(hmesh, level, OpenSubdiv::OsdKernelDispatcher::kCPU);
-    if (g_cpu_vertexBuffer) {
-        delete g_cpu_vertexBuffer;
-        g_cpu_vertexBuffer = NULL;
+    if (g_regression) {
+        if (g_cpu_osdmesh) delete g_cpu_osdmesh;
+        g_cpu_osdmesh = new OpenSubdiv::OsdMesh();
+        g_cpu_osdmesh->Create(hmesh, level, OpenSubdiv::OsdKernelDispatcher::kCPU);
+        if (g_cpu_vertexBuffer) {
+            delete g_cpu_vertexBuffer;
+            g_cpu_vertexBuffer = NULL;
+        }
     }
-#endif
 
     // Hbr mesh can be deleted
     delete hmesh;
@@ -389,6 +396,7 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme=kCatmark
 }
 
 int main(int argc, char* argv[]) {
+
     std::string str;
     if (argc > 1) {
         std::ifstream ifs(argv[1]);
@@ -449,6 +457,8 @@ int main(int argc, char* argv[]) {
             g_currentShape = atoi(argv[++i]);
         else if (!strcmp(argv[i], "-k") || !strcmp(argv[i], "--kernel"))
             g_kernel = atoi(argv[++i]);
+        else if (!strcmp(argv[i], "-r") || !strcmp(argv[i], "--regression"))
+            g_regression = true;
         else if (!strcmp(argv[i], "-s") || !strcmp(argv[i], "--spy")) {
             osdSpMVKernel_DumpSpy_FileName = argv[++i];
         }
