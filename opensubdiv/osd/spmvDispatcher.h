@@ -8,8 +8,13 @@
 #include <stdio.h>
 #include <sstream>
 #include <string>
+#include <vector>
+
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
 
 static char* osdSpMVKernel_DumpSpy_FileName = NULL;
+static int osdSpMVKernel_NMultiplications= 5;
 
 #define DEBUG_PRINTF(fmt, ...) \
   fprintf(stderr, "[info] "fmt, ##__VA_ARGS__);
@@ -22,7 +27,7 @@ class OsdSpMVKernelDispatcher : public OsdCpuKernelDispatcher
 {
 public:
     OsdSpMVKernelDispatcher( int levels )
-        : OsdCpuKernelDispatcher(levels), StagedOp(NULL), SubdivOp(NULL)
+        : OsdCpuKernelDispatcher(levels), StagedOp(NULL), multiplications(osdSpMVKernel_NMultiplications)
     { }
 
     virtual ~OsdSpMVKernelDispatcher() {
@@ -30,8 +35,8 @@ public:
             delete _vdesc;
         if (StagedOp != NULL)
             delete StagedOp;
-        if (SubdivOp!= NULL)
-            delete SubdivOp;
+        foreach(CsrMatrix_t* op, SubdivOps)
+            delete op;
     }
 
     virtual void BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying) {
@@ -92,19 +97,21 @@ public:
      * M = S * M
      */
     virtual void PushMatrix() {
-        /* if no SubdivOp exists, create one from A */
-        if (SubdivOp == NULL) {
-            int nve = _currentVertexBuffer->GetNumElements();
-            SubdivOp = new CsrMatrix_t(StagedOp, nve);
-            DEBUG_PRINTF("PushMatrix set %d-%d\n", SubdivOp->m, SubdivOp->n);
-        } else {
-            CsrMatrix_t* new_SubdivOp = StagedOp->gemm(SubdivOp);
+        if (multiplications > 0 && SubdivOps.size() > 0) {
+            CsrMatrix_t* new_SubdivOp = StagedOp->gemm(SubdivOps.back());
             DEBUG_PRINTF("PushMatrix mul %d-%d = %d-%d * %d-%d\n",
                     (int) new_SubdivOp->m, (int) new_SubdivOp->n,
                     (int) StagedOp->m, (int) StagedOp->n,
-                    (int) SubdivOp->m, (int) SubdivOp->n);
-            delete SubdivOp;
-            SubdivOp = new_SubdivOp;
+                    (int) SubdivOps.back()->m, (int) SubdivOps.back()->n);
+            delete SubdivOps.back();
+            SubdivOps.pop_back();
+            SubdivOps.push_back(new_SubdivOp);
+            multiplications--;
+        } else {
+            int nve = _currentVertexBuffer->GetNumElements();
+            CsrMatrix_t* M = new CsrMatrix_t(StagedOp, nve);
+            SubdivOps.push_back(M);
+            DEBUG_PRINTF("PushMatrix set %d-%d\n", M->m, M->n);
         }
 
         /* remove staged matrix */
@@ -118,9 +125,11 @@ public:
      */
     virtual void FinalizeMatrix() {
         if (osdSpMVKernel_DumpSpy_FileName != NULL)
-            SubdivOp->dump(osdSpMVKernel_DumpSpy_FileName);
+            SubdivOps.back()->dump(osdSpMVKernel_DumpSpy_FileName);
 
-        SubdivOp->expand();
+        foreach(CsrMatrix_t* op, SubdivOps)
+            op->expand();
+
         this->PrintReport();
     }
 
@@ -135,7 +144,8 @@ public:
         float* V_out = (float*) _currentVertexBuffer->Map()
             + offset * numElems;
 
-        SubdivOp->spmv(V_out, V_in);
+        foreach(CsrMatrix_t* op, SubdivOps)
+            op->spmv(V_out, V_in);
     }
 
     /**
@@ -143,7 +153,7 @@ public:
      * ready to be applied to the vector of vertices.
      */
     virtual bool MatrixReady() {
-        return (SubdivOp != NULL);
+        return (SubdivOps.size() > 0);
     }
 
     /**
@@ -152,21 +162,28 @@ public:
      * matrix dimensions, number of nonzeroes, memory usage, etc.
      */
     virtual void PrintReport() {
-        int size_in_bytes = SubdivOp->NumBytes();
-        double sparsity_factor = 100.0 * SubdivOp->SparsityFactor();
+        int size_in_bytes = 0;
+        foreach(CsrMatrix_t* op, SubdivOps)
+            size_in_bytes += op->NumBytes();
+        double sparsity_factor = 100.0 * SubdivOps.back()->SparsityFactor();
 
         #if BENCHMARKING
-            printf(" nverts=%d", SubdivOp->nnz());
+            printf(" nverts=%d", SubdivOps.back()->nnz());
             printf(" mem=%d", size_in_bytes);
             printf(" sparsity=%f", sparsity_factor);
         #endif
 
-        DEBUG_PRINTF("Subdiv matrix is %d-by-%d with %f%% nonzeroes, takes %d MB.\n",
-                SubdivOp->m, SubdivOp->n, sparsity_factor, size_in_bytes / 1024 / 1024);
+        int opnum = 0;
+        foreach(CsrMatrix_t* op, SubdivOps) {
+            DEBUG_PRINTF("Subdiv matrix #%d is %d-by-%d with %f%% nonzeroes, takes %d MB.\n",
+                    opnum, op->m, op->n, sparsity_factor, size_in_bytes / 1024 / 1024);
+            opnum += 1;
+        }
     }
 
     CooMatrix_t* StagedOp;
-    CsrMatrix_t* SubdivOp;
+    std::vector<CsrMatrix_t*> SubdivOps;
+    int multiplications;
 };
 
 } // end namespace OPENSUBDIV_VERSION
