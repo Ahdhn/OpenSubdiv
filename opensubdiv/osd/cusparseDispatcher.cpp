@@ -27,6 +27,48 @@ namespace OPENSUBDIV_VERSION {
 
 static cusparseHandle_t handle = NULL;
 
+CudaCooMatrix::CudaCooMatrix(int m, int n) :
+    CooMatrix(m, n)
+{ }
+
+CudaCsrMatrix*
+CudaCooMatrix::gemm(CudaCsrMatrix* rhs) {
+    return NULL;
+}
+
+CudaCsrMatrix::CudaCsrMatrix(int m, int n, int nnz, int nve, mode_t mode)
+{ }
+
+CudaCsrMatrix::CudaCsrMatrix(CudaCooMatrix* StagedOp, int nve, mode_t mode)
+{ }
+
+void
+CudaCsrMatrix::spmv(float *d_out, float* d_in) {
+}
+
+CudaCsrMatrix*
+CudaCsrMatrix::gemm(CudaCsrMatrix* rhs) {
+    return NULL;
+}
+
+CudaCsrMatrix::~CudaCsrMatrix() {
+}
+
+void
+CudaCsrMatrix::expand() {
+}
+
+int
+CudaCsrMatrix::nnz() {
+    return 0;
+}
+
+void
+CudaCsrMatrix::dump(std::string ofilename) {
+    assert(!"No support for dumping matrices on GPUs. Use MKL kernel.");
+}
+
+
 #if 0
 device_csr_matrix_view::device_csr_matrix_view(csr_matrix* M) :
     m(M->size1()), n(M->size2()), nnz(M->nnz()) {

@@ -16,9 +16,7 @@ class CudaCsrMatrix;
 class CudaCooMatrix : public CooMatrix {
 public:
     CudaCooMatrix(int m, int n);
-    void append_element(int i, int j, float val);
     CudaCsrMatrix* gemm(CudaCsrMatrix* rhs);
-    int nnz() const;
 };
 
 class CudaCsrMatrix : public CsrMatrix {
@@ -26,7 +24,7 @@ public:
     CudaCsrMatrix(int m, int n, int nnz, int nve=1, mode_t=VERTEX);
     CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve=1, mode_t=VERTEX);
     void spmv(float* d_out, float* d_in);
-    CudaCsrMatrix* gemm(CudaCsrMatrix* rhs);
+    virtual CudaCsrMatrix* gemm(CudaCsrMatrix* rhs);
     virtual ~CudaCsrMatrix();
     void expand();
     int nnz();

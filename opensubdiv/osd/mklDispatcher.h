@@ -24,8 +24,9 @@ public:
 
     CooMatrix(int m, int n);
     void append_element(int i, int j, float val);
-    CsrMatrix* gemm(CsrMatrix* rhs);
     int nnz() const;
+
+    virtual CsrMatrix* gemm(CsrMatrix* rhs);
 };
 
 class CsrMatrix {
