@@ -22,6 +22,22 @@ expand(int src_numrows, int factor,
             dst_vals[dst_idx] = src_vals[src_idx];
         }
     }
+
+    #if 0
+        // how its done on CPU
+        int new_i = 0;
+        for(int r = 0; r < m; r++) {
+            for(int k = 0; k < nve; k++) {
+                new_rows[r*nve + k] = new_i+1;
+                for(int i = rows[r]; i < rows[r+1]; i++, new_i++) {
+                    int col_one = cols[i-1];
+                    float val = vals[i-1];
+                    new_cols[new_i] = ((col_one-1)*nve + k) + 1;
+                    new_vals[new_i] = val;
+                }
+            }
+        }
+    #endif
 }
 
 __global__ void
