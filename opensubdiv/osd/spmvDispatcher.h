@@ -205,8 +205,14 @@ public:
     virtual void expand() = 0;
     virtual int nnz() = 0;
     virtual void dump(std::string ofilename) = 0;
-    virtual int NumBytes() = 0;
-    virtual double SparsityFactor() = 0;
+
+    virtual inline int NumBytes() {
+        return nnz()*sizeof(float) + nnz()*sizeof(int) + (m+1)*sizeof(int);
+    }
+
+    virtual inline double SparsityFactor() {
+        return (double) nnz() / (double) (m * n);
+    }
 };
 
 } // end namespace OPENSUBDIV_VERSION

@@ -76,16 +76,6 @@ CpuCsrMatrix::nnz() {
     return this->rows[m];
 }
 
-int
-CpuCsrMatrix::NumBytes() {
-    return nnz()*sizeof(float) + nnz()*sizeof(int) + (m+1)*sizeof(int);
-}
-
-double
-CpuCsrMatrix::SparsityFactor() {
-    return (double) nnz() / (double) (m * n);
-}
-
 void
 CpuCsrMatrix::spmv(float* d_out, float* d_in) {
     assert(mode == CsrMatrix::ELEMENT);

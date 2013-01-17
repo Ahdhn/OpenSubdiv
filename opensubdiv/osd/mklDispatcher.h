@@ -43,8 +43,6 @@ public:
     virtual void expand();
     virtual int nnz();
     virtual void dump(std::string ofilename);
-    virtual int NumBytes();
-    virtual double SparsityFactor();
 };
 
 
