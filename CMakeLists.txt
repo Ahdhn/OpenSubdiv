@@ -106,7 +106,7 @@ find_package(PTex)
 find_package(MKL)
 
 #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBENCHMARKING -DREGRESSION -g -ggdb3")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -ggdb3")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
 find_package(GLEW)
 

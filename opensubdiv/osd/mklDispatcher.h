@@ -13,52 +13,43 @@ extern "C" {
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
-class CsrMatrix;
+class CpuCsrMatrix;
 
-class CooMatrix {
+class CpuCooMatrix : public CooMatrix {
 public:
-    int m, n;
+    CpuCooMatrix(int m, int n);
+
+    virtual void append_element(int i, int j, float val);
+    virtual int nnz() const;
+    virtual CpuCsrMatrix* gemm(CpuCsrMatrix* rhs);
+
     std::vector<int> rows;
     std::vector<int> cols;
     std::vector<float> vals;
-
-    CooMatrix(int m, int n);
-    void append_element(int i, int j, float val);
-    int nnz() const;
-
-    virtual CsrMatrix* gemm(CsrMatrix* rhs);
 };
 
-class CsrMatrix {
+class CpuCsrMatrix : public CsrMatrix {
 public:
-    int m, n, nve;
     int* rows;
     int* cols;
     float* vals;
 
-    typedef enum {
-        VERTEX, // matrix indices refer to logical vertices
-        ELEMENT // matrix indices refer to vertex elements
-    } mode_t;
+    CpuCsrMatrix(int m, int n, int nnz, int nve=1, mode_t mode=CsrMatrix::VERTEX);
+    CpuCsrMatrix(const CpuCooMatrix* StagedOp, int nve=1, mode_t mode=CsrMatrix::VERTEX);
+    virtual ~CpuCsrMatrix();
 
-    mode_t mode;
-
-    CsrMatrix(int m, int n, int nnz, int nve=1, mode_t=VERTEX);
-    CsrMatrix(const CooMatrix* StagedOp, int nve=1, mode_t=VERTEX);
-    void spmv(float* d_out, float* d_in);
-    CsrMatrix* gemm(CsrMatrix* rhs);
-    virtual ~CsrMatrix();
-    void expand();
-    int nnz();
-    void dump(std::string ofilename);
-
-    int NumBytes();
-    double SparsityFactor();
+    virtual void spmv(float* d_out, float* d_in);
+    virtual CpuCsrMatrix* gemm(CpuCsrMatrix* rhs);
+    virtual void expand();
+    virtual int nnz();
+    virtual void dump(std::string ofilename);
+    virtual int NumBytes();
+    virtual double SparsityFactor();
 };
 
 
 class OsdMklKernelDispatcher :
-    public OsdSpMVKernelDispatcher<CooMatrix,CsrMatrix,OsdCpuVertexBuffer>
+    public OsdSpMVKernelDispatcher<CpuCooMatrix,CpuCsrMatrix,OsdCpuVertexBuffer>
 {
 public:
     OsdMklKernelDispatcher(int levels);

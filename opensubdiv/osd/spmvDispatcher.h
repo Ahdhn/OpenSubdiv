@@ -173,6 +173,42 @@ public:
     CsrMatrix_t* SubdivOp;
 };
 
+
+class CsrMatrix;
+
+class CooMatrix {
+public:
+    int m, n;
+    CooMatrix(int m, int n) : m(m), n(m) { };
+
+    virtual void append_element(int i, int j, float val) = 0;
+    virtual int nnz() const = 0;
+};
+
+class CsrMatrix {
+public:
+    int m, n, nve;
+
+    typedef enum {
+        VERTEX, // matrix indices refer to logical vertices
+        ELEMENT // matrix indices refer to vertex elements
+    } mode_t;
+
+    mode_t mode;
+
+    CsrMatrix(int m, int n, int nnz, int nve=1, mode_t mode=VERTEX) :
+        m(m), n(m), nve(nve), mode(mode) { };
+    CsrMatrix(const CooMatrix* StagedOp, int nve=1, mode_t mode=VERTEX) :
+        m(StagedOp->m), n(StagedOp->n), nve(nve), mode(mode) { }
+
+    virtual void spmv(float* d_out, float* d_in) = 0;
+    virtual void expand() = 0;
+    virtual int nnz() = 0;
+    virtual void dump(std::string ofilename) = 0;
+    virtual int NumBytes() = 0;
+    virtual double SparsityFactor() = 0;
+};
+
 } // end namespace OPENSUBDIV_VERSION
 using namespace OPENSUBDIV_VERSION;
 

@@ -4,11 +4,12 @@
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
-CooMatrix::CooMatrix(int m, int n) : m(m), n(n)
+CpuCooMatrix::CpuCooMatrix(int m, int n) :
+    CooMatrix(m, n)
 { }
 
 void
-CooMatrix::append_element(int i, int j, float val) {
+CpuCooMatrix::append_element(int i, int j, float val) {
 #ifdef DEBUG
     assert(0 <= i);
     assert(i < StagedOp->m);
@@ -22,29 +23,28 @@ CooMatrix::append_element(int i, int j, float val) {
 }
 
 int
-CooMatrix::nnz() const {
+CpuCooMatrix::nnz() const {
     return vals.size();
 }
 
-CsrMatrix*
-CooMatrix::gemm(CsrMatrix* rhs) {
-    CsrMatrix* lhs = new CsrMatrix(this);
-    CsrMatrix* answer = lhs->gemm(rhs);
+CpuCsrMatrix*
+CpuCooMatrix::gemm(CpuCsrMatrix* rhs) {
+    CpuCsrMatrix* lhs = new CpuCsrMatrix(this);
+    CpuCsrMatrix* answer = lhs->gemm(rhs);
     delete lhs;
     return answer;
 }
 
-
-CsrMatrix::CsrMatrix(int m, int n, int nnz, int nve, mode_t mode) :
-    m(m), n(n), nve(nve), mode(mode) {
+CpuCsrMatrix::CpuCsrMatrix(int m, int n, int nnz, int nve, mode_t mode) :
+    CsrMatrix(m, n, nnz, nve, mode) {
     rows = (int*) malloc((m+1) * sizeof(int));
     cols = (int*) malloc(nnz * sizeof(int));
     vals = (float*) malloc(nnz * sizeof(float));
     rows[m] = nnz+1;
 }
 
-CsrMatrix::CsrMatrix(const CooMatrix* StagedOp, int nve, mode_t mode) :
-    nve(nve), mode(mode) {
+CpuCsrMatrix::CpuCsrMatrix(const CpuCooMatrix* StagedOp, int nve, mode_t mode) :
+    CsrMatrix(StagedOp, nve, mode) {
 
     m = StagedOp->m;
     n = StagedOp->n;
@@ -72,38 +72,38 @@ CsrMatrix::CsrMatrix(const CooMatrix* StagedOp, int nve, mode_t mode) :
 }
 
 int
-CsrMatrix::nnz() {
+CpuCsrMatrix::nnz() {
     return this->rows[m];
 }
 
 int
-CsrMatrix::NumBytes() {
+CpuCsrMatrix::NumBytes() {
     return nnz()*sizeof(float) + nnz()*sizeof(int) + (m+1)*sizeof(int);
 }
 
 double
-CsrMatrix::SparsityFactor() {
+CpuCsrMatrix::SparsityFactor() {
     return (double) nnz() / (double) (m * n);
 }
 
 void
-CsrMatrix::spmv(float* d_out, float* d_in) {
-    assert(mode == CsrMatrix::ELEMENT);
+CpuCsrMatrix::spmv(float* d_out, float* d_in) {
+    assert(mode == CpuCsrMatrix::ELEMENT);
     mkl_scsrgemv((char*)"N", &m, vals, rows, cols, d_in, d_out);
 }
 
-CsrMatrix*
-CsrMatrix::gemm(CsrMatrix* rhs) {
+CpuCsrMatrix*
+CpuCsrMatrix::gemm(CpuCsrMatrix* rhs) {
     if (rhs->mode != this->mode) {
         rhs->expand();
         this->expand();
     }
 
-    CsrMatrix* A = this;
-    CsrMatrix* B = rhs;
+    CpuCsrMatrix* A = this;
+    CpuCsrMatrix* B = rhs;
 
     int c_nnz = std::min(A->m*B->n, (int) B->nnz()*7); // XXX: shouldn't this be 4, not 7?
-    CsrMatrix* C = new CsrMatrix(A->m, B->n, c_nnz, B->nve, mode);
+    CpuCsrMatrix* C = new CpuCsrMatrix(A->m, B->n, c_nnz, B->nve, mode);
 
     int request = 0; // output arrays pre allocated
     int sort = 8; // reorder nonzeroes in C
@@ -126,8 +126,8 @@ CsrMatrix::gemm(CsrMatrix* rhs) {
 }
 
 void
-CsrMatrix::expand() {
-    if (mode == CsrMatrix::VERTEX) {
+CpuCsrMatrix::expand() {
+    if (mode == CpuCsrMatrix::VERTEX) {
         int* new_rows = (int*) malloc((nve*m+1) * sizeof(int));
         int* new_cols = (int*) malloc(nve*nnz() * sizeof(int));
         float* new_vals = (float*) malloc(nve*nnz() * sizeof(float));
@@ -154,13 +154,13 @@ CsrMatrix::expand() {
         rows = new_rows;
         cols = new_cols;
         vals = new_vals;
-        mode = CsrMatrix::ELEMENT;
+        mode = CpuCsrMatrix::ELEMENT;
         new_rows[m] = new_i+1;
     }
 }
 
 void
-CsrMatrix::dump(std::string ofilename) {
+CpuCsrMatrix::dump(std::string ofilename) {
     FILE* ofile = fopen(ofilename.c_str(), "w");
     assert(ofile != NULL);
 
@@ -178,7 +178,7 @@ CsrMatrix::dump(std::string ofilename) {
     fclose(ofile);
 }
 
-CsrMatrix::~CsrMatrix() {
+CpuCsrMatrix::~CpuCsrMatrix() {
     free(rows);
     free(cols);
     free(vals);
@@ -186,7 +186,7 @@ CsrMatrix::~CsrMatrix() {
 
 
 OsdMklKernelDispatcher::OsdMklKernelDispatcher(int levels) :
-    OsdSpMVKernelDispatcher<CooMatrix,CsrMatrix,OsdCpuVertexBuffer>(levels)
+    OsdSpMVKernelDispatcher<CpuCooMatrix,CpuCsrMatrix,OsdCpuVertexBuffer>(levels)
 { }
 
 static OsdMklKernelDispatcher::OsdKernelDispatcher *
