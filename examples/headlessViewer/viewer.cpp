@@ -270,7 +270,7 @@ updateGeom(bool reportMaxError=false) {
         if (!g_cpu_vertexBuffer)
             g_cpu_vertexBuffer = g_cpu_osdmesh->InitializeVertexBuffer(6);
         g_cpu_vertexBuffer->UpdateData(&vertex[0], nverts);
-        g_cpu_osdmesh->Subdivide(g_cpu_vertexBuffer, NULL) * 1000.0f;
+        g_cpu_osdmesh->Subdivide(g_cpu_vertexBuffer, NULL);
 
         float maxerror = 0.0;
         int level = g_osdmesh->GetLevel();
@@ -445,9 +445,10 @@ int main(int argc, char* argv[]) {
             g_kernel = atoi(argv[++i]);
         else if (!strcmp(argv[i], "-r") || !strcmp(argv[i], "--regression"))
             g_regression = true;
-        else if (!strcmp(argv[i], "-s") || !strcmp(argv[i], "--spy")) {
+#ifdef OPENSUBDIV_HAS_MKL
+        else if (!strcmp(argv[i], "-s") || !strcmp(argv[i], "--spy"))
             osdSpMVKernel_DumpSpy_FileName = argv[++i];
-        }
+#endif
         else
             filename = argv[i];
     }
