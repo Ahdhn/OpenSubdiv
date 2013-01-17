@@ -13,9 +13,11 @@ namespace OPENSUBDIV_VERSION {
 
 class CudaCsrMatrix;
 
-class CudaCooMatrix : public CooMatrix {
+class CudaCooMatrix : public CpuCooMatrix {
 public:
-    CudaCooMatrix(int m, int n);
+    CudaCooMatrix(int m, int n) :
+        CpuCooMatrix(m, n) { }
+
     CudaCsrMatrix* gemm(CudaCsrMatrix* rhs);
 };
 

@@ -27,19 +27,17 @@ namespace OPENSUBDIV_VERSION {
 
 static cusparseHandle_t handle = NULL;
 
-CudaCooMatrix::CudaCooMatrix(int m, int n) :
-    CooMatrix(m, n)
-{ }
-
 CudaCsrMatrix*
 CudaCooMatrix::gemm(CudaCsrMatrix* rhs) {
     return NULL;
 }
 
-CudaCsrMatrix::CudaCsrMatrix(int m, int n, int nnz, int nve, mode_t mode)
+CudaCsrMatrix::CudaCsrMatrix(int m, int n, int nnz, int nve, mode_t mode) :
+    CsrMatrix(m, n, nnz, nve, mode)
 { }
 
-CudaCsrMatrix::CudaCsrMatrix(CudaCooMatrix* StagedOp, int nve, mode_t mode)
+CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve, mode_t mode) :
+    CsrMatrix(StagedOp, nve, mode)
 { }
 
 void
