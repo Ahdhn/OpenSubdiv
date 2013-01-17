@@ -20,11 +20,8 @@ CpuCooMatrix::append_element(int i, int j, float val) {
     rows.push_back(i+1); // one-based indexing
     cols.push_back(j+1);
     vals.push_back(val);
-}
 
-int
-CpuCooMatrix::nnz() const {
-    return vals.size();
+    nnz = vals.size();
 }
 
 CpuCsrMatrix*
@@ -48,7 +45,7 @@ CpuCsrMatrix::CpuCsrMatrix(const CpuCooMatrix* StagedOp, int nve, mode_t mode) :
 
     m = StagedOp->m;
     n = StagedOp->n;
-    int numnz = StagedOp->nnz();
+    int numnz = StagedOp->nnz;
     rows = (int*) malloc((m+1) * sizeof(int));
     cols = (int*) malloc(numnz * sizeof(int));
     vals = (float*) malloc(numnz * sizeof(float));
@@ -71,11 +68,6 @@ CpuCsrMatrix::CpuCsrMatrix(const CpuCooMatrix* StagedOp, int nve, mode_t mode) :
     assert(info == 0);
 }
 
-int
-CpuCsrMatrix::nnz() {
-    return this->rows[m];
-}
-
 void
 CpuCsrMatrix::spmv(float* d_out, float* d_in) {
     assert(mode == CsrMatrix::ELEMENT);
@@ -92,7 +84,7 @@ CpuCsrMatrix::gemm(CpuCsrMatrix* rhs) {
     CpuCsrMatrix* A = this;
     CpuCsrMatrix* B = rhs;
 
-    int c_nnz = std::min(A->m*B->n, (int) B->nnz()*7); // XXX: shouldn't this be 4, not 7?
+    int c_nnz = std::min(A->m*B->n, (int) B->nnz*7); // XXX: shouldn't this be 4, not 7?
     CpuCsrMatrix* C = new CpuCsrMatrix(A->m, B->n, c_nnz, B->nve, mode);
 
     int request = 0; // output arrays pre allocated
@@ -119,8 +111,8 @@ void
 CpuCsrMatrix::expand() {
     if (mode == CsrMatrix::VERTEX) {
         int* new_rows = (int*) malloc((nve*m+1) * sizeof(int));
-        int* new_cols = (int*) malloc(nve*nnz() * sizeof(int));
-        float* new_vals = (float*) malloc(nve*nnz() * sizeof(float));
+        int* new_cols = (int*) malloc(nve*nnz * sizeof(int));
+        float* new_vals = (float*) malloc(nve*nnz * sizeof(float));
 
         int new_i = 0;
         for(int r = 0; r < m; r++) {
@@ -155,7 +147,7 @@ CpuCsrMatrix::dump(std::string ofilename) {
     assert(ofile != NULL);
 
     fprintf(ofile, "%%%%MatrixMarket matrix coordinate real general\n");
-    fprintf(ofile, "%d %d %d\n", m, n, nnz());
+    fprintf(ofile, "%d %d %d\n", m, n, nnz);
 
     for(int r = 0; r < m; r++) {
         for(int i = rows[r]; i < rows[r+1]; i++) {

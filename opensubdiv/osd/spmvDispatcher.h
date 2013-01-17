@@ -160,7 +160,7 @@ public:
         double sparsity_factor = 100.0 * SubdivOp->SparsityFactor();
 
         #if BENCHMARKING
-            printf(" nverts=%d", SubdivOp->nnz());
+            printf(" nverts=%d", SubdivOp->nnz;
             printf(" mem=%d", size_in_bytes);
             printf(" sparsity=%f", sparsity_factor);
         #endif
@@ -178,16 +178,15 @@ class CsrMatrix;
 
 class CooMatrix {
 public:
-    int m, n;
-    CooMatrix(int m, int n) : m(m), n(n) { };
+    int m, n, nnz;
+    CooMatrix(int m, int n, int nnz=0) : m(m), n(n), nnz(nnz) { };
 
     virtual void append_element(int i, int j, float val) = 0;
-    virtual int nnz() const = 0;
 };
 
 class CsrMatrix {
 public:
-    int m, n, nve;
+    int m, n, nve, nnz;
 
     typedef enum {
         VERTEX, // matrix indices refer to logical vertices
@@ -197,21 +196,20 @@ public:
     mode_t mode;
 
     CsrMatrix(int m, int n, int nnz=1, int nve=1, mode_t mode=VERTEX) :
-        m(m), n(n), nve(nve), mode(mode) { };
+        m(m), n(n), nnz(nnz), nve(nve), mode(mode) { };
     CsrMatrix(const CooMatrix* StagedOp, int nve=1, mode_t mode=VERTEX) :
-        m(StagedOp->m), n(StagedOp->n), nve(nve), mode(mode) { }
+        m(StagedOp->m), n(StagedOp->n), nnz(StagedOp->nnz), nve(nve), mode(mode) { }
 
     virtual void spmv(float* d_out, float* d_in) = 0;
     virtual void expand() = 0;
-    virtual int nnz() = 0;
     virtual void dump(std::string ofilename) = 0;
 
     virtual inline int NumBytes() {
-        return nnz()*sizeof(float) + nnz()*sizeof(int) + (m+1)*sizeof(int);
+        return nnz*sizeof(float) + nnz*sizeof(int) + (m+1)*sizeof(int);
     }
 
     virtual inline double SparsityFactor() {
-        return (double) nnz() / (double) (m * n);
+        return (double) nnz / (double) (m * n);
     }
 };
 

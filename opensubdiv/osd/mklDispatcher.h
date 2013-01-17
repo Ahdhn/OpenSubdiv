@@ -20,7 +20,6 @@ public:
     CpuCooMatrix(int m, int n);
 
     virtual void append_element(int i, int j, float val);
-    virtual int nnz() const;
     virtual CpuCsrMatrix* gemm(CpuCsrMatrix* rhs);
 
     std::vector<int> rows;
@@ -41,7 +40,6 @@ public:
     virtual void spmv(float* d_out, float* d_in);
     virtual CpuCsrMatrix* gemm(CpuCsrMatrix* rhs);
     virtual void expand();
-    virtual int nnz();
     virtual void dump(std::string ofilename);
 };
 
