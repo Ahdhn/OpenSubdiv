@@ -29,36 +29,103 @@ static cusparseHandle_t handle = NULL;
 
 CudaCsrMatrix*
 CudaCooMatrix::gemm(CudaCsrMatrix* rhs) {
-    return NULL;
+    CudaCsrMatrix* lhs = new CudaCsrMatrix(this);
+    CudaCsrMatrix* answer = lhs->gemm(rhs);
+    delete lhs;
+    return answer;
 }
 
 CudaCsrMatrix::CudaCsrMatrix(int m, int n, int nnz, int nve, mode_t mode) :
-    CsrMatrix(m, n, nnz, nve, mode)
-{ }
+    CsrMatrix(m, n, nnz, nve, mode), rows(NULL), cols(NULL), vals(NULL)
+{
+    /* make cusparse matrix descriptor */
+    cusparseCreateMatDescr(&desc);
+    cusparseSetMatType(desc,CUSPARSE_MATRIX_TYPE_GENERAL);
+    cusparseSetMatIndexBase(desc,CUSPARSE_INDEX_BASE_ZERO);
+
+    /* make cusparse handle if null */
+    if (handle == NULL)
+        cusparseCreate(&handle);
+}
 
 CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve, mode_t mode) :
-    CsrMatrix(StagedOp, nve, mode)
-{ }
+    CsrMatrix(StagedOp, nve, mode), rows(NULL), cols(NULL), vals(NULL)
+{
+    /* make cusparse matrix descriptor */
+    cusparseCreateMatDescr(&desc);
+    cusparseSetMatType(desc,CUSPARSE_MATRIX_TYPE_GENERAL);
+    cusparseSetMatIndexBase(desc,CUSPARSE_INDEX_BASE_ZERO);
+
+    /* make cusparse handle if null */
+    if (handle == NULL)
+        cusparseCreate(&handle);
+
+    /* allocate device memory */
+    cudaMalloc(&rows, (StagedOp->m+1) * sizeof(int));
+    cudaMalloc(&cols, StagedOp->nnz * sizeof(int));
+    cudaMalloc(&vals, StagedOp->nnz * sizeof(float));
+
+    /* copy data to device */
+    cudaMemcpy(rows, &StagedOp->rows[0], StagedOp->rows.size() * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(cols, &StagedOp->cols[0], StagedOp->cols.size() * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(vals, &StagedOp->vals[0], StagedOp->vals.size() * sizeof(float), cudaMemcpyHostToDevice);
+}
 
 void
 CudaCsrMatrix::spmv(float *d_out, float* d_in) {
+    cusparseStatus_t status;
+    cusparseOperation_t op = CUSPARSE_OPERATION_NON_TRANSPOSE;
+    float alpha = 1.0,
+          beta = 0.0;
+    status = cusparseScsrmv(handle, op, m, n, nnz, &alpha, desc,
+            vals, rows, cols, d_in, &beta, d_out);
+    assert(status == CUSPARSE_STATUS_SUCCESS);
 }
 
 CudaCsrMatrix*
-CudaCsrMatrix::gemm(CudaCsrMatrix* rhs) {
-    return NULL;
+CudaCsrMatrix::gemm(CudaCsrMatrix* B) {
+    CudaCsrMatrix* A = this;
+    int mm = A->m,
+        nn = A->n,
+        kk = B->n;
+    assert(A->n == B->m);
+
+    cusparseOperation_t transA = CUSPARSE_OPERATION_NON_TRANSPOSE,
+                        transB = CUSPARSE_OPERATION_NON_TRANSPOSE;
+
+    CudaCsrMatrix* C = new CudaCsrMatrix(mm, kk);
+
+    cusparseStatus_t status;
+    cudaMalloc(&C->rows, (mm+1) * sizeof(int));
+    status = cusparseXcsrgemmNnz(handle, transA, transB,
+            mm, nn, kk,
+            A->desc, A->nnz, A->rows, A->cols,
+            B->desc, B->nnz, B->rows, B->cols,
+            C->desc, C->rows, &C->nnz);
+    assert(status == CUSPARSE_STATUS_SUCCESS);
+
+    cudaMalloc(&C->cols, C->nnz * sizeof(int));
+    cudaMalloc(&C->vals, C->nnz * sizeof(float));
+    status = cusparseScsrgemm(handle, transA, transB,
+            mm, nn, kk,
+            A->desc, A->nnz, A->vals, A->rows, A->cols,
+            B->desc, B->nnz, B->vals, B->rows, B->cols,
+            C->desc, C->vals, C->rows, C->cols);
+    assert(status == CUSPARSE_STATUS_SUCCESS);
+
+    return C;
 }
 
 CudaCsrMatrix::~CudaCsrMatrix() {
+    /* clean up device memory */
+    cusparseDestroyMatDescr(desc);
+    cudaFree(rows);
+    cudaFree(cols);
+    cudaFree(vals);
 }
 
 void
 CudaCsrMatrix::expand() {
-}
-
-int
-CudaCsrMatrix::nnz() {
-    return 0;
 }
 
 void
@@ -69,7 +136,7 @@ CudaCsrMatrix::dump(std::string ofilename) {
 
 #if 0
 device_csr_matrix_view::device_csr_matrix_view(csr_matrix* M) :
-    m(M->size1()), n(M->size2()), nnz(M->nnz()) {
+    m(M->size1()), n(M->size2()), nnz(M->nnz) {
 
     /* make cusparse matrix descriptor */
     cusparseCreateMatDescr(&desc);

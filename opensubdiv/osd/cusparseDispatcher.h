@@ -23,16 +23,18 @@ public:
 
 class CudaCsrMatrix : public CsrMatrix {
 public:
-    CudaCsrMatrix(int m, int n, int nnz, int nve=1, mode_t=VERTEX);
+    CudaCsrMatrix(int m, int n, int nnz=0, int nve=1, mode_t=VERTEX);
     CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve=1, mode_t=VERTEX);
     void spmv(float* d_out, float* d_in);
     virtual CudaCsrMatrix* gemm(CudaCsrMatrix* rhs);
     virtual ~CudaCsrMatrix();
     void expand();
-    int nnz();
     void dump(std::string ofilename);
 
     cusparseMatDescr_t desc;
+    int* rows;
+    int* cols;
+    float* vals;
 };
 
 class OsdCusparseKernelDispatcher :

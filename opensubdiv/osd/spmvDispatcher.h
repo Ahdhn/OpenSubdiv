@@ -196,7 +196,7 @@ public:
 
     mode_t mode;
 
-    CsrMatrix(int m, int n, int nnz, int nve=1, mode_t mode=VERTEX) :
+    CsrMatrix(int m, int n, int nnz=1, int nve=1, mode_t mode=VERTEX) :
         m(m), n(n), nve(nve), mode(mode) { };
     CsrMatrix(const CooMatrix* StagedOp, int nve=1, mode_t mode=VERTEX) :
         m(StagedOp->m), n(StagedOp->n), nve(nve), mode(mode) { }
