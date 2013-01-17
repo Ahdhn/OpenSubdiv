@@ -50,6 +50,10 @@ public:
                 _currentVaryingBuffer ? _currentVaryingBuffer->GetNumElements() : 0);
     }
 
+    virtual VertexBuffer_t* InitializeVertexBuffer(int numElements, int numVertices) {
+	    return new VertexBuffer_t(numElements, numVertices);
+    }
+
     int GetElemsPerVertex() const {
         return _currentVertexBuffer ? _currentVertexBuffer->GetNumElements() : 0;
     }

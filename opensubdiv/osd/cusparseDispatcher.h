@@ -4,52 +4,44 @@
 #include "../version.h"
 #include "../osd/spmvDispatcher.h"
 #include "../osd/cudaDispatcher.h"
+#include "../osd/mklDispatcher.h"
 
 #include <cusparse_v2.h>
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
-class device_csr_matrix_view {
-public:
-    device_csr_matrix_view(int m, int n, int nnz=0);
-    device_csr_matrix_view(csr_matrix* M);
-    void spmv(float* d_out, const float* d_in);
-    device_csr_matrix_view* times(device_csr_matrix_view* rhs);
-    virtual ~device_csr_matrix_view();
-    void report(std::string name);
-    void expand(int factor);
+class CudaCsrMatrix;
 
-    int m, n, nnz;
-    int* rows;
-    int* cols;
-    float* vals;
+class CudaCooMatrix : public CooMatrix {
+public:
+    CudaCooMatrix(int m, int n);
+    void append_element(int i, int j, float val);
+    CudaCsrMatrix* gemm(CudaCsrMatrix* rhs);
+    int nnz() const;
+};
+
+class CudaCsrMatrix : public CsrMatrix {
+public:
+    CudaCsrMatrix(int m, int n, int nnz, int nve=1, mode_t=VERTEX);
+    CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve=1, mode_t=VERTEX);
+    void spmv(float* d_out, float* d_in);
+    CudaCsrMatrix* gemm(CudaCsrMatrix* rhs);
+    virtual ~CudaCsrMatrix();
+    void expand();
+    int nnz();
+    void dump(std::string ofilename);
 
     cusparseMatDescr_t desc;
 };
 
-class OsdCusparseKernelDispatcher : public OsdSpMVKernelDispatcher
+class OsdCusparseKernelDispatcher :
+    public OsdSpMVKernelDispatcher<CudaCooMatrix,CudaCsrMatrix,OsdCudaVertexBuffer>
 {
 public:
     OsdCusparseKernelDispatcher(int levels);
-    virtual ~OsdCusparseKernelDispatcher();
-
     static void Register();
-    virtual void BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying);
-    virtual OsdVertexBuffer *InitializeVertexBuffer(int numElements, int numVertices);
-
-    virtual void StageMatrix(int i, int j);
-    virtual void StageElem(int i, int j, float value);
-    virtual void ApplyMatrix(int offset);
-    virtual void PushMatrix();
-    virtual void FinalizeMatrix();
-    virtual bool MatrixReady();
-    virtual void PrintReport();
-    virtual void Synchronize();
-
-    device_csr_matrix_view *_deviceMatrix;
-    device_csr_matrix_view *_deviceMatrixBig;
-    coo_matrix *S;
+    void Synchronize();
 };
 
 } // end namespace OPENSUBDIV_VERSION

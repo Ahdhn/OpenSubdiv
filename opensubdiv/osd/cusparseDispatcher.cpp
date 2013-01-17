@@ -27,6 +27,7 @@ namespace OPENSUBDIV_VERSION {
 
 static cusparseHandle_t handle = NULL;
 
+#if 0
 device_csr_matrix_view::device_csr_matrix_view(csr_matrix* M) :
     m(M->size1()), n(M->size2()), nnz(M->nnz()) {
 
@@ -136,37 +137,11 @@ device_csr_matrix_view::device_csr_matrix_view(int m, int n, int nnz) :
 void
 device_csr_matrix_view::expand(int factor) {
 }
+#endif
 
-void
-OsdCusparseKernelDispatcher::BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying)
-{
-    _currentVertexBuffer = (vertex) ?
-        dynamic_cast<OsdCudaVertexBuffer *>(vertex) : NULL;
-
-    _currentVaryingBuffer = (varying) ?
-        dynamic_cast<OsdCudaVertexBuffer *>(varying) : NULL;
-
-    _vdesc = new SpMVVertexDescriptor(this,
-            _currentVertexBuffer  ? _currentVertexBuffer->GetNumElements()  : 0,
-            _currentVaryingBuffer ? _currentVaryingBuffer->GetNumElements() : 0);
-}
-
-OsdVertexBuffer *
-OsdCusparseKernelDispatcher::InitializeVertexBuffer(int numElements, int numVertices)
-{
-    return new OsdCudaVertexBuffer(numElements, numVertices);
-}
-
-OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher( int levels )
-    : OsdSpMVKernelDispatcher(levels),
-      _deviceMatrix(NULL), _deviceMatrixBig(NULL), S(NULL) { }
-
-OsdCusparseKernelDispatcher::~OsdCusparseKernelDispatcher()
-{
-    if (S)                  delete S;
-    if (_deviceMatrix)      delete _deviceMatrix;
-    if (_deviceMatrixBig)   delete _deviceMatrixBig;
-}
+OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher(int levels) :
+    OsdSpMVKernelDispatcher<CudaCooMatrix,CudaCsrMatrix,OsdCudaVertexBuffer>(levels)
+{ }
 
 static OsdCusparseKernelDispatcher::OsdKernelDispatcher *
 Create(int levels) {
@@ -176,112 +151,6 @@ Create(int levels) {
 void
 OsdCusparseKernelDispatcher::Register() {
     Factory::GetInstance().Register(Create, kCUSPARSE);
-}
-
-void
-OsdCusparseKernelDispatcher::StageMatrix(int i, int j)
-{
-    if (S) delete S;
-    S = new coo_matrix(i,j);
-}
-
-inline void
-OsdCusparseKernelDispatcher::StageElem(int i, int j, float value)
-{
-#ifdef DEBUG
-    assert(0 <= i);
-    assert(i < S->size1());
-    assert(0 <= j);
-    assert(j < S->size2());
-#endif
-    S->append_element(i, j, value);
-}
-
-void
-OsdCusparseKernelDispatcher::PushMatrix()
-{
-    if (_deviceMatrix == NULL) {
-        //printf("PushMatrix set %d-%d\n", S->size1(), S->size2());
-        csr_matrix S_csr(*S);
-        _deviceMatrix = new device_csr_matrix_view(&S_csr);
-    } else {
-        //printf("PushMatrix mul %d-%d = %d-%d * %d-%d\n",
-        //        (int) S->size1(), (int) _deviceMatrix->n,
-        //        (int) S->size1(),  (int) S->size2(),
-        //        _deviceMatrix->m, _deviceMatrix->n);
-        csr_matrix S_csr(*S);
-        device_csr_matrix_view A (&S_csr);
-        device_csr_matrix_view *C = A.times(_deviceMatrix);
-        delete _deviceMatrix;
-        _deviceMatrix = C;
-    }
-}
-
-bool
-OsdCusparseKernelDispatcher::MatrixReady()
-{
-    return (_deviceMatrixBig != NULL);
-}
-
-void
-OsdCusparseKernelDispatcher::FinalizeMatrix()
-{
-    int nve = _currentVertexBuffer->GetNumElements();
-    //_deviceMatrix->expand(nve);
-    device_csr_matrix_view* M_src = _deviceMatrix;
-    device_csr_matrix_view* M_dst =
-        new device_csr_matrix_view(nve*M_src->m, nve*M_src->n, nve*M_src->nnz);
-
-    /* Call expansion kernel. This is currently done by expanding
-     * the CSR matrix to a COO matrix and calling the cusparse
-     * routine to convert COO->CSR, but the kernel can probably be
-     * rewritten to expanding directly from CSR to CSR. */
-    int *coo_dst_rows;
-    cusparseStatus_t status;
-    cudaMalloc(&coo_dst_rows, M_dst->nnz * sizeof(int));
-    {
-        /* expand by a factor of nve */
-        OsdCusparseExpand(M_src->m, nve,
-                coo_dst_rows, M_dst->cols, M_dst->vals,
-                M_src->rows, M_src->cols, M_src->vals);
-
-        /* convert to csr format */
-        status = cusparseXcoo2csr(handle, coo_dst_rows, M_dst->nnz, M_dst->m,
-                M_dst->rows, CUSPARSE_INDEX_BASE_ZERO);
-        assert(status == CUSPARSE_STATUS_SUCCESS);
-    }
-    cudaFree(coo_dst_rows);
-    _deviceMatrixBig = M_dst;
-
-    PrintReport();
-}
-
-void
-OsdCusparseKernelDispatcher::ApplyMatrix(int offset)
-{
-    float* d_in = (float*) _currentVertexBuffer->Map();
-    float* d_out = d_in + offset * _currentVertexBuffer->GetNumElements();
-    _deviceMatrixBig->spmv(d_out, d_in);
-    _currentVertexBuffer->Unmap();
-}
-
-void
-OsdCusparseKernelDispatcher::PrintReport()
-{
-    int size_in_bytes = (_deviceMatrixBig->nnz * 2 +
-            _deviceMatrixBig->m + 1) * sizeof(float);
-    double sparsity_factor = 100.0 *
-        _deviceMatrixBig->nnz / _deviceMatrixBig->m / _deviceMatrixBig->n;
-
-#if BENCHMARKING
-    printf(" nverts=%d", _deviceMatrixBig->m / 6);
-    printf(" mem=%d", size_in_bytes);
-    printf(" sparsity=%f", sparsity_factor);
-#else
-    printf("Subdiv matrix is %d-by-%d with %f%% nonzeroes, takes %d MB.\n",
-        _deviceMatrixBig->m, _deviceMatrixBig->n,
-        sparsity_factor, size_in_bytes / 1024 / 1024);
-#endif
 }
 
 void
