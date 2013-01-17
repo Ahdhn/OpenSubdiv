@@ -179,7 +179,7 @@ class CsrMatrix;
 class CooMatrix {
 public:
     int m, n;
-    CooMatrix(int m, int n) : m(m), n(m) { };
+    CooMatrix(int m, int n) : m(m), n(n) { };
 
     virtual void append_element(int i, int j, float val) = 0;
     virtual int nnz() const = 0;
@@ -197,7 +197,7 @@ public:
     mode_t mode;
 
     CsrMatrix(int m, int n, int nnz, int nve=1, mode_t mode=VERTEX) :
-        m(m), n(m), nve(nve), mode(mode) { };
+        m(m), n(n), nve(nve), mode(mode) { };
     CsrMatrix(const CooMatrix* StagedOp, int nve=1, mode_t mode=VERTEX) :
         m(StagedOp->m), n(StagedOp->n), nve(nve), mode(mode) { }
 

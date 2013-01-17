@@ -88,7 +88,7 @@ CpuCsrMatrix::SparsityFactor() {
 
 void
 CpuCsrMatrix::spmv(float* d_out, float* d_in) {
-    assert(mode == CpuCsrMatrix::ELEMENT);
+    assert(mode == CsrMatrix::ELEMENT);
     mkl_scsrgemv((char*)"N", &m, vals, rows, cols, d_in, d_out);
 }
 
@@ -127,7 +127,7 @@ CpuCsrMatrix::gemm(CpuCsrMatrix* rhs) {
 
 void
 CpuCsrMatrix::expand() {
-    if (mode == CpuCsrMatrix::VERTEX) {
+    if (mode == CsrMatrix::VERTEX) {
         int* new_rows = (int*) malloc((nve*m+1) * sizeof(int));
         int* new_cols = (int*) malloc(nve*nnz() * sizeof(int));
         float* new_vals = (float*) malloc(nve*nnz() * sizeof(float));
@@ -154,7 +154,7 @@ CpuCsrMatrix::expand() {
         rows = new_rows;
         cols = new_cols;
         vals = new_vals;
-        mode = CpuCsrMatrix::ELEMENT;
+        mode = CsrMatrix::ELEMENT;
         new_rows[m] = new_i+1;
     }
 }
