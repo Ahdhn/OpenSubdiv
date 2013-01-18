@@ -160,7 +160,7 @@ public:
         double sparsity_factor = 100.0 * SubdivOp->SparsityFactor();
 
         #if BENCHMARKING
-            printf(" nverts=%d", SubdivOp->nnz;
+            printf(" nverts=%d", SubdivOp->nnz);
             printf(" mem=%d", size_in_bytes);
             printf(" sparsity=%f", sparsity_factor);
         #endif
