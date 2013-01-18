@@ -66,6 +66,8 @@ CpuCsrMatrix::CpuCsrMatrix(const CpuCooMatrix* StagedOp, int nve, mode_t mode) :
 
     mkl_scsrcoo(job, &m, vals, cols, rows, &numnz, acoo, rowind, colind, &info);
     assert(info == 0);
+
+    nnz = rows[m]-1;
 }
 
 void
@@ -104,6 +106,8 @@ CpuCsrMatrix::gemm(CpuCsrMatrix* rhs) {
         printf("Error: info returned %d\n", info);
         assert(info == 0);
     }
+
+    C->nnz = C->rows[C->m]-1;
     return C;
 }
 
@@ -131,13 +135,14 @@ CpuCsrMatrix::expand() {
         free(cols);
         free(vals);
 
-        m = m*nve;
-        n = n*nve;
+        m *= nve;
+        n *= nve;
+        nnz *= nve;
         rows = new_rows;
         cols = new_cols;
         vals = new_vals;
         mode = CsrMatrix::ELEMENT;
-        new_rows[m] = new_i+1;
+        new_rows[m] = nnz+1;
     }
 }
 
