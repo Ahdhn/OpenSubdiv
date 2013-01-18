@@ -3,41 +3,30 @@
 #define THREADS_PER_BLOCK 512
 
 __global__ void
-expand(int src_numrows, int factor,
+expand(int src_numthreads, int nve,
   int* dst_rows, int* dst_cols, float* dst_vals,
   int* src_rows, int* src_cols, float* src_vals)
 {
-    int src_row = threadIdx.x + blockIdx.x * blockDim.x;
-    if (src_row >= src_numrows)
+    int thread = threadIdx.x + blockIdx.x * blockDim.x;
+    if (thread >= src_numthreads)
         return;
 
-    int v_per_row = src_rows[src_row+1] - src_rows[src_row];
-    int base = src_rows[src_row];
+    int r = thread / nve; // src_row
+    int k = thread % nve; // replica number
 
-    for(int src_idx = src_rows[src_row]; src_idx < src_rows[src_row+1]; src_idx++) {
-        for(int k = 0; k < factor; k++) {
-            int dst_idx = factor*base + k*v_per_row + src_idx-base;
-            dst_rows[dst_idx] = factor * src_row + k;
-            dst_cols[dst_idx] = factor * src_cols[src_idx] + k;
-            dst_vals[dst_idx] = src_vals[src_idx];
-        }
+    int i = src_rows[r];
+    int stride = src_rows[r+1]-src_rows[r];
+    int dst_base = i*nve + k*stride;
+    int src_base = src_rows[r];
+    dst_rows[r*nve + k] = dst_base;
+
+    for(i = src_rows[r]; i < src_rows[r+1]; i++) {
+	    int offset = i - src_base;
+	    int col = src_cols[i];
+	    float val = src_vals[i];
+	    dst_cols[dst_base+offset] = col*nve + k;
+	    dst_vals[dst_base+offset] = val;
     }
-
-    #if 0
-        // how its done on CPU
-        int new_i = 0;
-        for(int r = 0; r < m; r++) {
-            for(int k = 0; k < nve; k++) {
-                new_rows[r*nve + k] = new_i+1;
-                for(int i = rows[r]; i < rows[r+1]; i++, new_i++) {
-                    int col_one = cols[i-1];
-                    float val = vals[i-1];
-                    new_cols[new_i] = ((col_one-1)*nve + k) + 1;
-                    new_vals[new_i] = val;
-                }
-            }
-        }
-    #endif
 }
 
 __global__ void
@@ -66,7 +55,7 @@ OsdCusparseExpand(int src_numrows, int factor,
     int* dst_rows, int* dst_cols, float* dst_vals,
     int* src_rows, int* src_cols, float* src_vals)
 {
-    int blks = (src_numrows + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    int blks = (src_numrows*factor + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     expand<<<blks,THREADS_PER_BLOCK>>>(src_numrows, factor,
             dst_rows, dst_cols, dst_vals,
             src_rows, src_cols, src_vals);
