@@ -5,6 +5,13 @@
 
 #include <stdio.h>
 
+#include <iostream>
+#include <vector>
+extern "C" {
+#include <mkl_spblas.h>
+}
+
+
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
 
@@ -29,7 +36,7 @@ static cusparseHandle_t handle = NULL;
 
 CudaCsrMatrix*
 CudaCooMatrix::gemm(CudaCsrMatrix* rhs) {
-    CudaCsrMatrix* lhs = new CudaCsrMatrix(this);
+    CudaCsrMatrix* lhs = new CudaCsrMatrix(this, rhs->nve);
     CudaCsrMatrix* answer = lhs->gemm(rhs);
     delete lhs;
     return answer;
@@ -60,25 +67,48 @@ CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve, mode_t mode
     if (handle == NULL)
         cusparseCreate(&handle);
 
+    m = StagedOp->m;
+    n = StagedOp->n;
+    nnz = StagedOp->nnz;
+    int *h_rows = (int*) malloc((m+1) * sizeof(int));
+    int *h_cols = (int*) malloc(nnz * sizeof(int));
+    float *h_vals = (float*) malloc(nnz * sizeof(float));
+
+    int job[] = {
+        2, // job(1)=2 (coo->csr with sorting)
+        0, // job(2)=1 (one-based indexing for csr matrix)
+        0, // job(3)=1 (one-based indexing for coo matrix)
+        0, // empty
+        nnz, // job(5)=nnz (sets nnz for csr matrix)
+        0  // job(6)=0 (all output arrays filled)
+    };
+
+    float* acoo = (float*) &StagedOp->vals[0];
+    int* rowind = (int*) &StagedOp->rows[0];
+    int* colind = (int*) &StagedOp->cols[0];
+    int info;
+
+    mkl_scsrcoo(job, &m, h_vals, h_cols, h_rows, &nnz, acoo, rowind, colind, &info);
+    assert(info == 0);
+
     /* allocate device memory */
-    int *coo_rows;
-    cudaMalloc(&coo_rows, StagedOp->nnz * sizeof(int));
-    cudaMalloc(&rows, (StagedOp->m+1) * sizeof(int));
-    cudaMalloc(&cols, StagedOp->nnz * sizeof(int));
-    cudaMalloc(&vals, StagedOp->nnz * sizeof(float));
+    cudaMalloc(&rows, (m+1) * sizeof(int));
+    cudaMalloc(&cols, nnz * sizeof(int));
+    cudaMalloc(&vals, nnz * sizeof(float));
+
+    cudaMemset(rows, 0, (m+1) * sizeof(int));
+    cudaMemset(cols, 0, nnz * sizeof(int));
+    cudaMemset(vals, 0, nnz * sizeof(float));
 
     /* copy data to device */
-    cudaMemcpy(coo_rows, &StagedOp->rows[0], StagedOp->rows.size() * sizeof(int), cudaMemcpyHostToDevice);
-    cudaMemcpy(cols, &StagedOp->cols[0], StagedOp->cols.size() * sizeof(int), cudaMemcpyHostToDevice);
-    cudaMemcpy(vals, &StagedOp->vals[0], StagedOp->vals.size() * sizeof(float), cudaMemcpyHostToDevice);
-
-    /* convert COO matrix to CSR */
-    cusparseStatus_t status;
-    status = cusparseXcoo2csr(handle, coo_rows, StagedOp->nnz, StagedOp->m, rows, CUSPARSE_INDEX_BASE_ZERO);
-    assert(status == CUSPARSE_STATUS_SUCCESS);
+    cudaMemcpy(rows, &h_rows[0], (m+1) * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(cols, &h_cols[0], nnz * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(vals, &h_vals[0], nnz * sizeof(float), cudaMemcpyHostToDevice);
 
     /* cleanup */
-    cudaFree(coo_rows);
+    free(h_rows);
+    free(h_cols);
+    free(h_vals);
 }
 
 void
@@ -103,7 +133,7 @@ CudaCsrMatrix::gemm(CudaCsrMatrix* B) {
     cusparseOperation_t transA = CUSPARSE_OPERATION_NON_TRANSPOSE,
                         transB = CUSPARSE_OPERATION_NON_TRANSPOSE;
 
-    CudaCsrMatrix* C = new CudaCsrMatrix(mm, kk);
+    CudaCsrMatrix* C = new CudaCsrMatrix(mm, kk, 0, nve);
 
     /* check that we're in host pointer mode to get C->nnz */
     assert(handle != NULL);
@@ -113,6 +143,7 @@ CudaCsrMatrix::gemm(CudaCsrMatrix* B) {
 
     cusparseStatus_t status;
     cudaMalloc(&C->rows, (mm+1) * sizeof(int));
+    cudaMemset(C->rows, 0, (mm+1) * sizeof(int));
     status = cusparseXcsrgemmNnz(handle, transA, transB,
             mm, nn, kk,
             A->desc, A->nnz, A->rows, A->cols,
@@ -134,6 +165,8 @@ CudaCsrMatrix::gemm(CudaCsrMatrix* B) {
 
     cudaMalloc(&C->cols, C->nnz * sizeof(int));
     cudaMalloc(&C->vals, C->nnz * sizeof(float));
+    cudaMemset(C->cols, 0, C->nnz * sizeof(int));
+    cudaMemset(C->vals, 0, C->nnz * sizeof(float));
     status = cusparseScsrgemm(handle, transA, transB,
             mm, nn, kk,
             A->desc, A->nnz, A->vals, A->rows, A->cols,
@@ -153,6 +186,8 @@ CudaCsrMatrix::gemm(CudaCsrMatrix* B) {
         }
     assert(status == CUSPARSE_STATUS_SUCCESS);
 
+    printf("POST GEMM C (%d nnz):\n", C->nnz);
+    C->dump();
     return C;
 }
 
@@ -173,6 +208,10 @@ CudaCsrMatrix::expand() {
         cudaMalloc(&new_cols, nve*nnz * sizeof(int));
         cudaMalloc(&new_vals, nve*nnz * sizeof(float));
 
+        cudaMemset(new_rows, 0, (nve*m+1) * sizeof(int));
+        cudaMemset(new_cols, 0, nve*nnz * sizeof(int));
+        cudaMemset(new_vals, 0, nve*nnz * sizeof(float));
+
         OsdCusparseExpand(m, nve, new_rows, new_cols, new_vals, rows, cols, vals);
 
         cudaFree(rows);
@@ -186,13 +225,50 @@ CudaCsrMatrix::expand() {
         cols = new_cols;
         vals = new_vals;
         mode = CsrMatrix::ELEMENT;
-        cudaMemcpy(rows, &nnz, sizeof(int), cudaMemcpyHostToDevice);
+
+        int rowsm = nnz+1;
+        cudaMemcpy(&rows[m], &rowsm, sizeof(int), cudaMemcpyHostToDevice);
+
+        printf("POST EXPAND C (nve %d, nnz %d)\n", nve, nnz);
+        dump();
     }
 }
 
 void
 CudaCsrMatrix::dump(std::string ofilename) {
     assert(!"No support for dumping matrices on GPUs. Use MKL kernel.");
+}
+
+void
+CudaCsrMatrix::dump() {
+    cudaThreadSynchronize();
+
+    std::vector<int> h_rows; h_rows.resize(m+1);
+    std::vector<int> h_cols; h_cols.resize(nnz);
+    std::vector<float> h_vals; h_vals.resize(nnz);
+
+    cudaMemcpy(&h_rows[0], rows, (m+1) * sizeof(int), cudaMemcpyDeviceToHost);
+    cudaMemcpy(&h_cols[0], cols, nnz * sizeof(int), cudaMemcpyDeviceToHost);
+    cudaMemcpy(&h_vals[0], vals, nnz * sizeof(float), cudaMemcpyDeviceToHost);
+
+    std::vector<int>::iterator rit;
+    std::vector<int>::iterator cit;
+    std::vector<float>::iterator vit;
+
+    std::cout << "rows:";
+    for(rit = h_rows.begin(); rit != h_rows.end(); rit++)
+        std::cout << " " << *rit;
+    std::cout << std::endl;
+
+    std::cout << "cols:";
+    for(cit = h_cols.begin(); cit != h_cols.end(); cit++)
+        std::cout << " " << *cit;
+    std::cout << std::endl;
+
+    std::cout << "vals:";
+    for(vit = h_vals.begin(); vit != h_vals.end(); vit++)
+        std::cout << " " << *vit;
+    std::cout << std::endl;
 }
 
 OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher(int levels) :

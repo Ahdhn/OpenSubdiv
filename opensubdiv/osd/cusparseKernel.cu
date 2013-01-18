@@ -55,10 +55,17 @@ OsdCusparseExpand(int src_numrows, int factor,
     int* dst_rows, int* dst_cols, float* dst_vals,
     int* src_rows, int* src_cols, float* src_vals)
 {
-    int blks = (src_numrows*factor + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    expand<<<blks,THREADS_PER_BLOCK>>>(src_numrows, factor,
+    int numthreads = src_numrows * factor;
+    int blks = (numthreads + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    expand<<<blks,THREADS_PER_BLOCK>>>(numthreads, factor,
             dst_rows, dst_cols, dst_vals,
             src_rows, src_cols, src_vals);
+
+    /* fix up value at end of row index array */
+    int dst_sentinel, src_sentinel;
+    cudaMemcpy(&src_sentinel, &src_rows[src_numrows], sizeof(int), cudaMemcpyDeviceToHost);
+    dst_sentinel = (src_sentinel - 1) * factor + 1;
+    cudaMemcpy(&dst_rows[src_numrows*factor], &dst_sentinel, sizeof(int), cudaMemcpyHostToDevice);
 }
 
 cusparseStatus_t
