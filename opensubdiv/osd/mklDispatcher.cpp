@@ -148,6 +148,8 @@ CpuCsrMatrix::expand() {
         vals = new_vals;
         mode = CsrMatrix::ELEMENT;
         new_rows[m] = nnz+1;
+        
+        printf("POST EXPAND C (nve %d, nnz %d)\n", nve, nnz); dump();
     }
 }
 
@@ -168,6 +170,20 @@ CpuCsrMatrix::dump(std::string ofilename) {
     }
 
     fclose(ofile);
+}
+
+void
+CpuCsrMatrix::dump() {
+    printf("rows:");
+    for (int i = 0; i < m+1; i++)
+       std::cout <<  " " << rows[i];
+    printf("\ncols:");
+    for (int i = 0; i < nnz; i++)
+       std::cout << " " << cols[i];
+    printf("\nvals:");
+    for (int i = 0; i < nnz; i++)
+       std::cout <<  " " << vals[i];
+    printf("\n");
 }
 
 CpuCsrMatrix::~CpuCsrMatrix() {

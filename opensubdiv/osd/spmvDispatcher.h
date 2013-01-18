@@ -50,7 +50,7 @@ public:
                 _currentVaryingBuffer ? _currentVaryingBuffer->GetNumElements() : 0);
     }
 
-    virtual VertexBuffer_t* InitializeVertexBuffer(int numElements, int numVertices) {
+    virtual OsdVertexBuffer* InitializeVertexBuffer(int numElements, int numVertices) {
 	    return new VertexBuffer_t(numElements, numVertices);
     }
 

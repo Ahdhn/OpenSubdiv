@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#define THREADS_PER_BLOCK 512
+#define THREADS_PER_BLOCK 128
 
 __global__ void
 expand(int src_numthreads, int nve,
@@ -14,17 +14,17 @@ expand(int src_numthreads, int nve,
     int r = thread / nve; // src_row
     int k = thread % nve; // replica number
 
-    int i = src_rows[r];
+    int i = src_rows[r]-1;
     int stride = src_rows[r+1]-src_rows[r];
     int dst_base = i*nve + k*stride;
     int src_base = src_rows[r];
-    dst_rows[r*nve + k] = dst_base;
+    dst_rows[r*nve + k] = dst_base+1;
 
     for(i = src_rows[r]; i < src_rows[r+1]; i++) {
 	    int offset = i - src_base;
-	    int col = src_cols[i];
-	    float val = src_vals[i];
-	    dst_cols[dst_base+offset] = col*nve + k;
+	    int col = src_cols[i-1];
+	    float val = src_vals[i-1];
+	    dst_cols[dst_base+offset] = ((col-1)*nve + k) +1;
 	    dst_vals[dst_base+offset] = val;
     }
 }

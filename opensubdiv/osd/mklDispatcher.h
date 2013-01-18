@@ -19,8 +19,8 @@ class CpuCooMatrix : public CooMatrix {
 public:
     CpuCooMatrix(int m, int n);
 
-    virtual void append_element(int i, int j, float val);
     virtual CpuCsrMatrix* gemm(CpuCsrMatrix* rhs);
+    virtual void append_element(int i, int j, float val);
 
     std::vector<int> rows;
     std::vector<int> cols;
@@ -41,6 +41,7 @@ public:
     virtual CpuCsrMatrix* gemm(CpuCsrMatrix* rhs);
     virtual void expand();
     virtual void dump(std::string ofilename);
+    virtual void dump();
 };
 
 

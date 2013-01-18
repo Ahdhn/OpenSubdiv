@@ -18,7 +18,7 @@ public:
     CudaCooMatrix(int m, int n) :
         CpuCooMatrix(m, n) { }
 
-    CudaCsrMatrix* gemm(CudaCsrMatrix* rhs);
+    virtual CudaCsrMatrix* gemm(CudaCsrMatrix* rhs);
 };
 
 class CudaCsrMatrix : public CsrMatrix {

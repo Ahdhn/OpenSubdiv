@@ -48,7 +48,7 @@ CudaCsrMatrix::CudaCsrMatrix(int m, int n, int nnz, int nve, mode_t mode) :
     /* make cusparse matrix descriptor */
     cusparseCreateMatDescr(&desc);
     cusparseSetMatType(desc,CUSPARSE_MATRIX_TYPE_GENERAL);
-    cusparseSetMatIndexBase(desc,CUSPARSE_INDEX_BASE_ZERO);
+    cusparseSetMatIndexBase(desc,CUSPARSE_INDEX_BASE_ONE);
 
     /* make cusparse handle if null */
     if (handle == NULL)
@@ -61,7 +61,7 @@ CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve, mode_t mode
     /* make cusparse matrix descriptor */
     cusparseCreateMatDescr(&desc);
     cusparseSetMatType(desc,CUSPARSE_MATRIX_TYPE_GENERAL);
-    cusparseSetMatIndexBase(desc,CUSPARSE_INDEX_BASE_ZERO);
+    cusparseSetMatIndexBase(desc,CUSPARSE_INDEX_BASE_ONE);
 
     /* make cusparse handle if null */
     if (handle == NULL)
@@ -76,8 +76,8 @@ CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve, mode_t mode
 
     int job[] = {
         2, // job(1)=2 (coo->csr with sorting)
-        0, // job(2)=1 (one-based indexing for csr matrix)
-        0, // job(3)=1 (one-based indexing for coo matrix)
+        1, // job(2)=1 (zero-based indexing for csr matrix)
+        1, // job(3)=1 (one-based indexing for coo matrix)
         0, // empty
         nnz, // job(5)=nnz (sets nnz for csr matrix)
         0  // job(6)=0 (all output arrays filled)
@@ -88,6 +88,7 @@ CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve, mode_t mode
     int* colind = (int*) &StagedOp->cols[0];
     int info;
 
+    /* use mkl because cusparse doesn't offer sorting */
     mkl_scsrcoo(job, &m, h_vals, h_cols, h_rows, &nnz, acoo, rowind, colind, &info);
     assert(info == 0);
 
@@ -109,6 +110,8 @@ CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve, mode_t mode
     free(h_rows);
     free(h_cols);
     free(h_vals);
+
+    //printf("POST coo2csr\n"); dump();
 }
 
 void
@@ -186,8 +189,7 @@ CudaCsrMatrix::gemm(CudaCsrMatrix* B) {
         }
     assert(status == CUSPARSE_STATUS_SUCCESS);
 
-    printf("POST GEMM C (%d nnz):\n", C->nnz);
-    C->dump();
+    //printf("POST GEMM C (%d nnz):\n", C->nnz); C->dump();
     return C;
 }
 
@@ -202,6 +204,8 @@ CudaCsrMatrix::~CudaCsrMatrix() {
 void
 CudaCsrMatrix::expand() {
     if (mode == CsrMatrix::VERTEX) {
+        // printf("PRE EXPAND C (nve %d, nnz %d)\n", nve, nnz); dump();
+
         int *new_rows, *new_cols;
         float *new_vals;
         cudaMalloc(&new_rows, (nve*m+1) * sizeof(int));
@@ -226,11 +230,7 @@ CudaCsrMatrix::expand() {
         vals = new_vals;
         mode = CsrMatrix::ELEMENT;
 
-        int rowsm = nnz+1;
-        cudaMemcpy(&rows[m], &rowsm, sizeof(int), cudaMemcpyHostToDevice);
-
-        printf("POST EXPAND C (nve %d, nnz %d)\n", nve, nnz);
-        dump();
+        printf("POST EXPAND C (nve %d, nnz %d)\n", nve, nnz); dump();
     }
 }
 
@@ -241,8 +241,6 @@ CudaCsrMatrix::dump(std::string ofilename) {
 
 void
 CudaCsrMatrix::dump() {
-    cudaThreadSynchronize();
-
     std::vector<int> h_rows; h_rows.resize(m+1);
     std::vector<int> h_cols; h_cols.resize(nnz);
     std::vector<float> h_vals; h_vals.resize(nnz);
