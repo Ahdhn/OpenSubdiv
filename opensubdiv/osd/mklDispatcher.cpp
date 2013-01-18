@@ -118,15 +118,20 @@ CpuCsrMatrix::expand() {
         int* new_cols = (int*) malloc(nve*nnz * sizeof(int));
         float* new_vals = (float*) malloc(nve*nnz * sizeof(float));
 
-        int new_i = 0;
+        #pragma omp parallel for
         for(int r = 0; r < m; r++) {
             for(int k = 0; k < nve; k++) {
-                new_rows[r*nve + k] = new_i+1;
-                for(int i = rows[r]; i < rows[r+1]; i++, new_i++) {
+                int i = rows[r]-1;
+                int stride = rows[r+1]-rows[r];
+                int new_base = i*nve + k*stride;
+                int old_base = rows[r];
+                new_rows[r*nve + k] = new_base+1;
+                for(i = rows[r]; i < rows[r+1]; i++) {
+                    int offset = i - old_base;
                     int col_one = cols[i-1];
                     float val = vals[i-1];
-                    new_cols[new_i] = ((col_one-1)*nve + k) + 1;
-                    new_vals[new_i] = val;
+                    new_cols[new_base+offset] = ((col_one-1)*nve + k) + 1;
+                    new_vals[new_base+offset] = val;
                 }
             }
         }
