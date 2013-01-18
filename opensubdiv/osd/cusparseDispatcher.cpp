@@ -89,10 +89,6 @@ CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve, mode_t mode
     cudaMalloc(&cols, nnz * sizeof(int));
     cudaMalloc(&vals, nnz * sizeof(float));
 
-    cudaMemset(rows, 0, (m+1) * sizeof(int));
-    cudaMemset(cols, 0, nnz * sizeof(int));
-    cudaMemset(vals, 0, nnz * sizeof(float));
-
     /* copy data to device */
     cudaMemcpy(rows, &h_rows[0], (m+1) * sizeof(int), cudaMemcpyHostToDevice);
     cudaMemcpy(cols, &h_cols[0], nnz * sizeof(int), cudaMemcpyHostToDevice);
@@ -113,7 +109,7 @@ CudaCsrMatrix::spmv(float *d_out, float* d_in) {
     float alpha = 1.0,
           beta = 0.0;
     status = cusparseScsrmv(handle, op, m, n, nnz, &alpha, desc,
-            vals, rows, cols, d_in, &beta, d_out);
+		    vals, rows, cols, d_in, &beta, d_out);
     assert(status == CUSPARSE_STATUS_SUCCESS);
 }
 
@@ -137,7 +133,6 @@ CudaCsrMatrix::gemm(CudaCsrMatrix* B) {
 
     cusparseStatus_t status;
     cudaMalloc(&C->rows, (mm+1) * sizeof(int));
-    cudaMemset(C->rows, 0, (mm+1) * sizeof(int));
     status = cusparseXcsrgemmNnz(handle, transA, transB,
             mm, nn, kk,
             A->desc, A->nnz, A->rows, A->cols,
@@ -159,8 +154,6 @@ CudaCsrMatrix::gemm(CudaCsrMatrix* B) {
 
     cudaMalloc(&C->cols, C->nnz * sizeof(int));
     cudaMalloc(&C->vals, C->nnz * sizeof(float));
-    cudaMemset(C->cols, 0, C->nnz * sizeof(int));
-    cudaMemset(C->vals, 0, C->nnz * sizeof(float));
     status = cusparseScsrgemm(handle, transA, transB,
             mm, nn, kk,
             A->desc, A->nnz, A->vals, A->rows, A->cols,
@@ -203,10 +196,6 @@ CudaCsrMatrix::expand() {
         cudaMalloc(&new_cols, nve*nnz * sizeof(int));
         cudaMalloc(&new_vals, nve*nnz * sizeof(float));
 
-        cudaMemset(new_rows, 0, (nve*m+1) * sizeof(int));
-        cudaMemset(new_cols, 0, nve*nnz * sizeof(int));
-        cudaMemset(new_vals, 0, nve*nnz * sizeof(float));
-
         OsdCusparseExpand(m, nve, new_rows, new_cols, new_vals, rows, cols, vals);
 
         cudaFree(rows);
@@ -227,7 +216,7 @@ CudaCsrMatrix::expand() {
 
 void
 CudaCsrMatrix::dump(std::string ofilename) {
-    assert(!"No support for dumping matrices on GPUs. Use MKL kernel.");
+    assert(!"No support for dumping matrices to file on GPUs. Use MKL kernel.");
 }
 
 void
