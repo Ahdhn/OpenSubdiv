@@ -98,15 +98,15 @@ public:
     virtual void PushMatrix() {
         /* if no SubdivOp exists, create one from A */
         if (SubdivOp == NULL) {
+            DEBUG_PRINTF("PushMatrix set %d-%d\n", StagedOp->m, StagedOp->n);
             int nve = _currentVertexBuffer->GetNumElements();
             SubdivOp = new CsrMatrix_t(StagedOp, nve);
-            DEBUG_PRINTF("PushMatrix set %d-%d\n", SubdivOp->m, SubdivOp->n);
         } else {
-            CsrMatrix_t* new_SubdivOp = StagedOp->gemm(SubdivOp);
             DEBUG_PRINTF("PushMatrix mul %d-%d = %d-%d * %d-%d\n",
-                    (int) new_SubdivOp->m, (int) new_SubdivOp->n,
+                    (int) StagedOp->m, (int) SubdivOp->n,
                     (int) StagedOp->m, (int) StagedOp->n,
                     (int) SubdivOp->m, (int) SubdivOp->n);
+            CsrMatrix_t* new_SubdivOp = StagedOp->gemm(SubdivOp);
             delete SubdivOp;
             SubdivOp = new_SubdivOp;
         }
