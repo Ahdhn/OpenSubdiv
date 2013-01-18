@@ -149,7 +149,7 @@ CpuCsrMatrix::expand() {
         mode = CsrMatrix::ELEMENT;
         new_rows[m] = nnz+1;
         
-        printf("POST EXPAND C (nve %d, nnz %d)\n", nve, nnz); dump();
+        //printf("POST EXPAND C (nve %d, nnz %d)\n", nve, nnz); dump();
     }
 }
 

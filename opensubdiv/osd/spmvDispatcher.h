@@ -26,12 +26,9 @@ public:
     { }
 
     virtual ~OsdSpMVKernelDispatcher() {
-        if (_vdesc)
-            delete _vdesc;
-        if (StagedOp != NULL)
-            delete StagedOp;
-        if (SubdivOp!= NULL)
-            delete SubdivOp;
+        if (_vdesc)           delete _vdesc;
+        if (StagedOp != NULL) delete StagedOp;
+        if (SubdivOp != NULL)  delete SubdivOp;
     }
 
     virtual void BindVertexBuffer(OsdVertexBuffer *vertex, OsdVertexBuffer *varying) {
@@ -136,8 +133,7 @@ public:
     virtual void ApplyMatrix(int offset) {
         int numElems = _currentVertexBuffer->GetNumElements();
         float* V_in = (float*) _currentVertexBuffer->Map();
-        float* V_out = (float*) _currentVertexBuffer->Map()
-            + offset * numElems;
+        float* V_out = (float*) V_in + offset * numElems;
 
         SubdivOp->spmv(V_out, V_in);
     }

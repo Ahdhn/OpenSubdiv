@@ -210,7 +210,7 @@ CudaCsrMatrix::expand() {
         vals = new_vals;
         mode = CsrMatrix::ELEMENT;
 
-        printf("POST EXPAND C (nve %d, nnz %d)\n", nve, nnz); dump();
+        //printf("POST EXPAND C (nve %d, nnz %d)\n", nve, nnz); dump();
     }
 }
 
