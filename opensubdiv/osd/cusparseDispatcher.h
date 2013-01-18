@@ -43,6 +43,7 @@ class OsdCusparseKernelDispatcher :
 {
 public:
     OsdCusparseKernelDispatcher(int levels);
+    ~OsdCusparseKernelDispatcher();
     static void Register();
     void Synchronize();
 };

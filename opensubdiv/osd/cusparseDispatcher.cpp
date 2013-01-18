@@ -49,10 +49,6 @@ CudaCsrMatrix::CudaCsrMatrix(int m, int n, int nnz, int nve, mode_t mode) :
     cusparseCreateMatDescr(&desc);
     cusparseSetMatType(desc,CUSPARSE_MATRIX_TYPE_GENERAL);
     cusparseSetMatIndexBase(desc,CUSPARSE_INDEX_BASE_ONE);
-
-    /* make cusparse handle if null */
-    if (handle == NULL)
-        cusparseCreate(&handle);
 }
 
 CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve, mode_t mode) :
@@ -62,10 +58,6 @@ CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve, mode_t mode
     cusparseCreateMatDescr(&desc);
     cusparseSetMatType(desc,CUSPARSE_MATRIX_TYPE_GENERAL);
     cusparseSetMatIndexBase(desc,CUSPARSE_INDEX_BASE_ONE);
-
-    /* make cusparse handle if null */
-    if (handle == NULL)
-        cusparseCreate(&handle);
 
     m = StagedOp->m;
     n = StagedOp->n;
@@ -139,7 +131,6 @@ CudaCsrMatrix::gemm(CudaCsrMatrix* B) {
     CudaCsrMatrix* C = new CudaCsrMatrix(mm, kk, 0, nve);
 
     /* check that we're in host pointer mode to get C->nnz */
-    assert(handle != NULL);
     cusparsePointerMode_t pmode;
     cusparseGetPointerMode(handle, &pmode);
     assert(pmode == CUSPARSE_POINTER_MODE_HOST);
@@ -270,8 +261,19 @@ CudaCsrMatrix::dump() {
 }
 
 OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher(int levels) :
-    OsdSpMVKernelDispatcher<CudaCooMatrix,CudaCsrMatrix,OsdCudaVertexBuffer>(levels)
-{ }
+    OsdSpMVKernelDispatcher<CudaCooMatrix,
+                            CudaCsrMatrix,
+                            OsdCudaVertexBuffer>(levels) {
+    /* make cusparse handle if null */
+    assert (handle == NULL);
+    cusparseCreate(&handle);
+}
+
+OsdCusparseKernelDispatcher::~OsdCusparseKernelDispatcher() {
+    /* clean up cusparse handle */
+    cusparseDestroy(handle);
+    handle = NULL;
+}
 
 static OsdCusparseKernelDispatcher::OsdKernelDispatcher *
 Create(int levels) {
