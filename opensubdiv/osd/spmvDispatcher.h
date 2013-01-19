@@ -11,8 +11,12 @@
 
 static char* osdSpMVKernel_DumpSpy_FileName = NULL;
 
-#define DEBUG_PRINTF(fmt, ...) \
-  fprintf(stderr, "[info] "fmt, ##__VA_ARGS__);
+#ifdef BENCHMARKING
+  #define DEBUG_PRINTF(fmt, ...) {};
+#else
+  #define DEBUG_PRINTF(fmt, ...) \
+    fprintf(stderr, "[info] "fmt, ##__VA_ARGS__);
+#endif
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
@@ -163,8 +167,8 @@ public:
             printf(" sparsity=%f", sparsity_factor);
         #endif
 
-        DEBUG_PRINTF("Subdiv matrix is %d-by-%d with %f%% nonzeroes, takes %d MB.\n",
-                SubdivOp->m, SubdivOp->n, sparsity_factor, size_in_bytes / 1024 / 1024);
+	DEBUG_PRINTF("Subdiv matrix is %d-by-%d with %f%% nonzeroes, takes %d MB.\n",
+            SubdivOp->m, SubdivOp->n, sparsity_factor, size_in_bytes / 1024 / 1024);
     }
 
     CooMatrix_t* StagedOp;
