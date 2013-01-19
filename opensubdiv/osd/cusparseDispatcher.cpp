@@ -98,8 +98,6 @@ CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve, mode_t mode
     free(h_rows);
     free(h_cols);
     free(h_vals);
-
-    //printf("POST coo2csr\n"); dump();
 }
 
 void
@@ -173,7 +171,6 @@ CudaCsrMatrix::gemm(CudaCsrMatrix* B) {
         }
     assert(status == CUSPARSE_STATUS_SUCCESS);
 
-    //printf("POST GEMM C (%d nnz):\n", C->nnz); C->dump();
     return C;
 }
 
@@ -188,8 +185,6 @@ CudaCsrMatrix::~CudaCsrMatrix() {
 void
 CudaCsrMatrix::expand() {
     if (mode == CsrMatrix::VERTEX) {
-        // printf("PRE EXPAND C (nve %d, nnz %d)\n", nve, nnz); dump();
-
         int *new_rows, *new_cols;
         float *new_vals;
         cudaMalloc(&new_rows, (nve*m+1) * sizeof(int));
@@ -209,44 +204,12 @@ CudaCsrMatrix::expand() {
         cols = new_cols;
         vals = new_vals;
         mode = CsrMatrix::ELEMENT;
-
-        //printf("POST EXPAND C (nve %d, nnz %d)\n", nve, nnz); dump();
     }
 }
 
 void
 CudaCsrMatrix::dump(std::string ofilename) {
     assert(!"No support for dumping matrices to file on GPUs. Use MKL kernel.");
-}
-
-void
-CudaCsrMatrix::dump() {
-    std::vector<int> h_rows; h_rows.resize(m+1);
-    std::vector<int> h_cols; h_cols.resize(nnz);
-    std::vector<float> h_vals; h_vals.resize(nnz);
-
-    cudaMemcpy(&h_rows[0], rows, (m+1) * sizeof(int), cudaMemcpyDeviceToHost);
-    cudaMemcpy(&h_cols[0], cols, nnz * sizeof(int), cudaMemcpyDeviceToHost);
-    cudaMemcpy(&h_vals[0], vals, nnz * sizeof(float), cudaMemcpyDeviceToHost);
-
-    std::vector<int>::iterator rit;
-    std::vector<int>::iterator cit;
-    std::vector<float>::iterator vit;
-
-    std::cout << "rows:";
-    for(rit = h_rows.begin(); rit != h_rows.end(); rit++)
-        std::cout << " " << *rit;
-    std::cout << std::endl;
-
-    std::cout << "cols:";
-    for(cit = h_cols.begin(); cit != h_cols.end(); cit++)
-        std::cout << " " << *cit;
-    std::cout << std::endl;
-
-    std::cout << "vals:";
-    for(vit = h_vals.begin(); vit != h_vals.end(); vit++)
-        std::cout << " " << *vit;
-    std::cout << std::endl;
 }
 
 OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher(int levels) :

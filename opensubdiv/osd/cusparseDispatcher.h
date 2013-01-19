@@ -30,7 +30,6 @@ public:
     virtual ~CudaCsrMatrix();
     void expand();
     void dump(std::string ofilename);
-    void dump();
 
     cusparseMatDescr_t desc;
     int* rows;

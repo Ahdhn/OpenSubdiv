@@ -41,7 +41,6 @@ public:
     virtual CpuCsrMatrix* gemm(CpuCsrMatrix* rhs);
     virtual void expand();
     virtual void dump(std::string ofilename);
-    virtual void dump();
 };
 
 
