@@ -136,6 +136,8 @@ public:
         float* V_out = (float*) V_in + offset * numElems;
 
         SubdivOp->spmv(V_out, V_in);
+
+        _currentVertexBuffer->Unmap();
     }
 
     /**
