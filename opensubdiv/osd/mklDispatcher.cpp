@@ -170,6 +170,13 @@ CpuCsrMatrix::dump(std::string ofilename) {
     fclose(ofile);
 }
 
+CpuCsrMatrix::~CpuCsrMatrix() {
+    free(rows);
+    free(cols);
+    free(vals);
+}
+
+
 OsdMklKernelDispatcher::OsdMklKernelDispatcher(int levels) :
     OsdSpMVKernelDispatcher<CpuCooMatrix,CpuCsrMatrix,OsdCpuVertexBuffer>(levels)
 { }
