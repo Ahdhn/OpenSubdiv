@@ -5,9 +5,9 @@ from subprocess import *
 import numpy as np
 
 if sys.platform == 'darwin':
-    VIEWER_PATH = "/Users/mbdriscoll/cs284/OpenSubdiv/build/bin/headlessViewer"
+    VIEWER_PATH = "/Users/mbdriscoll/cs284/OpenSubdiv/build/bin/glutViewer"
 else:
-    VIEWER_PATH = "/home/driscoll/OpenSubdiv/build/bin/headlessViewer"
+    VIEWER_PATH = "/home/driscoll/OpenSubdiv/build/bin/glutViewer"
 
 kernelNum = {
 	"CPU":        0,
