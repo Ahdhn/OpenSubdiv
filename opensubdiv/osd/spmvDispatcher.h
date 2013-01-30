@@ -9,7 +9,7 @@
 #include <sstream>
 #include <string>
 
-static char* osdSpMVKernel_DumpSpy_FileName = NULL;
+extern char* osdSpMVKernel_DumpSpy_FileName;
 
 #ifdef BENCHMARKING
   #define DEBUG_PRINTF(fmt, ...) {};

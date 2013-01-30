@@ -1,6 +1,8 @@
 #include "../version.h"
 #include "../osd/mklDispatcher.h"
 
+char* osdSpMVKernel_DumpSpy_FileName = NULL;
+
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
