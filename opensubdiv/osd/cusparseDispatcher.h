@@ -35,6 +35,8 @@ public:
     int* rows;
     int* cols;
     float* vals;
+
+    cusparseHybMat_t hyb;
 };
 
 class OsdCusparseKernelDispatcher :

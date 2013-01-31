@@ -43,7 +43,7 @@ CudaCooMatrix::gemm(CudaCsrMatrix* rhs) {
 }
 
 CudaCsrMatrix::CudaCsrMatrix(int m, int n, int nnz, int nve, mode_t mode) :
-    CsrMatrix(m, n, nnz, nve, mode), rows(NULL), cols(NULL), vals(NULL)
+    CsrMatrix(m, n, nnz, nve, mode), rows(NULL), cols(NULL), vals(NULL), hyb(NULL)
 {
     /* make cusparse matrix descriptor */
     cusparseCreateMatDescr(&desc);
@@ -106,8 +106,7 @@ CudaCsrMatrix::spmv(float *d_out, float* d_in) {
     cusparseOperation_t op = CUSPARSE_OPERATION_NON_TRANSPOSE;
     float alpha = 1.0,
           beta = 0.0;
-    status = cusparseScsrmv(handle, op, m, n, nnz, &alpha, desc,
-		    vals, rows, cols, d_in, &beta, d_out);
+    status = cusparseShybmv(handle, op, &alpha, desc, hyb, d_in, &beta, d_out);
     assert(status == CUSPARSE_STATUS_SUCCESS);
 }
 
@@ -205,6 +204,14 @@ CudaCsrMatrix::expand() {
         vals = new_vals;
         mode = CsrMatrix::ELEMENT;
     }
+
+    assert(hyb == NULL);
+    cusparseCreateHybMat(&hyb);
+    cusparseScsr2hyb(handle, m, n, desc, vals, rows, cols, hyb, 0, CUSPARSE_HYB_PARTITION_MAX);
+
+    cudaFree(rows);
+    cudaFree(cols);
+    cudaFree(vals);
 }
 
 void
