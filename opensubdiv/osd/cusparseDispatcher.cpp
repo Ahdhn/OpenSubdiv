@@ -52,7 +52,7 @@ CudaCsrMatrix::CudaCsrMatrix(int m, int n, int nnz, int nve, mode_t mode) :
 }
 
 CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve, mode_t mode) :
-    CsrMatrix(StagedOp, nve, mode), rows(NULL), cols(NULL), vals(NULL)
+    CsrMatrix(StagedOp, nve, mode), rows(NULL), cols(NULL), vals(NULL), hyb(NULL)
 {
     /* make cusparse matrix descriptor */
     cusparseCreateMatDescr(&desc);
@@ -176,9 +176,9 @@ CudaCsrMatrix::gemm(CudaCsrMatrix* B) {
 CudaCsrMatrix::~CudaCsrMatrix() {
     /* clean up device memory */
     cusparseDestroyMatDescr(desc);
-    cudaFree(rows);
-    cudaFree(cols);
-    cudaFree(vals);
+
+    if (hyb != NULL)
+        cusparseDestroyHybMat(hyb);
 }
 
 void
