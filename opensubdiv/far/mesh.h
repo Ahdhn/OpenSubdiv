@@ -196,15 +196,15 @@ FarMesh<U>::GetPtexCoordinates(int level) const {
 template <class U> void
 FarMesh<U>::Subdivide(int level) {
 
-    if (_vertexEditTables != NULL) {
-        std::cerr << "Warning: SpMV strategy doesn't support vertex edits." << std::endl;
-        return;
-    }
-
     if (not _dispatcher->MatrixReady()) {
 
-        for (int i=1; i<level; ++i)
+        for (int i=1; i<level; ++i) {
             _subdivisionTables->Apply(i);
+
+            // edits only work for table-driven strategy, not spmv
+            if (_vertexEditTables)
+                _vertexEditTables->Apply(i, _dispatcher);
+        }
 
         _dispatcher->FinalizeMatrix();
     }
