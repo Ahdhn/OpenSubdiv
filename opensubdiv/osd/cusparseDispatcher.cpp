@@ -34,6 +34,23 @@ namespace OPENSUBDIV_VERSION {
 
 static cusparseHandle_t handle = NULL;
 
+inline void
+cusparseCheckStatus(cusparseStatus_t status) {
+    if (status != CUSPARSE_STATUS_SUCCESS)
+        switch (status) {
+            case CUSPARSE_STATUS_NOT_INITIALIZED:  printf("bad status 1: CUSPARSE_STATUS_NOT_INITIALIZED\n"); break;
+            case CUSPARSE_STATUS_ALLOC_FAILED:     printf("bad status 1: CUSPARSE_STATUS_ALLOC_FAILED\n"); break;
+            case CUSPARSE_STATUS_INVALID_VALUE:    printf("bad status 1: CUSPARSE_STATUS_INVALID_VALUE\n"); break;
+            case CUSPARSE_STATUS_ARCH_MISMATCH:    printf("bad status 1: CUSPARSE_STATUS_ARCH_MISMATCH\n"); break;
+            case CUSPARSE_STATUS_MAPPING_ERROR:    printf("bad status 1: CUSPARSE_STATUS_MAPPING_ERROR\n"); break;
+            case CUSPARSE_STATUS_EXECUTION_FAILED: printf("bad status 1: CUSPARSE_STATUS_EXECUTION_FAILED\n"); break;
+            case CUSPARSE_STATUS_INTERNAL_ERROR:   printf("bad status 1: CUSPARSE_STATUS_INTERNAL_ERROR\n"); break;
+            case CUSPARSE_STATUS_MATRIX_TYPE_NOT_SUPPORTED: printf("bad status 1: CUSPARSE_STATUS_MATRIX_TYPE_NOT_SUPPORTED\n"); break;
+            default: printf("bad status 2: unknown (%d)\n", status); break;
+        }
+    assert(status == CUSPARSE_STATUS_SUCCESS);
+}
+
 CudaCsrMatrix*
 CudaCooMatrix::gemm(CudaCsrMatrix* rhs) {
     CudaCsrMatrix* lhs = new CudaCsrMatrix(this, rhs->nve);
@@ -107,7 +124,7 @@ CudaCsrMatrix::spmv(float *d_out, float* d_in) {
     float alpha = 1.0,
           beta = 0.0;
     status = cusparseShybmv(handle, op, &alpha, desc, hyb, d_in, &beta, d_out);
-    assert(status == CUSPARSE_STATUS_SUCCESS);
+    cusparseCheckStatus(status);
 }
 
 CudaCsrMatrix*
@@ -135,19 +152,7 @@ CudaCsrMatrix::gemm(CudaCsrMatrix* B) {
             A->desc, A->nnz, A->rows, A->cols,
             B->desc, B->nnz, B->rows, B->cols,
             C->desc, C->rows, &C->nnz);
-    if (status != CUSPARSE_STATUS_SUCCESS)
-        switch (status) {
-            case CUSPARSE_STATUS_NOT_INITIALIZED:  printf("bad status 1: CUSPARSE_STATUS_NOT_INITIALIZED\n"); break;
-            case CUSPARSE_STATUS_ALLOC_FAILED:     printf("bad status 1: CUSPARSE_STATUS_ALLOC_FAILED\n"); break;
-            case CUSPARSE_STATUS_INVALID_VALUE:    printf("bad status 1: CUSPARSE_STATUS_INVALID_VALUE\n"); break;
-            case CUSPARSE_STATUS_ARCH_MISMATCH:    printf("bad status 1: CUSPARSE_STATUS_ARCH_MISMATCH\n"); break;
-            case CUSPARSE_STATUS_MAPPING_ERROR:    printf("bad status 1: CUSPARSE_STATUS_MAPPING_ERROR\n"); break;
-            case CUSPARSE_STATUS_EXECUTION_FAILED: printf("bad status 1: CUSPARSE_STATUS_EXECUTION_FAILED\n"); break;
-            case CUSPARSE_STATUS_INTERNAL_ERROR:   printf("bad status 1: CUSPARSE_STATUS_INTERNAL_ERROR\n"); break;
-            case CUSPARSE_STATUS_MATRIX_TYPE_NOT_SUPPORTED: printf("bad status 1: CUSPARSE_STATUS_MATRIX_TYPE_NOT_SUPPORTED\n"); break;
-            default: printf("bad status 2: unknown (%d)\n", status); break;
-        }
-    assert(status == CUSPARSE_STATUS_SUCCESS);
+    cusparseCheckStatus(status);
 
     cudaMalloc(&C->cols, C->nnz * sizeof(int));
     cudaMalloc(&C->vals, C->nnz * sizeof(float));
@@ -156,19 +161,7 @@ CudaCsrMatrix::gemm(CudaCsrMatrix* B) {
             A->desc, A->nnz, A->vals, A->rows, A->cols,
             B->desc, B->nnz, B->vals, B->rows, B->cols,
             C->desc, C->vals, C->rows, C->cols);
-    if (status != CUSPARSE_STATUS_SUCCESS)
-        switch (status) {
-            case CUSPARSE_STATUS_NOT_INITIALIZED:  printf("bad status 2: CUSPARSE_STATUS_NOT_INITIALIZED\n"); break;
-            case CUSPARSE_STATUS_ALLOC_FAILED:     printf("bad status 2: CUSPARSE_STATUS_ALLOC_FAILED\n"); break;
-            case CUSPARSE_STATUS_INVALID_VALUE:    printf("bad status 2: CUSPARSE_STATUS_INVALID_VALUE\n"); break;
-            case CUSPARSE_STATUS_ARCH_MISMATCH:    printf("bad status 2: CUSPARSE_STATUS_ARCH_MISMATCH\n"); break;
-            case CUSPARSE_STATUS_MAPPING_ERROR:    printf("bad status 2: CUSPARSE_STATUS_MAPPING_ERROR\n"); break;
-            case CUSPARSE_STATUS_EXECUTION_FAILED: printf("bad status 2: CUSPARSE_STATUS_EXECUTION_FAILED\n"); break;
-            case CUSPARSE_STATUS_INTERNAL_ERROR:   printf("bad status 2: CUSPARSE_STATUS_INTERNAL_ERROR\n"); break;
-            case CUSPARSE_STATUS_MATRIX_TYPE_NOT_SUPPORTED: printf("bad status 2: CUSPARSE_STATUS_MATRIX_TYPE_NOT_SUPPORTED\n"); break;
-            default: printf("bad status 2: unknown (%d)\n", status); break;
-        }
-    assert(status == CUSPARSE_STATUS_SUCCESS);
+    cusparseCheckStatuc(status);
 
     return C;
 }
