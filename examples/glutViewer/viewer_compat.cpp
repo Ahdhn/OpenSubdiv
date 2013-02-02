@@ -623,8 +623,8 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme=kCatmark
     }
 #endif
 
-    // Hbr mesh can be deleted
-    delete hmesh;
+    // Hbr mesh can be deleted (mbd: let osd mesh own hmesh for limit surface evaluation)
+    // delete hmesh;
 
     // update element array buffer
     const std::vector<int> &indices = g_osdmesh->GetFarMesh()->GetFaceVertices(level);

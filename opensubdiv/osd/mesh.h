@@ -136,6 +136,8 @@ protected:
 
     OsdKernelDispatcher * _dispatcher;
 
+    // mbd: for connectivity queries during limit surface eval
+    OpenSubdiv::OsdHbrMesh * _hbrMesh;
 };
 
 } // end namespace OPENSUBDIV_VERSION
