@@ -1,7 +1,7 @@
 %!PS-Adobe-2.0 EPSF-2.0
 %%Title: ./graphs/ttff_Venus.tex
-%%Creator: gnuplot 4.6 patchlevel 0
-%%CreationDate: Sun Dec  9 22:58:33 2012
+%%Creator: gnuplot 4.6 patchlevel 1
+%%CreationDate: Fri Feb  1 14:03:16 2013
 %%DocumentFonts: 
 %%BoundingBox: 50 50 410 302
 %%EndComments
@@ -47,7 +47,7 @@ gnudict begin
   } if
 } def
 %
-% Gnuplot Prolog Version 4.4 (August 2010)
+% Gnuplot Prolog Version 4.6 (September 2012)
 %
 %/SuppressPDFMark true def
 %
@@ -314,7 +314,8 @@ gnudict begin
 /PatternFill {gsave /PFa [ 9 2 roll ] def
   PFa 0 get PFa 2 get 2 div add PFa 1 get PFa 3 get 2 div add translate
   PFa 2 get -2 div PFa 3 get -2 div PFa 2 get PFa 3 get Rec
-  gsave 1 setgray fill grestore clip
+  TransparentPatterns {} {gsave 1 setgray fill grestore} ifelse
+  clip
   currentlinewidth 0.5 mul setlinewidth
   /PFs PFa 2 get dup mul PFa 3 get dup mul add sqrt def
   0 0 M PFa 5 get rotate PFs -2 div dup translate
@@ -428,11 +429,11 @@ systemdict /pdfmark known not {
 SDict begin [
   /Title (./graphs/ttff_Venus.tex)
   /Subject (gnuplot plot)
-  /Creator (gnuplot 4.6 patchlevel 0)
-  /Author (mbdriscoll)
+  /Creator (gnuplot 4.6 patchlevel 1)
+  /Author (driscoll)
 %  /Producer (gnuplot)
 %  /Keywords ()
-  /CreationDate (Sun Dec  9 22:58:33 2012)
+  /CreationDate (Fri Feb  1 14:03:16 2013)
   /DOCINFO pdfmark
 end
 } ifelse

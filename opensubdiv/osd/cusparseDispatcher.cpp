@@ -161,7 +161,7 @@ CudaCsrMatrix::gemm(CudaCsrMatrix* B) {
             A->desc, A->nnz, A->vals, A->rows, A->cols,
             B->desc, B->nnz, B->vals, B->rows, B->cols,
             C->desc, C->vals, C->rows, C->cols);
-    cusparseCheckStatuc(status);
+    cusparseCheckStatus(status);
 
     return C;
 }
