@@ -84,6 +84,8 @@ public:
 
     /// Compute the positions of refined vertices using the specified kernels
     virtual void Apply( int level, void * data=0 ) const;
+    virtual void PushProjectionMatrix(int nverts, int offset);
+    virtual void PushEvalSurfMatrix(int nverts, int offset);
 
     /// Face-vertices indexing table accessor
     FarTable<unsigned int> const & Get_F_IT( ) const { return _F_IT; }
@@ -376,6 +378,34 @@ FarCatmarkSubdivisionTables<U>::computeVertexPointsB( int offset, int level, int
         }
         vdst->AddVaryingWithWeight( vsrc[p], 1.0f, clientdata );
     }
+}
+
+template <class U> void
+FarCatmarkSubdivisionTables<U>::PushProjectionMatrix( int nverts, int offset ) {
+
+    assert(this->_mesh);
+    FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
+
+    dispatch->StageMatrix(nverts, nverts);
+    {
+        for(int i = 0; i < nverts; i++)
+            dispatch->StageElem(i, i, 1.0);
+    }
+    dispatch->PushMatrix();
+}
+
+template <class U> void
+FarCatmarkSubdivisionTables<U>::PushEvalSurfMatrix( int nverts, int offset ) {
+
+    assert(this->_mesh);
+    FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
+
+    dispatch->StageMatrix(nverts, nverts);
+    {
+        for(int i = 0; i < nverts; i++)
+            dispatch->StageElem(i, i, 1.0);
+    }
+    dispatch->PushMatrix();
 }
 
 } // end namespace OPENSUBDIV_VERSION

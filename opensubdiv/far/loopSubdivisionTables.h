@@ -82,7 +82,8 @@ public:
 
     /// Compute the positions of refined vertices using the specified kernels
     virtual void Apply( int level, void * data=0 ) const;
-
+    virtual void PushProjectionMatrix(int nverts, int offset);
+    virtual void PushEvalSurfMatrix(int nverts, int offset);
 
 private:
     template <class X, class Y> friend struct FarLoopSubdivisionTablesFactory;
@@ -294,6 +295,35 @@ FarLoopSubdivisionTables<U>::computeVertexPointsB( int offset, int level, int st
         vdst->AddVaryingWithWeight( vsrc[p], 1.0f, clientdata );
     }
 }
+
+template <class U> void
+FarLoopSubdivisionTables<U>::PushProjectionMatrix( int nverts, int offset ) {
+
+    assert(this->_mesh);
+    FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
+
+    dispatch->StageMatrix(nverts, nverts);
+    {
+        for(int i = 0; i < nverts; i++)
+            dispatch->StageElem(i, i, 1.0);
+    }
+    dispatch->PushMatrix();
+}
+
+template <class U> void
+FarLoopSubdivisionTables<U>::PushEvalSurfMatrix( int nverts, int offset ) {
+
+    assert(this->_mesh);
+    FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
+
+    dispatch->StageMatrix(nverts, nverts);
+    {
+        for(int i = 0; i < nverts; i++)
+            dispatch->StageElem(i, i, 1.0);
+    }
+    dispatch->PushMatrix();
+}
+
 
 } // end namespace OPENSUBDIV_VERSION
 using namespace OPENSUBDIV_VERSION;

@@ -111,8 +111,8 @@ public:
     /// Compute the positions of refined vertices using the specified kernels
     virtual void Apply( int level, void * clientdata=0 ) const=0;
     virtual void PushToLimitSurface( int level, void * clientdata=0 );
-    virtual void PushProjectionMatrix(int nverts, int offset);
-    virtual void PushEvalSurfMatrix(int nverts, int offset);
+    virtual void PushProjectionMatrix(int nverts, int offset) = 0;
+    virtual void PushEvalSurfMatrix(int nverts, int offset) = 0;
 
     /// Pointer back to the mesh owning the table
     FarMesh<U> * GetMesh() { return _mesh; }
@@ -323,35 +323,6 @@ FarSubdivisionTables<U>::PushToLimitSurface( int level, void * clientdata ) {
     this->PushProjectionMatrix(nverts, offset);
     this->PushEvalSurfMatrix(nverts, offset);
 }
-
-template <class U> void
-FarSubdivisionTables<U>::PushProjectionMatrix( int nverts, int offset ) {
-
-    assert(this->_mesh);
-    FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
-
-    dispatch->StageMatrix(nverts, nverts);
-    {
-        for(int i = 0; i < nverts; i++)
-            dispatch->StageElem(i, i, 1.0);
-    }
-    dispatch->PushMatrix();
-}
-
-template <class U> void
-FarSubdivisionTables<U>::PushEvalSurfMatrix( int nverts, int offset ) {
-
-    assert(this->_mesh);
-    FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
-
-    dispatch->StageMatrix(nverts, nverts);
-    {
-        for(int i = 0; i < nverts; i++)
-            dispatch->StageElem(i, i, 1.0);
-    }
-    dispatch->PushMatrix();
-}
-
 
 } // end namespace OPENSUBDIV_VERSION
 using namespace OPENSUBDIV_VERSION;
