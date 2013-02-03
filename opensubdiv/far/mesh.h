@@ -200,7 +200,7 @@ FarMesh<U>::Subdivide(int level, int exact) {
                 _vertexEditTables->Apply(i, _dispatcher);
         }
 
-        if (exact == 1)
+        if (exact == 1 && _dispatcher->SupportsExactEvaluation())
             _subdivisionTables->PushToLimitSurface(level-1); //XXX level-1?
 
         _dispatcher->FinalizeMatrix();

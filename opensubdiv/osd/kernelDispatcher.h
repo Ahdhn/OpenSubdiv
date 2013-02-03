@@ -142,6 +142,7 @@ public:
     virtual void StageElem(int i, int j, float value) { };
     virtual void PushMatrix() { };
     virtual void ApplyM(int offset) { };
+    virtual int SupportsExactEvaluation() { return 0; }
 
     virtual int GetElemsPerVertex() const { return -2; }
     virtual int GetElemsPerVarying() const { return -2; }

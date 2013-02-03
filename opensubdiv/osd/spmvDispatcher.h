@@ -171,6 +171,15 @@ public:
             SubdivOp->m, SubdivOp->n, sparsity_factor, size_in_bytes / 1024 / 1024);
     }
 
+    /**
+     * True if this kernel supports limit surface evaluation. This method exists to
+     * avoid no-op calls into the matrix manipulation methods for adhoc kernels.
+     */
+    virtual int SupportsExactEvaluation() {
+        DEBUG_PRINTF("Pushing to limit surface.\n");
+        return 1;
+    }
+
     CooMatrix_t* StagedOp;
     CsrMatrix_t* SubdivOp;
 };
