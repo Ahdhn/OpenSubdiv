@@ -574,7 +574,7 @@ drawCoarseMesh(int mode) {
 
 //------------------------------------------------------------------------------
 void
-createOsdMesh( const char * shape, int level, int kernel, Scheme scheme=kCatmark ) {
+createOsdMesh( const char * shape, int level, int kernel, Scheme scheme, int exact ) {
     // start timer
     Stopwatch s;
     s.Start();
@@ -605,16 +605,24 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme=kCatmark
         g_coarseVertexSharpness.push_back(hmesh->GetVertex(i)->GetSharpness());
     }
 
+    if (exact && level < 2) {
+        printf("Warning: exact evaluation requires at least two levels of subdivision. "
+               "Bumping subdiv level to 2.\n");
+        g_level = level = 2;
+    }
+    // TODO reconcile exact evaluation and hedits at levels greater than the tess factor
+
     // generate Osd mesh from Hbr mesh
     if (g_osdmesh) delete g_osdmesh;
     g_osdmesh = new OpenSubdiv::OsdMesh();
-    g_osdmesh->Create(hmesh, level, kernel);
+    g_osdmesh->Create(hmesh, level, kernel, exact);
     if (g_vertexBuffer) {
         delete g_vertexBuffer;
         g_vertexBuffer = NULL;
     }
 
 #if REGRESSION
+    assert(!exact && "No support for regression testing of exact surfaces, yet.");
     if (g_cpu_osdmesh) delete g_cpu_osdmesh;
     g_cpu_osdmesh = new OpenSubdiv::OsdMesh();
     g_cpu_osdmesh->Create(hmesh, level, OpenSubdiv::OsdKernelDispatcher::kCPU);
@@ -822,14 +830,14 @@ void quit() {
 void exactMenu(int k) {
 
     g_exact = k;
-    createOsdMesh( g_defaultShapes[ g_currentShape ].data, g_level, g_kernel, g_defaultShapes[ g_currentShape ].scheme );
+    createOsdMesh( g_defaultShapes[ g_currentShape ].data, g_level, g_kernel, g_defaultShapes[ g_currentShape ].scheme, g_exact );
 }
 
 //------------------------------------------------------------------------------
 void kernelMenu(int k) {
 
     g_kernel = k;
-    createOsdMesh( g_defaultShapes[ g_currentShape ].data, g_level, g_kernel, g_defaultShapes[ g_currentShape ].scheme );
+    createOsdMesh( g_defaultShapes[ g_currentShape ].data, g_level, g_kernel, g_defaultShapes[ g_currentShape ].scheme, g_exact );
 }
 
 //------------------------------------------------------------------------------
@@ -846,7 +854,7 @@ modelMenu(int m) {
 
     glutSetWindowTitle( g_defaultShapes[m].name.c_str() );
 
-    createOsdMesh( g_defaultShapes[m].data, g_level, g_kernel, g_defaultShapes[ g_currentShape ].scheme );
+    createOsdMesh( g_defaultShapes[m].data, g_level, g_kernel, g_defaultShapes[ g_currentShape ].scheme, g_exact );
 }
 
 //------------------------------------------------------------------------------
@@ -855,7 +863,7 @@ levelMenu(int l) {
 
     g_level = l;
 
-    createOsdMesh( g_defaultShapes[g_currentShape].data, g_level, g_kernel, g_defaultShapes[ g_currentShape ].scheme );
+    createOsdMesh( g_defaultShapes[g_currentShape].data, g_level, g_kernel, g_defaultShapes[ g_currentShape ].scheme, g_exact );
 }
 
 //------------------------------------------------------------------------------

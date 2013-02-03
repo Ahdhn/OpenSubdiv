@@ -135,7 +135,7 @@ OsdMesh::createEditTables( FarVertexEditTables<OsdVertex> const *editTables ) {
 }
 
 bool
-OsdMesh::Create(OsdHbrMesh *hbrMesh, int level, int kernel, std::vector<int> * remap) {
+OsdMesh::Create(OsdHbrMesh *hbrMesh, int level, int kernel, int exact, std::vector<int> * remap) {
 
     if (_dispatcher)
         delete _dispatcher;
