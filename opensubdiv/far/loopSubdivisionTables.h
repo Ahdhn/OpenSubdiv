@@ -82,7 +82,6 @@ public:
 
     /// Compute the positions of refined vertices using the specified kernels
     virtual void Apply( int level, void * data=0 ) const;
-    virtual void PushToLimitSurface( int level, void * clientdata=0 ) const;
 
 
 private:
@@ -132,11 +131,6 @@ FarLoopSubdivisionTables<U>::Apply( int level, void * clientdata ) const
         dispatch->ApplyLoopVertexVerticesKernelA(this->_mesh, offset, true, level, batch->kernelA2.first, batch->kernelA2.second, clientdata);
 }
 #endif
-
-template <class U> void
-FarLoopSubdivisionTables<U>::PushToLimitSurface( int level, void * clientdata ) const {
-    // TODO
-}
 
 template <class U> void
 FarLoopSubdivisionTables<U>::Apply( int level, void * clientdata ) const

@@ -84,7 +84,6 @@ public:
 
     /// Compute the positions of refined vertices using the specified kernels
     virtual void Apply( int level, void * data=0 ) const;
-    virtual void PushToLimitSurface( int level, void * clientdata=0 ) const;
 
     /// Face-vertices indexing table accessor
     FarTable<unsigned int> const & Get_F_IT( ) const { return _F_IT; }
@@ -165,11 +164,6 @@ FarCatmarkSubdivisionTables<U>::Apply( int level, void * clientdata ) const {
         dispatch->ApplyCatmarkVertexVerticesKernelA(this->_mesh, offset, true, level, batch->kernelA2.first, batch->kernelA2.second, clientdata);
 }
 #endif
-
-template <class U> void
-FarCatmarkSubdivisionTables<U>::PushToLimitSurface( int level, void * clientdata ) const {
-    // TODO
-}
 
 template <class U> void
 FarCatmarkSubdivisionTables<U>::Apply( int level, void * clientdata ) const {

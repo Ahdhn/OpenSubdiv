@@ -110,7 +110,7 @@ public:
 
     /// Compute the positions of refined vertices using the specified kernels
     virtual void Apply( int level, void * clientdata=0 ) const=0;
-    virtual void PushToLimitSurface( int level, void * clientdata=0 ) const=0;
+    virtual void PushToLimitSurface( int level, void * clientdata=0 ) const;
 
     /// Pointer back to the mesh owning the table
     FarMesh<U> * GetMesh() { return _mesh; }
@@ -310,6 +310,32 @@ FarSubdivisionTables<U>::GetMemoryUsed() const {
            _V_IT.GetMemoryUsed()+
            _V_W.GetMemoryUsed();
 }
+
+template <class U> void
+FarSubdivisionTables<U>::PushToLimitSurface( int level, void * clientdata ) const {
+
+    assert(this->_mesh and level>0);
+    FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
+
+    int iop = this->GetNumVertices( level );
+
+    /* Build and push projection matrix */
+    dispatch->StageMatrix(iop, iop);
+    {
+        for(int i = 0; i < iop; i++)
+            dispatch->StageElem(i, i, 1.0);
+    }
+    dispatch->PushMatrix();
+
+    /* Build and push evaluation matrix */
+    dispatch->StageMatrix(iop, iop);
+    {
+        for(int i = 0; i < iop; i++)
+            dispatch->StageElem(i, i, 1.0);
+    }
+    dispatch->PushMatrix();
+}
+
 
 } // end namespace OPENSUBDIV_VERSION
 using namespace OPENSUBDIV_VERSION;

@@ -132,7 +132,7 @@ FarBilinearSubdivisionTables<U>::GetMemoryUsed() const {
 
 template <class U> void
 FarBilinearSubdivisionTables<U>::PushToLimitSurface( int level, void * clientdata ) const {
-    // TODO
+    /* do nothing */
 }
 
 template <class U> void
