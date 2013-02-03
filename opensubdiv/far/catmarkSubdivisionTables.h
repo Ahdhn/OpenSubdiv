@@ -68,13 +68,6 @@
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
-class CCEVALSTRUCT {
-  public:
-    double * val;
-    double * vecI;
-    double ** Phi;
-};
-
 /// \brief Catmark subdivision scheme tables.
 ///
 /// Catmull-Clark tables store the indexing tables required in order to compute
@@ -85,7 +78,6 @@ class CCEVALSTRUCT {
 template <class U> class FarCatmarkSubdivisionTables : public FarSubdivisionTables<U> {
 
 public:
-    virtual ~FarCatmarkSubdivisionTables();
 
     /// Memory required to store the indexing tables
     virtual int GetMemoryUsed() const;
@@ -131,19 +123,13 @@ private:
     FarTable<int>           _F_ITa;
     FarTable<unsigned int>  _F_IT;
 
-    /* for limit surface evaluation */
-    CCEVALSTRUCT ** read_eval ( int * pNmax );
-
-    CCEVALSTRUCT ** eigen;
-    int Nmax;
 };
 
 template <class U>
 FarCatmarkSubdivisionTables<U>::FarCatmarkSubdivisionTables( FarMesh<U> * mesh, int maxlevel ) :
     FarSubdivisionTables<U>(mesh, maxlevel),
     _F_ITa(maxlevel+1),
-    _F_IT(maxlevel+1),
-    eigen(NULL)
+    _F_IT(maxlevel+1)
 { }
 
 template <class U> int
@@ -151,22 +137,6 @@ FarCatmarkSubdivisionTables<U>::GetMemoryUsed() const {
     return FarSubdivisionTables<U>::GetMemoryUsed()+
         _F_ITa.GetMemoryUsed()+
         _F_IT.GetMemoryUsed();
-}
-
-template <class U>
-FarCatmarkSubdivisionTables<U>::~FarCatmarkSubdivisionTables() {
-    if (eigen != NULL) {
-        for (int i = 0; i < Nmax-2; i++) {
-            free(eigen[i]->val);
-            free(eigen[i]->vecI);
-            free(eigen[i]->Phi);
-            free(eigen[i]->Phi[0]);
-            free(eigen[i]->Phi[1]);
-            free(eigen[i]->Phi[2]);
-            free(eigen[i]);
-        }
-        free(eigen);
-    }
 }
 
 #if 0 // REMOVEME
@@ -417,23 +387,21 @@ FarCatmarkSubdivisionTables<U>::PushProjectionMatrix( int nverts, int offset ) {
     assert(this->_mesh);
     FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
 
-    if (eigen == NULL)
-        eigen = read_eval(&Nmax);
-    assert(eigen != NULL);
+    char* filename = (char*)
+#if defined(_WIN32) || defined(__APPLE__)
+      "../data/ccdata50NT.dat";
+#else
+      "../data/ccdata50.dat";
+#endif
+
+    if (this->eigen == NULL)
+        this->eigen = this->read_eval(filename, &this->Nmax);
+    assert(this->eigen != NULL);
 
     dispatch->StageMatrix(nverts, nverts);
     {
-#if 0
-        for(int i = 0; i < nverts; i++) {
-            for(int j = 0; j < 2*N+8; j++) {
-                int k = GetOsdIndexForJthNeighborOfI(i + offset, j) - offset;
-                dispatch->StageElem(i, k, 1.0);
-            }
-        }
-#else
         for(int i = 0; i < nverts; i++)
             dispatch->StageElem(i, i, 1.0);
-#endif
     }
     dispatch->PushMatrix();
 }
@@ -444,7 +412,7 @@ FarCatmarkSubdivisionTables<U>::PushEvalSurfMatrix( int nverts, int offset ) {
     assert(this->_mesh);
     FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
 
-    assert(eigen != NULL);
+    assert(this->eigen != NULL);
 
     dispatch->StageMatrix(nverts, nverts);
     {
@@ -452,62 +420,6 @@ FarCatmarkSubdivisionTables<U>::PushEvalSurfMatrix( int nverts, int offset ) {
             dispatch->StageElem(i, i, 1.0);
     }
     dispatch->PushMatrix();
-}
-
-template <class U>
-CCEVALSTRUCT **
-FarCatmarkSubdivisionTables<U>::read_eval ( int * pNmax )
-{
-   CCEVALSTRUCT ** ev;
-   FILE * f;
-   int Nmax, i, N, K;
-
-#if defined(_WIN32) || defined(__APPLE__)
-   if ( !(f = fopen ( "../data/ccdata50NT.dat", "rb" )) ) {
-       fprintf(stderr, "[error] Could not open ../data/ccdata50NT.dat.\n");
-       exit(1);
-   };
-#else
-   if ( !(f = fopen ( "../data/ccdata50.dat", "r" )) ) {
-       fprintf(stderr, "[error] Could not open ../data/ccdata50.dat.\n");
-       exit(1);
-   };
-#endif
-
-   fread ( &Nmax, sizeof(int), 1, f );
-
-   if (Nmax > 50) {
-       fprintf(stderr, "Error: expected 50 valences, got %d.\n", Nmax);
-       return NULL;
-   }
-
-   ev = (CCEVALSTRUCT **) malloc ( (Nmax-2)*sizeof(CCEVALSTRUCT *) );
-
-   for ( i=0 ; i<Nmax-2 ; i++ )
-   {
-      N = i+3;
-      K = 2*N+8;
-
-      ev[i] = (CCEVALSTRUCT *) malloc ( sizeof(CCEVALSTRUCT) );
-      ev[i]->val = (double *) malloc ( K*sizeof(double) );
-      ev[i]->vecI = (double *) malloc ( K*K*sizeof(double) );
-      ev[i]->Phi = (double **) malloc ( 3*sizeof(double *) );
-      ev[i]->Phi[0] = (double *) malloc ( K*16*sizeof(double) );
-      ev[i]->Phi[1] = (double *) malloc ( K*16*sizeof(double) );
-      ev[i]->Phi[2] = (double *) malloc ( K*16*sizeof(double) );
-
-      fread ( ev[i]->val, sizeof(double), K, f );
-      fread ( ev[i]->vecI, sizeof(double), K*K, f );
-      fread ( ev[i]->Phi[0], sizeof(double), K*16, f );
-      fread ( ev[i]->Phi[1], sizeof(double), K*16, f );
-      fread ( ev[i]->Phi[2], sizeof(double), K*16, f );
-   }
-
-   fclose ( f );
-
-	*pNmax = Nmax;
-
-   return ( ev );
 }
 
 } // end namespace OPENSUBDIV_VERSION

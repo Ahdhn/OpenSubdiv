@@ -67,6 +67,14 @@
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
+class EVALSTRUCT {
+  public:
+    double * val;
+    double * vecI;
+    double ** Phi;
+};
+
+
 template <class U> class FarMesh;
 template <class U> class FarDispatcher;
 
@@ -100,7 +108,8 @@ template <class U> class FarSubdivisionTables {
 public:
 
     /// Destructor
-    virtual ~FarSubdivisionTables<U>() {}
+    FarSubdivisionTables<U>() : eigen(NULL) {}
+    virtual ~FarSubdivisionTables<U>();
 
     /// Return the highest level of subdivision possible with these tables
     int GetMaxLevel() const { return (int)(_vertsOffsets.size()); }
@@ -204,6 +213,11 @@ public:
     // compute Kernels (kernel application order is : B / A / A)
     std::vector<VertexKernelBatch> & getKernelBatches() const { return _batches; }
 
+    /* for limit surface evaluation */
+    EVALSTRUCT ** read_eval ( char* filename, int * pNmax );
+    EVALSTRUCT ** eigen;
+    int Nmax;
+
 protected:
     // mesh that owns this subdivisionTable
     FarMesh<U> * _mesh;
@@ -218,7 +232,6 @@ protected:
     std::vector<VertexKernelBatch> _batches; // batches of vertices for kernel execution
 
     std::vector<int> _vertsOffsets; // offset to the first vertex of each level
-private:
 };
 
 template <class U>
@@ -230,7 +243,8 @@ FarSubdivisionTables<U>::FarSubdivisionTables( FarMesh<U> * mesh, int maxlevel )
     _V_IT(maxlevel+1),
     _V_W(maxlevel+1),
     _batches(maxlevel),
-    _vertsOffsets(maxlevel+1,0)
+    _vertsOffsets(maxlevel+1,0),
+    eigen(NULL)
 {
     assert( maxlevel > 0 );
 }
@@ -323,6 +337,78 @@ FarSubdivisionTables<U>::PushToLimitSurface( int level, void * clientdata ) {
     this->PushProjectionMatrix(nverts, offset);
     this->PushEvalSurfMatrix(nverts, offset);
 }
+
+template <class U>
+EVALSTRUCT **
+FarSubdivisionTables<U>::read_eval ( char * filename, int * pNmax )
+{
+   EVALSTRUCT ** ev;
+   FILE * f;
+   int Nmax, i, N, K;
+
+#if defined(_WIN32) || defined(__APPLE__)
+   char* mode = (char*) "rb";
+#else
+   char* mode = (char*) "r";
+#endif
+
+   if ( !(f = fopen ( filename, mode )) ) {
+       fprintf(stderr, "[error] Could not open %s.\n", filename);
+       exit(1);
+   };
+
+   fread ( &Nmax, sizeof(int), 1, f );
+
+   if (Nmax > 50) {
+       fprintf(stderr, "Error: expected 50 valences, got %d.\n", Nmax);
+       return NULL;
+   }
+
+   ev = (EVALSTRUCT **) malloc ( (Nmax-2)*sizeof(EVALSTRUCT *) );
+
+   for ( i=0 ; i<Nmax-2 ; i++ )
+   {
+      N = i+3;
+      K = 2*N+8;
+
+      ev[i] = (EVALSTRUCT *) malloc ( sizeof(EVALSTRUCT) );
+      ev[i]->val = (double *) malloc ( K*sizeof(double) );
+      ev[i]->vecI = (double *) malloc ( K*K*sizeof(double) );
+      ev[i]->Phi = (double **) malloc ( 3*sizeof(double *) );
+      ev[i]->Phi[0] = (double *) malloc ( K*16*sizeof(double) );
+      ev[i]->Phi[1] = (double *) malloc ( K*16*sizeof(double) );
+      ev[i]->Phi[2] = (double *) malloc ( K*16*sizeof(double) );
+
+      fread ( ev[i]->val, sizeof(double), K, f );
+      fread ( ev[i]->vecI, sizeof(double), K*K, f );
+      fread ( ev[i]->Phi[0], sizeof(double), K*16, f );
+      fread ( ev[i]->Phi[1], sizeof(double), K*16, f );
+      fread ( ev[i]->Phi[2], sizeof(double), K*16, f );
+   }
+
+   fclose ( f );
+
+	*pNmax = Nmax;
+
+   return ( ev );
+}
+
+template <class U>
+FarSubdivisionTables<U>::~FarSubdivisionTables() {
+    if (eigen != NULL) {
+        for (int i = 0; i < Nmax-2; i++) {
+            free(eigen[i]->val);
+            free(eigen[i]->vecI);
+            free(eigen[i]->Phi);
+            free(eigen[i]->Phi[0]);
+            free(eigen[i]->Phi[1]);
+            free(eigen[i]->Phi[2]);
+            free(eigen[i]);
+        }
+        free(eigen);
+    }
+}
+
 
 } // end namespace OPENSUBDIV_VERSION
 using namespace OPENSUBDIV_VERSION;

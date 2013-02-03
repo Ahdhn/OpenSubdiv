@@ -302,6 +302,17 @@ FarLoopSubdivisionTables<U>::PushProjectionMatrix( int nverts, int offset ) {
     assert(this->_mesh);
     FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
 
+    char* filename = (char*)
+#if defined(_WIN32) || defined(__APPLE__)
+      "../data/lpdata50NT.dat";
+#else
+      "../data/lpdata50.dat";
+#endif
+
+    if (this->eigen == NULL)
+        this->eigen = this->read_eval(filename, &this->Nmax);
+    assert(this->eigen != NULL);
+
     dispatch->StageMatrix(nverts, nverts);
     {
         for(int i = 0; i < nverts; i++)
@@ -315,6 +326,8 @@ FarLoopSubdivisionTables<U>::PushEvalSurfMatrix( int nverts, int offset ) {
 
     assert(this->_mesh);
     FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
+
+    assert(this->eigen != NULL);
 
     dispatch->StageMatrix(nverts, nverts);
     {
