@@ -83,6 +83,7 @@ public:
 
     /// Compute the positions of refined vertices using the specified kernels
     virtual void Apply( int level, void * data=0 ) const;
+    virtual void PushToLimitSurface( int level, void * data=0 ) const;
 
     /// Face-vertices indexing table accessor
     FarTable<unsigned int> const & Get_F_IT( ) const { return _F_IT; }
@@ -127,6 +128,11 @@ FarBilinearSubdivisionTables<U>::GetMemoryUsed() const {
     return FarSubdivisionTables<U>::GetMemoryUsed()+
         _F_ITa.GetMemoryUsed()+
         _F_IT.GetMemoryUsed();
+}
+
+template <class U> void
+FarBilinearSubdivisionTables<U>::PushToLimitSurface( int level, void * clientdata ) const {
+    // TODO
 }
 
 template <class U> void

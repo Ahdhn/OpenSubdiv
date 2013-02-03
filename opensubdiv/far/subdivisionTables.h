@@ -110,6 +110,7 @@ public:
 
     /// Compute the positions of refined vertices using the specified kernels
     virtual void Apply( int level, void * clientdata=0 ) const=0;
+    virtual void PushToLimitSurface( int level, void * clientdata=0 ) const=0;
 
     /// Pointer back to the mesh owning the table
     FarMesh<U> * GetMesh() { return _mesh; }

@@ -147,6 +147,7 @@ OsdMesh::Create(OsdHbrMesh *hbrMesh, int level, int kernel, int exact, std::vect
     }
 
     _level = level;
+    _exact = exact;
 
     // create Far mesh
     OSD_DEBUG("Create MeshFactory\n");
@@ -206,7 +207,7 @@ OsdMesh::Subdivide(OsdVertexBuffer *vertex, OsdVertexBuffer *varying) {
     {
         _dispatcher->OnKernelLaunch();
 
-        _farMesh->Subdivide(_level+1);
+        _farMesh->Subdivide(_level+1, _exact);
 
         _dispatcher->OnKernelFinish();
     }

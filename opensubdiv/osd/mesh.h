@@ -133,6 +133,7 @@ protected:
     FarMesh<OsdVertex> *_farMesh;
 
     int _level;
+    int _exact;
 
     OsdKernelDispatcher * _dispatcher;
 

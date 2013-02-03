@@ -120,15 +120,9 @@ public:
     /// Returns the total number of vertices in the mesh across across all depths
     int GetNumVertices() const { return (int)(_vertices.size()); }
 
-    /// Computational strategy
-    enum Strategy {
-        AdHoc  = 0,
-        SpMV   = 1,
-    };
-
     /// Apply the subdivision tables to compute the positions of the vertices up
     /// to 'level'
-    void Subdivide(int level=-1);
+    void Subdivide(int level=-1, int exact=0);
 
 private:
 
@@ -194,7 +188,7 @@ FarMesh<U>::GetPtexCoordinates(int level) const {
 }
 
 template <class U> void
-FarMesh<U>::Subdivide(int level) {
+FarMesh<U>::Subdivide(int level, int exact) {
 
     if (not _dispatcher->MatrixReady()) {
 
@@ -205,6 +199,9 @@ FarMesh<U>::Subdivide(int level) {
             if (_vertexEditTables)
                 _vertexEditTables->Apply(i, _dispatcher);
         }
+
+        if (exact == 1)
+            _subdivisionTables->PushToLimitSurface(level-1); //XXX level-1?
 
         _dispatcher->FinalizeMatrix();
     }
