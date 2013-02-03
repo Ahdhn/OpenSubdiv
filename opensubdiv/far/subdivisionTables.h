@@ -110,7 +110,9 @@ public:
 
     /// Compute the positions of refined vertices using the specified kernels
     virtual void Apply( int level, void * clientdata=0 ) const=0;
-    virtual void PushToLimitSurface( int level, void * clientdata=0 ) const;
+    virtual void PushToLimitSurface( int level, void * clientdata=0 );
+    virtual void PushProjectionMatrix(int nverts, int offset);
+    virtual void PushEvalSurfMatrix(int nverts, int offset);
 
     /// Pointer back to the mesh owning the table
     FarMesh<U> * GetMesh() { return _mesh; }
@@ -312,17 +314,42 @@ FarSubdivisionTables<U>::GetMemoryUsed() const {
 }
 
 template <class U> void
-FarSubdivisionTables<U>::PushToLimitSurface( int level, void * clientdata ) const {
-
-    assert(this->_mesh and level>0);
-    FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
+FarSubdivisionTables<U>::PushToLimitSurface( int level, void * clientdata ) {
 
     int nverts = this->GetNumVertices( level );
-    int offset =     this->GetFirstVertexOffset( level );
+    int offset = this->GetFirstVertexOffset( level );
 
     /* Build and push projection matrix */
-    dispatch->PushProjectionMatrix(_mesh, nverts, offset);
-    dispatch->PushEvalSurfMatrix(_mesh, nverts, offset);
+    this->PushProjectionMatrix(nverts, offset);
+    this->PushEvalSurfMatrix(nverts, offset);
+}
+
+template <class U> void
+FarSubdivisionTables<U>::PushProjectionMatrix( int nverts, int offset ) {
+
+    assert(this->_mesh);
+    FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
+
+    dispatch->StageMatrix(nverts, nverts);
+    {
+        for(int i = 0; i < nverts; i++)
+            dispatch->StageElem(i, i, 1.0);
+    }
+    dispatch->PushMatrix();
+}
+
+template <class U> void
+FarSubdivisionTables<U>::PushEvalSurfMatrix( int nverts, int offset ) {
+
+    assert(this->_mesh);
+    FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
+
+    dispatch->StageMatrix(nverts, nverts);
+    {
+        for(int i = 0; i < nverts; i++)
+            dispatch->StageElem(i, i, 1.0);
+    }
+    dispatch->PushMatrix();
 }
 
 
