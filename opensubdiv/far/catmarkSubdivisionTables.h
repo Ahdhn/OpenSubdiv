@@ -463,13 +463,13 @@ FarCatmarkSubdivisionTables<U>::read_eval ( int * pNmax )
    int Nmax, i, N, K;
 
 #if defined(_WIN32) || defined(__APPLE__)
-   if ( !(f = fopen ( "ccdata50NT.dat", "rb" )) ) {
-       fprintf(stderr, "[error] Could not open ccdata50NT.dat. Make sure it's in the current working directory.\n");
+   if ( !(f = fopen ( "../data/ccdata50NT.dat", "rb" )) ) {
+       fprintf(stderr, "[error] Could not open ../data/ccdata50NT.dat.\n");
        exit(1);
    };
 #else
-   if ( !(f = fopen ( "ccdata50.dat", "r" )) ) {
-       fprintf(stderr, "[error] Could not open ccdata50.dat. Make sure it's in the current working directory.\n");
+   if ( !(f = fopen ( "../data/ccdata50.dat", "r" )) ) {
+       fprintf(stderr, "[error] Could not open ../data/ccdata50.dat.\n");
        exit(1);
    };
 #endif
