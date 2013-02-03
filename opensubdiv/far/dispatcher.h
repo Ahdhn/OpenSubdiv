@@ -133,6 +133,8 @@ public:
     virtual int CopyNVerts(int nVerts, int index) { return 0; };
     virtual bool MatrixReady() { return false; }
     virtual void PrintReport() { }
+    virtual void PushProjectionMatrix(FarMesh<U> *mesh, int nverts, int offset);
+    virtual void PushEvalSurfMatrix(FarMesh<U> *mesh, int nverts, int offset);
 
     virtual int GetElemsPerVertex() const { return -1; }
     virtual int GetElemsPerVarying() const { return -1; }
@@ -256,6 +258,26 @@ FarDispatcher<U>::ApplyVertexEdits(FarMesh<U> * mesh, int offset, int level, voi
     FarVertexEditTables<U> const * vertEdit = mesh->GetVertexEdit();
     if (vertEdit)
         vertEdit->computeVertexEdits(level, clientdata);
+}
+
+template <class U> void
+FarDispatcher<U>::PushProjectionMatrix(FarMesh<U> * mesh, int nverts, int offset) {
+    this->StageMatrix(nverts, nverts);
+    {
+        for(int i = 0; i < nverts; i++)
+            this->StageElem(i, i, 1.0);
+    }
+    this->PushMatrix();
+}
+
+template <class U> void
+FarDispatcher<U>::PushEvalSurfMatrix(FarMesh<U> * mesh, int nverts, int offset) {
+    this->StageMatrix(nverts, nverts);
+    {
+        for(int i = 0; i < nverts; i++)
+            this->StageElem(i, i, 1.0);
+    }
+    this->PushMatrix();
 }
 
 } // end namespace OPENSUBDIV_VERSION
