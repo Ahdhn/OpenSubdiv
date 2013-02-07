@@ -120,8 +120,7 @@ public:
     /// Compute the positions of refined vertices using the specified kernels
     virtual void Apply( int level, void * clientdata=0 ) const=0;
     virtual void PushToLimitSurface( int level, void * clientdata=0 );
-    virtual void PushProjectionMatrix(int nverts, int offset) = 0;
-    virtual void PushEvalSurfMatrix(int nverts, int offset) = 0;
+    virtual void PushLimitMatrix(int nverts, int offset) = 0;
 
     /// Pointer back to the mesh owning the table
     FarMesh<U> * GetMesh() { return _mesh; }
@@ -334,8 +333,7 @@ FarSubdivisionTables<U>::PushToLimitSurface( int level, void * clientdata ) {
     int offset = this->GetFirstVertexOffset( level );
 
     /* Build and push projection matrix */
-    this->PushProjectionMatrix(nverts, offset);
-    this->PushEvalSurfMatrix(nverts, offset);
+    this->PushLimitMatrix(nverts, offset);
 }
 
 template <class U>

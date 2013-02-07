@@ -84,8 +84,7 @@ public:
     /// Compute the positions of refined vertices using the specified kernels
     virtual void Apply( int level, void * data=0 ) const;
     virtual void PushToLimitSurface( int level, void * data=0 ) const;
-    virtual void PushProjectionMatrix(int nverts, int offset) { /* no-op */ };
-    virtual void PushEvalSurfMatrix(int nverts, int offset) { /* no-op */ };
+    virtual void PushLimitMatrix(int nverts, int offset) { /* no-op */ };
 
     /// Face-vertices indexing table accessor
     FarTable<unsigned int> const & Get_F_IT( ) const { return _F_IT; }
