@@ -129,9 +129,6 @@ public:
     /// Return the corresponding index of the HbrVertex<T> in the new mesh
     int GetVertexID( HbrVertex<T> * v );
 
-    /// Return the corresponding index of the Far Vertex Id in the Hbr mesh
-    HbrVertex<T> * GetHbrVertex( int farVertexID );
-
     /// Returns a the mapping between HbrVertex<T>->GetID() and Far vertices indices
     std::vector<int> const & GetRemappingTable( ) const { return _remapTable; }
     std::vector<int> const & GetUnmappingTable( ) const { return _unmapTable; }
@@ -557,12 +554,6 @@ template <class T, class U> int
 FarMeshFactory<T,U>::GetVertexID( HbrVertex<T> * v ) {
     assert( v  and (v->GetID() < _remapTable.size()) );
     return _remapTable[ v->GetID() ];
-}
-
-template <class T, class U> HbrVertex<T> *
-FarMeshFactory<T,U>::GetHbrVertex( int i ) {
-    assert( (0 <= i) and (i < _unmapTable.size()) );
-    return _hbrMesh->GetVertex( _unmapTable[i] );
 }
 
 } // end namespace OPENSUBDIV_VERSION
