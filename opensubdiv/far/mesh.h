@@ -62,6 +62,14 @@
 #include <iostream>
 
 #include "../version.h"
+
+#include "../osd/mutex.h"
+
+#include "../hbr/mesh.h"
+#include "../hbr/bilinear.h"
+#include "../hbr/catmark.h"
+#include "../hbr/loop.h"
+
 #include "../far/subdivisionTables.h"
 #include "../far/vertexEditTables.h"
 
@@ -130,7 +138,13 @@ private:
     // declaration of the templated vertex class U.
     template <class X, class Y> friend class FarMeshFactory;
 
-    FarMesh() : _subdivisionTables(0), _vertexEditTables(0), _dispatcher(0) { }
+    FarMesh(HbrMesh<U> * _hbrMesh, const std::vector<int>& unmap) :
+        _subdivisionTables(0),
+        _vertexEditTables(0),
+        _dispatcher(0),
+        _hbrMesh(_hbrMesh),
+        _unmapTable(unmap)
+    { }
 
     // non-copyable, so these are not implemented:
     FarMesh(FarMesh<U> const &);
@@ -159,6 +173,10 @@ private:
 
     // number of vertices at level 0 of subdivision
     int _numCoarseVertices;
+
+    // mbd: hack so subdiv tables can query hbr
+    HbrMesh<U> * _hbrMesh;
+    const std::vector<int>& _unmapTable;
 };
 
 template <class U>

@@ -80,7 +80,7 @@
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
-OsdMesh::OsdMesh() : _farMesh(NULL), _dispatcher(NULL), _hbrMesh(NULL) { }
+OsdMesh::OsdMesh() : _farMesh(NULL), _dispatcher(NULL) { }
 
 OsdMesh::~OsdMesh() {
 
@@ -89,9 +89,6 @@ OsdMesh::~OsdMesh() {
 
     if(_farMesh)
         delete _farMesh;
-
-    if(_hbrMesh)
-        delete _hbrMesh;
 }
 
 void

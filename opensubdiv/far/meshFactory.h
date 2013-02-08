@@ -129,8 +129,12 @@ public:
     /// Return the corresponding index of the HbrVertex<T> in the new mesh
     int GetVertexID( HbrVertex<T> * v );
 
+    /// Return the corresponding index of the Far Vertex Id in the Hbr mesh
+    HbrVertex<T> * GetHbrVertex( int farVertexID );
+
     /// Returns a the mapping between HbrVertex<T>->GetID() and Far vertices indices
     std::vector<int> const & GetRemappingTable( ) const { return _remapTable; }
+    std::vector<int> const & GetUnmappingTable( ) const { return _unmapTable; }
 
 private:
     friend struct FarBilinearSubdivisionTablesFactory<T,U>;
@@ -175,7 +179,11 @@ private:
 
     // remapping table to translate vertex ID's between Hbr indices and the
     // order of the same vertices in the tables
+    // (mbd) remapping table to translate vertex ID's from HBR to FAR ?
     std::vector<int> _remapTable;
+
+    // remapping table to translate vertex ID's from FAR to HBR
+    std::vector<int> _unmapTable;
 
     // lists of vertices sorted by type and level
     std::vector<std::vector< HbrVertex<T> *> > _faceVertsList,
@@ -319,6 +327,7 @@ FarMeshFactory<T,U>::FarMeshFactory( HbrMesh<T> * mesh, int maxlevel ) :
     edgeCounts.assign(maxlevel+1,0);
 
     _remapTable.resize( maxvertid+1, -1);
+    _unmapTable.resize( maxvertid+1, -1);
 
     // Second pass (vertices) : calculate the starting indices of the sub-tables
     // (face, edge, verts...) and populate the remapping table.
@@ -361,6 +370,9 @@ FarMeshFactory<T,U>::FarMeshFactory( HbrMesh<T> * mesh, int maxlevel ) :
         for (size_t i=0; i<_vertVertsList[l].size(); ++i)
             _remapTable[ _vertVertsList[l][i]->GetID() ]=_vertVertIdx[l]+(int)i;
 
+    // Populate the far->hbr vertex mapping
+    for (int i=0; i < _remapTable.size(); i++)
+        _unmapTable[ _remapTable[i] ] = i;
 
     // Third pass (faces) : populate the face lists.
     int fsize=0;
@@ -493,7 +505,7 @@ FarMeshFactory<T,U>::Create( FarDispatcher<U> * dispatch ) {
     if (_maxlevel<1)
         return 0;
 
-    FarMesh<U> * result = new FarMesh<U>();
+    FarMesh<U> * result = new FarMesh<U>(_hbrMesh, GetUnmappingTable());
 
     if (dispatch)
         result->_dispatcher = dispatch;
@@ -545,6 +557,12 @@ template <class T, class U> int
 FarMeshFactory<T,U>::GetVertexID( HbrVertex<T> * v ) {
     assert( v  and (v->GetID() < _remapTable.size()) );
     return _remapTable[ v->GetID() ];
+}
+
+template <class T, class U> HbrVertex<T> *
+FarMeshFactory<T,U>::GetHbrVertex( int i ) {
+    assert( (0 <= i) and (i < _unmapTable.size()) );
+    return _hbrMesh->GetVertex( _unmapTable[i] );
 }
 
 } // end namespace OPENSUBDIV_VERSION
