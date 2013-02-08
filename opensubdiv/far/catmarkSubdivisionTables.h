@@ -65,6 +65,7 @@
 
 #include "../far/subdivisionTables.h"
 
+using namespace std;
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
@@ -85,6 +86,7 @@ public:
     /// Compute the positions of refined vertices using the specified kernels
     virtual void Apply( int level, void * data=0 ) const;
     virtual void PushLimitMatrix(int nverts, int offset);
+    static double EvalSpline(double coeffs[16], double u, double v);
 
     /// Face-vertices indexing table accessor
     FarTable<unsigned int> const & Get_F_IT( ) const { return _F_IT; }
@@ -380,6 +382,19 @@ FarCatmarkSubdivisionTables<U>::computeVertexPointsB( int offset, int level, int
     }
 }
 
+#define IX(i,j,n) ((i)+(n)*(j))
+
+template <class U> double
+FarCatmarkSubdivisionTables<U>::EvalSpline(double C[16], double u, double v) {
+    // from stam's patent application
+    double s0, s1, s2, s3;
+    s0=C[0]+u*(C[1]+u*(C[2]+u*C[3]));
+    s1=C[4]+u*(C[5]+u*(C[6]+u*C[7]));
+    s2=C[8]+u*(C[9]+u*(C[10]+u*C[11]));
+    s3=C[12]+u*(C[13]+u*(C[14]+u*C[15]));
+    return s0+v*(s1+v*(s2+v*s3));
+}
+
 template <class U> void
 FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
 
@@ -399,13 +414,48 @@ FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
 
     dispatch->StageMatrix(nverts, nverts);
     {
-        for(int i = 0; i < nverts; i++) {
-            HbrVertex<U> *hbrv = this->_mesh->GetHbrVertex(offset + i);
-            assert(hbrv != NULL);
-            int valence = hbrv->GetFace()->GetNumVertices();
-            assert(valence == 4);
+        for(int vi = 0; vi < nverts; vi++) {
+            /* Get Hbr handle */
+            HbrVertex<U> *vertex = this->_mesh->GetHbrVertex(offset + vi);
+            HbrFace<U> *face = vertex->GetFace();
+            int N = vertex->GetValence();
+            int K = 2*N+8;
 
-            dispatch->StageElem(i, i, 1.0);
+            /* determine which vertices to combine (specified by global far indices)
+             * and the vertex's u-v parameterization within */
+            vector<int> globalSrcIndicies;
+            globalSrcIndicies.reserve(K);
+            float u = 1.0f,
+                  v = 1.0f;
+            /* TODO: find orientation within a patch. For now, be naive: */
+            for (int i = 0; i < K; i++)
+                globalSrcIndicies[i] = offset + i;
+
+            /* build the K-vector of evaluation coeffs */
+            float n = floor(min(-log2(u),-log2(v)));
+            float pow2 = pow(2,n-1);
+            u *= pow2; v *= pow2;
+            int k;
+            if      (v < 0.5f) { k = 0; u=2.f*u-1.f; v=2.f*v;     }
+            else if (u < 0.5f) { k = 2; u=2.f*u;     v=2.f*v-1.f; }
+            else               { k = 1; u=2.f*u-1.f; v=2.f*v-1.f; }
+
+            float Eval[K];
+            for (int i = 0; i < K; i++)
+                Eval[i] = pow(this->eigen[N]->val[i],n-1) *
+                    (float) EvalSpline(&(this->eigen[N]->Phi[k][i*16]),u,v);
+
+            /* compute Eval * eigen[N].iV matvec (aka the final weights) */
+            float Weights[K];
+            for (int i = 0; i < K; i++) {
+                Weights[i] = 0.0f;
+                for (int j = 0; j < K; j++)
+                    Weights[i] += this->eigen[N]->vecI[IX(i,j,K)] * Eval[i];
+            }
+
+            /* insert weights into staged matrix */
+            for (int i = 0; i < K; i++)
+                dispatch->StageElem(vi, globalSrcIndicies[i] - offset, Weights[i]);
         }
     }
     dispatch->PushMatrix();
