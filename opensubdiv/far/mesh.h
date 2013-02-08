@@ -176,7 +176,7 @@ private:
 
     // mbd: hack so subdiv tables can query hbr
     HbrMesh<U> * _hbrMesh;
-    const std::vector<int>& _unmapTable;
+    const std::vector<int> _unmapTable;
 public:
     HbrVertex<U> * GetHbrVertex( int farVertexID );
 };

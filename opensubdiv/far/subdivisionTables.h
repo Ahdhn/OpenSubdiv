@@ -397,10 +397,10 @@ FarSubdivisionTables<U>::~FarSubdivisionTables() {
         for (int i = 0; i < Nmax-2; i++) {
             free(eigen[i]->val);
             free(eigen[i]->vecI);
-            free(eigen[i]->Phi);
             free(eigen[i]->Phi[0]);
             free(eigen[i]->Phi[1]);
             free(eigen[i]->Phi[2]);
+            free(eigen[i]->Phi);
             free(eigen[i]);
         }
         free(eigen);

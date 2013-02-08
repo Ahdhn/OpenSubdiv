@@ -400,7 +400,11 @@ FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
     dispatch->StageMatrix(nverts, nverts);
     {
         for(int i = 0; i < nverts; i++) {
-            assert(this->_mesh->GetHbrVertex(offset + i));
+            HbrVertex<U> *hbrv = this->_mesh->GetHbrVertex(offset + i);
+            assert(hbrv != NULL);
+            int valence = hbrv->GetFace()->GetNumVertices();
+            assert(valence == 4);
+
             dispatch->StageElem(i, i, 1.0);
         }
     }
