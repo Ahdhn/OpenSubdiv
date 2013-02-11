@@ -417,7 +417,7 @@ FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
         for(int vi = 0; vi < nverts; vi++) {
             /* Get Hbr handle */
             HbrVertex<U> *vertex = this->_mesh->GetHbrVertex(offset + vi);
-            HbrFace<U> *face = vertex->GetFace();
+            HbrHalfedge<U> *edge = vertex->GetIncidentEdge();
             int N = vertex->GetValence();
             int K = 2*N+8;
 
