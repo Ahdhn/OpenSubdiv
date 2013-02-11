@@ -59,6 +59,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <cfloat>
 #include <vector>
 
 #include "../version.h"
@@ -423,13 +424,12 @@ FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
 
             /* determine which vertices to combine (specified by global far indices)
              * and the vertex's u-v parameterization within */
-            vector<int> globalSrcIndicies;
-            globalSrcIndicies.reserve(K);
-            float u = 1.0f,
-                  v = 1.0f;
+            vector<int> globalSrcIndicies(K, 0.0f);
+            float u = 0.0f + 2.0f * FLT_EPSILON,
+                  v = 0.0f + 2.0f * FLT_EPSILON;
             /* TODO: find orientation within a patch. For now, be naive: */
             for (int i = 0; i < K; i++)
-                globalSrcIndicies[i] = offset + i;
+                globalSrcIndicies[i] = offset + vi;
 
             /* build the K-vector of evaluation coeffs */
             float n = floor(min(-log2(u),-log2(v)));
