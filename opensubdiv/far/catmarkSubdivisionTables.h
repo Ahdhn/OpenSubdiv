@@ -413,7 +413,29 @@ FarCatmarkSubdivisionTables<U>::Orient(HbrHalfedge<U> *edge, float *u, float *v)
     else    /* eA is extraord or patch is reg */ { e0 = eA; *u = FLT_EPSILON; *v = FLT_EPSILON; }
     assert(e0 != NULL);
 
-    return vector<HbrVertex<U>*>();
+    int N = e0->GetVertex()->GetValence();
+    vector<HbrVertex<U>*> PatchCV(2*N+8, NULL);
+
+    PatchCV[0] = e0->GetOrgVertex();
+    PatchCV[1] = e0->GetOpposite()->GetNext()->GetDestVertex();
+    PatchCV[2] = e0->GetOpposite()->GetPrev()->GetOrgVertex();
+    PatchCV[3] = e0->GetDestVertex();
+    PatchCV[4] = e0->GetNext()->GetDestVertex();
+    PatchCV[5] = e0->GetPrev()->GetOrgVertex();
+    PatchCV[6] = e0->GetPrev()->GetOpposite()->GetNext()->GetDestVertex();
+    PatchCV[7] = e0->GetPrev()->GetOpposite()->GetPrev()->GetOrgVertex();
+
+    // TODO 8..2*N
+
+    PatchCV[2*N+1] = e0->GetNext()->GetOpposite()->GetPrev()->GetOpposite()->GetNext()->GetOrgVertex();
+    PatchCV[2*N+2] = e0->GetNext()->GetNext()->GetOpposite()->GetNext()->GetOrgVertex();
+    PatchCV[2*N+3] = e0->GetNext()->GetNext()->GetOpposite()->GetPrev()->GetDestVertex();
+    PatchCV[2*N+4] = e0->GetPrev()->GetOpposite()->GetNext()->GetOpposite()->GetPrev()->GetDestVertex();
+    PatchCV[2*N+5] = e0->GetNext()->GetOpposite()->GetPrev()->GetDestVertex();
+    PatchCV[2*N+6] = e0->GetNext()->GetOpposite()->GetNext()->GetOrgVertex();
+    PatchCV[2*N+7] = e0->GetOpposite()->GetPrev()->GetOpposite()->GetNext()->GetOrgVertex();
+
+    return PatchCV;
 }
 
 template <class U> void
