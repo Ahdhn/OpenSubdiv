@@ -88,6 +88,7 @@ public:
     virtual void Apply( int level, void * data=0 ) const;
     virtual void PushLimitMatrix(int nverts, int offset);
     static double EvalSpline(double coeffs[16], double u, double v);
+    virtual std::vector<HbrVertex<U>*> Orient(HbrHalfedge<U> *edge, float *u, float *v);
 
     /// Face-vertices indexing table accessor
     FarTable<unsigned int> const & Get_F_IT( ) const { return _F_IT; }
@@ -396,6 +397,25 @@ FarCatmarkSubdivisionTables<U>::EvalSpline(double C[16], double u, double v) {
     return s0+v*(s1+v*(s2+v*s3));
 }
 
+template <class U> std::vector<HbrVertex<U>*>
+FarCatmarkSubdivisionTables<U>::Orient(HbrHalfedge<U> *edge, float *u, float *v)  {
+    /* find extraordinary vertex */
+    HbrHalfedge<U> *e0 = NULL,
+                   *eA = edge,
+                   *eB = edge->GetNext(),
+                   *eC = edge->GetNext()->GetNext(),
+                   *eD = edge->GetNext()->GetNext()->GetNext();
+
+    /* find e0 pointing to extraordinary vertex, if one exists */
+    if      (eD->GetVertex()->GetValence() != 4) { e0 = eD; *u = FLT_EPSILON; *v = 1.0f;        }
+    else if (eC->GetVertex()->GetValence() != 4) { e0 = eC; *u = 1.0f;        *v = 1.0f;        }
+    else if (eB->GetVertex()->GetValence() != 4) { e0 = eB; *u = 1.0f;        *v = FLT_EPSILON; }
+    else    /* eA is extraord or patch is reg */ { e0 = eA; *u = FLT_EPSILON; *v = FLT_EPSILON; }
+    assert(e0 != NULL);
+
+    return vector<HbrVertex<U>*>();
+}
+
 template <class U> void
 FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
 
@@ -416,20 +436,23 @@ FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
     dispatch->StageMatrix(nverts, nverts);
     {
         for(int vi = 0; vi < nverts; vi++) {
-            /* Get Hbr handle */
+            /* Get Hbr handles */
             HbrVertex<U> *vertex = this->_mesh->GetHbrVertex(offset + vi);
             HbrHalfedge<U> *edge = vertex->GetIncidentEdge();
-            int N = vertex->GetValence();
-            int K = 2*N+8;
+            HbrFace<U>     *face = edge->GetFace();
+
+            /* Truths: */
+            assert(edge->GetVertex() == vertex);
+            assert(face->GetNumVertices() == 4);
 
             /* determine which vertices to combine (specified by global far indices)
              * and the vertex's u-v parameterization within */
-            vector<int> globalSrcIndicies(K, 0.0f);
-            float u = 0.0f + 2.0f * FLT_EPSILON,
-                  v = 0.0f + 2.0f * FLT_EPSILON;
-            /* TODO: find orientation within a patch. For now, be naive: */
-            for (int i = 0; i < K; i++)
-                globalSrcIndicies[i] = offset + vi;
+            float u, v;
+            vector<HbrVertex<U>*> PatchVertices = this->Orient(edge, &u, &v);
+            vector<int> IndexMap(PatchVertices.size(), 0);
+            for (int i = 0; i < PatchVertices.size(); i++)
+                IndexMap[i] = this->_mesh->GetFarVertexID(PatchVertices[i]) - offset;
+            int K = IndexMap.size(), N = (K-8) / 2;
 
             /* build the K-vector of evaluation coeffs */
             float n = floor(min(-log2(u),-log2(v)));
@@ -455,7 +478,7 @@ FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
 
             /* insert weights into staged matrix */
             for (int i = 0; i < K; i++)
-                dispatch->StageElem(vi, globalSrcIndicies[i] - offset, Weights[i]);
+                dispatch->StageElem(vi, IndexMap[i], Weights[i]);
         }
     }
     dispatch->PushMatrix();

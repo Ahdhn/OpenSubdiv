@@ -502,7 +502,7 @@ FarMeshFactory<T,U>::Create( FarDispatcher<U> * dispatch ) {
     if (_maxlevel<1)
         return 0;
 
-    FarMesh<U> * result = new FarMesh<U>(_hbrMesh, GetUnmappingTable());
+    FarMesh<U> * result = new FarMesh<U>(_hbrMesh, GetRemappingTable(), GetUnmappingTable());
 
     if (dispatch)
         result->_dispatcher = dispatch;

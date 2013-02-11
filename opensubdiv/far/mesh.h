@@ -138,12 +138,13 @@ private:
     // declaration of the templated vertex class U.
     template <class X, class Y> friend class FarMeshFactory;
 
-    FarMesh(HbrMesh<U> * _hbrMesh, const std::vector<int>& unmap) :
+    FarMesh(HbrMesh<U> * _hbrMesh, const std::vector<int>& remap, const std::vector<int>& unmap) :
         _subdivisionTables(0),
         _vertexEditTables(0),
         _dispatcher(0),
         _hbrMesh(_hbrMesh),
-        _unmapTable(unmap)
+        _unmapTable(unmap),
+        _remapTable(remap)
     { }
 
     // non-copyable, so these are not implemented:
@@ -177,9 +178,18 @@ private:
     // mbd: hack so subdiv tables can query hbr
     HbrMesh<U> * _hbrMesh;
     const std::vector<int> _unmapTable;
+    const std::vector<int> _remapTable;
 public:
     HbrVertex<U> * GetHbrVertex( int farVertexID );
+    int GetFarVertexID( HbrVertex<U> *v );
 };
+
+template <class U> int
+FarMesh<U>::GetFarVertexID( HbrVertex<U> *v ) {
+    int i = v->GetID();
+    assert( (0 <= i) and (i < _remapTable.size()) );
+    return _remapTable[i];
+}
 
 template <class U> HbrVertex<U> *
 FarMesh<U>::GetHbrVertex( int i ) {
