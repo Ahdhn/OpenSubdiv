@@ -384,8 +384,6 @@ FarCatmarkSubdivisionTables<U>::computeVertexPointsB( int offset, int level, int
     }
 }
 
-#define IX(i,j,n) ((i)+(n)*(j))
-
 template <class U> double
 FarCatmarkSubdivisionTables<U>::EvalSpline(double C[16], double u, double v) {
     // from stam's patent application
@@ -508,7 +506,7 @@ FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
             for (int i = 0; i < K; i++) {
                 Weights[i] = 0.0f;
                 for (int j = 0; j < K; j++)
-                    Weights[i] += this->eigen[N]->vecI[IX(i,j,K)] * Eval[i];
+                    Weights[i] += this->eigen[N]->vecI[i+j*K] * Eval[i];
             }
 
 #if DEBUG
