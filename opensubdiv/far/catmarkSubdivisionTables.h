@@ -407,9 +407,9 @@ FarCatmarkSubdivisionTables<U>::Orient(HbrHalfedge<U> *edge, float *u, float *v)
                    *eD = edge->GetNext()->GetNext()->GetNext();
 
     /* find e0 pointing to extraordinary vertex, if one exists */
-    if      (eD->GetVertex()->GetValence() != 4) { e0 = eD; *u = FLT_EPSILON; *v = 1.0f;        }
-    else if (eC->GetVertex()->GetValence() != 4) { e0 = eC; *u = 1.0f;        *v = 1.0f;        }
-    else if (eB->GetVertex()->GetValence() != 4) { e0 = eB; *u = 1.0f;        *v = FLT_EPSILON; }
+    if      (eD->GetOrgVertex()->GetValence() != 4) { e0 = eD; *u = FLT_EPSILON; *v = 1.0f;        }
+    else if (eC->GetOrgVertex()->GetValence() != 4) { e0 = eC; *u = 1.0f;        *v = 1.0f;        }
+    else if (eB->GetOrgVertex()->GetValence() != 4) { e0 = eB; *u = 1.0f;        *v = FLT_EPSILON; }
     else    /* eA is extraord or patch is reg */ { e0 = eA; *u = FLT_EPSILON; *v = FLT_EPSILON; }
     assert(e0 != NULL);
 
@@ -487,6 +487,7 @@ FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
             for (int i = 0; i < PatchVertices.size(); i++)
                 IndexMap[i] = this->_mesh->GetFarVertexID(PatchVertices[i]) - offset;
             int K = IndexMap.size(), N = (K-8) / 2;
+            assert(K == 2*N+8);
 
             /* build the K-vector of evaluation coeffs */
             float n = floor(min(-log2(u),-log2(v)));
@@ -500,7 +501,7 @@ FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
             float Eval[K];
             for (int i = 0; i < K; i++)
                 Eval[i] = pow(this->eigen[N]->val[i],n-1) *
-                    (float) EvalSpline(&(this->eigen[N]->Phi[k][i*16]),u,v);
+                          EvalSpline(&(this->eigen[N]->Phi[k][i*16]),u,v);
 
             /* compute Eval * eigen[N].iV matvec (aka the final weights) */
             float Weights[K];
@@ -509,6 +510,19 @@ FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
                 for (int j = 0; j < K; j++)
                     Weights[i] += this->eigen[N]->vecI[IX(i,j,K)] * Eval[i];
             }
+
+#if DEBUG
+            if (vertex->GetValence() != 4) {
+                float sum = 0.0f;
+                for (int i = 0; i < K; i++)
+                    sum += Weights[i];
+                printf("Vertex %d (sum %f): ", vi, sum);
+                for (int i = 0; i < K; i++)
+                    if (fabs(Weights[i]) > 2.0f*FLT_EPSILON)
+                        printf(" %g*v%d", Weights[i], IndexMap[i]);
+                printf("\n");
+            }
+#endif
 
             /* insert weights into staged matrix */
             for (int i = 0; i < K; i++)
