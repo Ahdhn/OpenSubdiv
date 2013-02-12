@@ -87,7 +87,7 @@ public:
     /// Compute the positions of refined vertices using the specified kernels
     virtual void Apply( int level, void * data=0 ) const;
     virtual void PushLimitMatrix(int nverts, int offset);
-    static double EvalSpline(double coeffs[16], double u, double v);
+    static double EvalSpline(double coeffs[16], double u, double v, int i, int K);
     virtual std::vector<HbrVertex<U>*> Orient(HbrHalfedge<U> *edge, float *u, float *v);
 
     /// Face-vertices indexing table accessor
@@ -384,14 +384,17 @@ FarCatmarkSubdivisionTables<U>::computeVertexPointsB( int offset, int level, int
     }
 }
 
+#define IX(i,j,n) ((i)+(n)*(j))
+#define EIGEN(n) (this->eigen[(n)-3])
+
 template <class U> double
-FarCatmarkSubdivisionTables<U>::EvalSpline(double C[16], double u, double v) {
+FarCatmarkSubdivisionTables<U>::EvalSpline(double *C, double u, double v, int i, int K) {
     // from stam's patent application
     double s0, s1, s2, s3;
-    s0=C[0]+u*(C[1]+u*(C[2]+u*C[3]));
-    s1=C[4]+u*(C[5]+u*(C[6]+u*C[7]));
-    s2=C[8]+u*(C[9]+u*(C[10]+u*C[11]));
-    s3=C[12]+u*(C[13]+u*(C[14]+u*C[15]));
+    s0=C[i+0*K]+u*(C[i+1*K]+u*(C[i+2*K]+u*C[i+3*K]));
+    s1=C[i+4*K]+u*(C[i+5*K]+u*(C[i+6*K]+u*C[i+7*K]));
+    s2=C[i+8*K]+u*(C[i+9*K]+u*(C[i+10*K]+u*C[i+11*K]));
+    s3=C[i+12*K]+u*(C[i+13*K]+u*(C[i+14*K]+u*C[i+15*K]));
     return s0+v*(s1+v*(s2+v*s3));
 }
 
@@ -438,12 +441,12 @@ FarCatmarkSubdivisionTables<U>::Orient(HbrHalfedge<U> *edge, float *u, float *v)
         assert(i == 2*N+1);
 
     PatchCV[2*N+1] = e0->GetNext()->GetOpposite()->GetPrev()->GetOpposite()->GetNext()->GetOrgVertex();
-    PatchCV[2*N+2] = e0->GetNext()->GetNext()->GetOpposite()->GetNext()->GetOrgVertex();
-    PatchCV[2*N+3] = e0->GetNext()->GetNext()->GetOpposite()->GetPrev()->GetDestVertex();
-    PatchCV[2*N+4] = e0->GetPrev()->GetOpposite()->GetNext()->GetOpposite()->GetPrev()->GetDestVertex();
-    PatchCV[2*N+5] = e0->GetNext()->GetOpposite()->GetPrev()->GetDestVertex();
-    PatchCV[2*N+6] = e0->GetNext()->GetOpposite()->GetNext()->GetOrgVertex();
-    PatchCV[2*N+7] = e0->GetOpposite()->GetPrev()->GetOpposite()->GetNext()->GetOrgVertex();
+    PatchCV[2*N+2] = e0->GetNext()->GetNext()->GetOpposite()->GetNext()->GetDestVertex();
+    PatchCV[2*N+3] = e0->GetNext()->GetNext()->GetOpposite()->GetPrev()->GetOrgVertex();
+    PatchCV[2*N+4] = e0->GetPrev()->GetOpposite()->GetNext()->GetOpposite()->GetPrev()->GetOrgVertex();
+    PatchCV[2*N+5] = e0->GetNext()->GetOpposite()->GetPrev()->GetOrgVertex();
+    PatchCV[2*N+6] = e0->GetNext()->GetOpposite()->GetNext()->GetDestVertex();
+    PatchCV[2*N+7] = e0->GetOpposite()->GetPrev()->GetOpposite()->GetNext()->GetDestVertex();
 
     return PatchCV;
 }
@@ -488,8 +491,8 @@ FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
             assert(K == 2*N+8);
 
             /* build the K-vector of evaluation coeffs */
-            float n = floor(min(-log2(u),-log2(v)));
-            float pow2 = pow(2,n-1);
+            float n = floor(fmin(-log2(u),-log2(v)));
+            float pow2 = exp2(n-1);
             u *= pow2; v *= pow2;
             int k;
             if      (v < 0.5f) { k = 0; u=2.f*u-1.f; v=2.f*v;     }
@@ -498,15 +501,15 @@ FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
 
             float Eval[K];
             for (int i = 0; i < K; i++)
-                Eval[i] = pow(this->eigen[N]->val[i],n-1) *
-                          EvalSpline(&(this->eigen[N]->Phi[k][i*16]),u,v);
+                Eval[i] = pow(EIGEN(N)->val[i],n-1) *
+                          EvalSpline( &(EIGEN(N)->Phi[k][0]), u, v, i, K );
 
             /* compute Eval * eigen[N].iV matvec (aka the final weights) */
             float Weights[K];
             for (int i = 0; i < K; i++) {
                 Weights[i] = 0.0f;
                 for (int j = 0; j < K; j++)
-                    Weights[i] += this->eigen[N]->vecI[i+j*K] * Eval[i];
+                    Weights[i] += EIGEN(N)->vecI[IX(i,j,K)] * Eval[i];
             }
 
 #if DEBUG
@@ -514,11 +517,21 @@ FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
                 float sum = 0.0f;
                 for (int i = 0; i < K; i++)
                     sum += Weights[i];
-                printf("Vertex %d (sum %f): ", vi, sum);
+                printf("Vertex %d (valence %d, sum %f, k %d): ", vi, vertex->GetValence(), sum, k);
                 for (int i = 0; i < K; i++)
-                    if (fabs(Weights[i]) > 2.0f*FLT_EPSILON)
+                    //if (fabs(Weights[i]) > FLT_EPSILON)
+                    if (fabs(Weights[i]) > 0)
                         printf(" %g*v%d", Weights[i], IndexMap[i]);
                 printf("\n");
+
+                /*
+                printf("Using vecI:\n");
+                for (int j = 0; j < K; j++) {
+                    for (int kk = 0; kk < K; kk++)
+                        printf(" %6.3f", EIGEN(N)->vecI[IX(j,kk,K)]);
+                    printf("\n");
+                }
+                */
             }
 #endif
 
