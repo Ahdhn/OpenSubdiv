@@ -408,10 +408,10 @@ FarCatmarkSubdivisionTables<U>::Orient(HbrHalfedge<U> *edge, float *u, float *v)
     if      (eD->GetOrgVertex()->GetValence() != 4) { e0 = eD; *u = FLT_EPSILON; *v = 1.0f;        }
     else if (eC->GetOrgVertex()->GetValence() != 4) { e0 = eC; *u = 1.0f;        *v = 1.0f;        }
     else if (eB->GetOrgVertex()->GetValence() != 4) { e0 = eB; *u = 1.0f;        *v = FLT_EPSILON; }
-    else    /* eA is extraord or patch is reg */ { e0 = eA; *u = FLT_EPSILON; *v = FLT_EPSILON; }
+    else    /* eA has irreg vert or patch is reg */ { e0 = eA; *u = FLT_EPSILON; *v = FLT_EPSILON; }
     assert(e0 != NULL);
 
-    int N = e0->GetVertex()->GetValence();
+    int N = e0->GetOrgVertex()->GetValence();
     vector<HbrVertex<U>*> PatchCV(2*N+8, NULL);
 
     PatchCV[0] = e0->GetOrgVertex();
