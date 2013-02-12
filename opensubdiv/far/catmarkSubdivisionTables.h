@@ -425,7 +425,19 @@ FarCatmarkSubdivisionTables<U>::Orient(HbrHalfedge<U> *edge, float *u, float *v)
     PatchCV[6] = e0->GetPrev()->GetOpposite()->GetNext()->GetDestVertex();
     PatchCV[7] = e0->GetPrev()->GetOpposite()->GetPrev()->GetOrgVertex();
 
-    // TODO 8..2*N
+    int i = 8;
+    for (HbrHalfedge<U> *h = e0->GetPrev()->GetOpposite()->GetPrev()->GetOpposite();
+            h != e0->GetOpposite()->GetNext();
+            h = h->GetPrev()->GetOpposite()) {
+        PatchCV[i++] = h->GetNext()->GetOrgVertex();
+        HbrVertex<U> *shared = h->GetPrev()->GetOrgVertex();
+        if (shared != PatchCV[1])
+            PatchCV[i++] = shared;
+    }
+    if (N == 3)
+        assert(i == 8);
+    else
+        assert(i == 2*N+1);
 
     PatchCV[2*N+1] = e0->GetNext()->GetOpposite()->GetPrev()->GetOpposite()->GetNext()->GetOrgVertex();
     PatchCV[2*N+2] = e0->GetNext()->GetNext()->GetOpposite()->GetNext()->GetOrgVertex();
