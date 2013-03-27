@@ -216,6 +216,8 @@ initializeShapes( ) {
 #include <shapes/catmark_square_hedit3.h>
     g_defaultShapes.push_back(SimpleShape(catmark_square_hedit3, "catmark_square_hedit3", kCatmark));
 
+#include <shapes/catmark_square_hedit4.h>
+    g_defaultShapes.push_back(SimpleShape(catmark_square_hedit4, "catmark_square_hedit4", kCatmark));
 
 
 #include <shapes/loop_cube_creases0.h>
