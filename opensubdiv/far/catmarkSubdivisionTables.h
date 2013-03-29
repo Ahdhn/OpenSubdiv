@@ -417,6 +417,8 @@ FarCatmarkSubdivisionTables<U>::Orient(HbrHalfedge<U> *edge, float *u, float *v)
     int N = e0->GetOrgVertex()->GetValence();
     vector<HbrVertex<U>*> PatchCV(2*N+8, NULL);
 
+#define USE_OLD_ORIENTATION 0
+#if USE_OLD_ORIENTATION
     PatchCV[0] = e0->GetOrgVertex();
     PatchCV[1] = e0->GetOpposite()->GetNext()->GetDestVertex();
     PatchCV[2] = e0->GetOpposite()->GetPrev()->GetOrgVertex();
@@ -440,6 +442,30 @@ FarCatmarkSubdivisionTables<U>::Orient(HbrHalfedge<U> *edge, float *u, float *v)
     else
         assert(i == 2*N+1);
 
+    PatchCV[2*N+1] = e0->GetNext()->GetOpposite()->GetPrev()->GetOpposite()->GetNext()->GetDestVertex();
+    PatchCV[2*N+2] = e0->GetNext()->GetNext()->GetOpposite()->GetNext()->GetDestVertex();
+    PatchCV[2*N+3] = e0->GetNext()->GetNext()->GetOpposite()->GetPrev()->GetOrgVertex();
+    PatchCV[2*N+4] = e0->GetPrev()->GetOpposite()->GetNext()->GetOpposite()->GetPrev()->GetOrgVertex();
+    PatchCV[2*N+5] = e0->GetNext()->GetOpposite()->GetPrev()->GetOrgVertex();
+    PatchCV[2*N+6] = e0->GetNext()->GetOpposite()->GetNext()->GetDestVertex();
+    PatchCV[2*N+7] = e0->GetOpposite()->GetPrev()->GetOpposite()->GetNext()->GetDestVertex();
+
+#else
+    PatchCV[0] = e0->GetOrgVertex();
+    PatchCV[1] = e0->GetNext()->GetOrgVertex();
+    PatchCV[2] = e0->GetNext()->GetNext()->GetOrgVertex();
+    PatchCV[3] = e0->GetNext()->GetNext()->GetNext()->GetOrgVertex();
+
+    int i = 4;
+    for (HbrHalfedge<U> *h = e0->GetPrev()->GetOpposite()->GetPrev();
+            h != e0->GetOpposite();
+            h = h->GetOpposite()->GetPrev()) {
+        PatchCV[i++] = h->GetPrev()->GetOrgVertex();
+        PatchCV[i++] = h->GetOrgVertex();
+    }
+    assert(i == 2*N);
+
+    PatchCV[2*N+0] = e0->GetOpposite()->GetPrev()->GetOrgVertex();
     PatchCV[2*N+1] = e0->GetNext()->GetOpposite()->GetPrev()->GetOpposite()->GetNext()->GetOrgVertex();
     PatchCV[2*N+2] = e0->GetNext()->GetNext()->GetOpposite()->GetNext()->GetDestVertex();
     PatchCV[2*N+3] = e0->GetNext()->GetNext()->GetOpposite()->GetPrev()->GetOrgVertex();
@@ -447,6 +473,7 @@ FarCatmarkSubdivisionTables<U>::Orient(HbrHalfedge<U> *edge, float *u, float *v)
     PatchCV[2*N+5] = e0->GetNext()->GetOpposite()->GetPrev()->GetOrgVertex();
     PatchCV[2*N+6] = e0->GetNext()->GetOpposite()->GetNext()->GetDestVertex();
     PatchCV[2*N+7] = e0->GetOpposite()->GetPrev()->GetOpposite()->GetNext()->GetDestVertex();
+#endif
 
     return PatchCV;
 }
@@ -505,7 +532,7 @@ FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
             for (int i = 0; i < K; i++) {
                 Eval[i] = pow(EIGEN(N)->val[i],n-1) *
                           EvalSpline( &(EIGEN(N)->Phi[k][0]), u, v, i, K );
-                printf("\t%g = pow(%g,%g) * %g\n", Eval[i], EIGEN(N)->val[i], n-1, EvalSpline( &(EIGEN(N)->Phi[k][0]), u, v, i, K ));
+                printf("%d\t%g = pow(%g,%g) * %g\n", i,  Eval[i], EIGEN(N)->val[i], n-1, EvalSpline( &(EIGEN(N)->Phi[k][0]), u, v, i, K ));
             }
 
             /* compute Eval * eigen[N].iV matvec (aka the final weights) */
