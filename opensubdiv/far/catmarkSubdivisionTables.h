@@ -88,7 +88,7 @@ public:
     virtual void Apply( int level, void * data=0 ) const;
     virtual void PushLimitMatrix(int nverts, int offset);
     static double EvalSpline(double coeffs[16], double u, double v, int i, int K);
-    virtual std::vector<HbrVertex<U>*> Orient(HbrHalfedge<U> *edge, float *u, float *v);
+    virtual std::vector<HbrVertex<U>*> Orient(HbrHalfedge<U> *edge, float& u, float& v);
 
     /// Face-vertices indexing table accessor
     FarTable<unsigned int> const & Get_F_IT( ) const { return _F_IT; }
@@ -386,6 +386,7 @@ FarCatmarkSubdivisionTables<U>::computeVertexPointsB( int offset, int level, int
 
 #define IX(i,j,n) ((i)+(n)*(j))
 #define EIGEN(n) (this->eigen[(n)-3])
+#define CLAMP(val, lb, ub) (((val)<(lb)) ? (lb) : (((val)>(ub)) ? (ub) : (val)))
 
 template <class U> double
 FarCatmarkSubdivisionTables<U>::EvalSpline(double *C, double u, double v, int i, int K) {
@@ -399,7 +400,7 @@ FarCatmarkSubdivisionTables<U>::EvalSpline(double *C, double u, double v, int i,
 }
 
 template <class U> std::vector<HbrVertex<U>*>
-FarCatmarkSubdivisionTables<U>::Orient(HbrHalfedge<U> *edge, float *u, float *v)  {
+FarCatmarkSubdivisionTables<U>::Orient(HbrHalfedge<U> *edge, float& u, float& v)  {
     /* find extraordinary vertex */
     HbrHalfedge<U> *e0 = NULL,
                    *eA = edge,
@@ -408,10 +409,10 @@ FarCatmarkSubdivisionTables<U>::Orient(HbrHalfedge<U> *edge, float *u, float *v)
                    *eD = edge->GetNext()->GetNext()->GetNext();
 
     /* find e0 pointing to extraordinary vertex, if one exists */
-    if      (eD->GetOrgVertex()->GetValence() != 4) { e0 = eD; *u = 0.0f + FLT_EPSILON; *v = 1.0f - FLT_EPSILON; }
-    else if (eC->GetOrgVertex()->GetValence() != 4) { e0 = eC; *u = 1.0f - FLT_EPSILON; *v = 1.0f - FLT_EPSILON; }
-    else if (eB->GetOrgVertex()->GetValence() != 4) { e0 = eB; *u = 1.0f - FLT_EPSILON; *v = 0.0f + FLT_EPSILON; }
-    else    /* eA has irreg vert or patch is reg */ { e0 = eA; *u = 0.0f + FLT_EPSILON; *v = 0.0f + FLT_EPSILON; }
+    if      (eD->GetOrgVertex()->GetValence() != 4) { e0 = eD; u = 0.0f; v = 1.0f; }
+    else if (eC->GetOrgVertex()->GetValence() != 4) { e0 = eC; u = 1.0f; v = 1.0f; }
+    else if (eB->GetOrgVertex()->GetValence() != 4) { e0 = eB; u = 1.0f; v = 0.0f; }
+    else    /* eA has irreg vert or patch is reg */ { e0 = eA; u = 0.0f; v = 0.0f; }
     assert(e0 != NULL);
 
     int N = e0->GetOrgVertex()->GetValence();
@@ -451,6 +452,7 @@ FarCatmarkSubdivisionTables<U>::Orient(HbrHalfedge<U> *edge, float *u, float *v)
     PatchCV[2*N+7] = e0->GetOpposite()->GetPrev()->GetOpposite()->GetNext()->GetDestVertex();
 
 #else
+#warning Using new vertex orientation.
     PatchCV[0] = e0->GetOrgVertex();
     PatchCV[1] = e0->GetNext()->GetOrgVertex();
     PatchCV[2] = e0->GetNext()->GetNext()->GetOrgVertex();
@@ -509,8 +511,9 @@ FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
 
             /* determine which vertices to combine (specified by global far indices)
              * and the vertex's u-v parameterization within */
-            float uu, vv;
-            vector<HbrVertex<U>*> PatchVertices = this->Orient(edge, &uu, &vv);
+            float u, v;
+            vector<HbrVertex<U>*> PatchVertices = this->Orient(edge, u, v);
+            u = CLAMP(u, .001, .999), v = CLAMP(v, .001, .999);
             vector<int> IndexMap(PatchVertices.size(), 0);
             for (int i = 0; i < PatchVertices.size(); i++)
                 IndexMap[i] = this->_mesh->GetFarVertexID(PatchVertices[i]) - offset;
@@ -518,21 +521,22 @@ FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
             assert(K == 2*N+8);
 
             /* build the K-vector of evaluation coeffs */
-            float n = floor(fmin(-log2(uu),-log2(vv)));
+            float n = floor(fmin(-log2(u),-log2(v)));
             float pow2 = exp2(n-1);
-            float u = uu * pow2,
-                  v = vv * pow2;
+            u *= pow2,
+            v *= pow2;
+
             int k;
             if      (v < 0.5f) { k = 0; u=2.f*u-1.f; v=2.f*v;     }
             else if (u < 0.5f) { k = 2; u=2.f*u;     v=2.f*v-1.f; }
             else               { k = 1; u=2.f*u-1.f; v=2.f*v-1.f; }
 
-            printf("Eval:\n");
+            //printf("Eval:\n");
             float Eval[K];
             for (int i = 0; i < K; i++) {
                 Eval[i] = pow(EIGEN(N)->val[i],n-1) *
                           EvalSpline( &(EIGEN(N)->Phi[k][0]), u, v, i, K );
-                printf("%d\t%g = pow(%g,%g) * %g\n", i,  Eval[i], EIGEN(N)->val[i], n-1, EvalSpline( &(EIGEN(N)->Phi[k][0]), u, v, i, K ));
+                //printf("%d\t%g = pow(%g,%g) * %g\n", i,  Eval[i], EIGEN(N)->val[i], n-1, EvalSpline( &(EIGEN(N)->Phi[k][0]), u, v, i, K ));
             }
 
             /* compute Eval * eigen[N].iV matvec (aka the final weights) */
@@ -551,29 +555,31 @@ FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
                 float sum = 0.0f;
                 for (int i = 0; i < K; i++)
                     sum += Weights[i];
-                printf("Vertex %d (val %d, sum %1.2f, k %d, u %1.1f, v %1.1f):\t", vi, vertex->GetValence(), sum, k, uu, vv);
-                set<int> seen;
-                for (int i = 0; i < K; i++)
-                    if (fabs(Weights[i]) > 0 || Weights[i] != Weights[i]) {
-                        if (seen.find( IndexMap[i] ) != seen.end())
-                            printf("--");
-                        printf("%d ", IndexMap[i]);
-                        seen.insert( IndexMap[i] );
-                    }
-                printf("\t");
-                for (int i = 0; i < K; i++)
-                    if (fabs(Weights[i]) > 0 || Weights[i] != Weights[i])
-                        printf("%1.2g ", Weights[i]);
-                printf("]\n");
+                if (sum != sum) {
+                    printf("Vertex %d (val %d, sum %1.2f, k %d, u' %1.1f, v' %1.1f):\t", vi, vertex->GetValence(), sum, k, u, v);
+                    set<int> seen;
+                    for (int i = 0; i < K; i++)
+                        if (fabs(Weights[i]) > 0 || Weights[i] != Weights[i]) {
+                            if (seen.find( IndexMap[i] ) != seen.end())
+                                printf("--");
+                            printf("%d ", IndexMap[i]);
+                            seen.insert( IndexMap[i] );
+                        }
+                    printf("\t");
+                    for (int i = 0; i < K; i++)
+                        if (fabs(Weights[i]) > 0 || Weights[i] != Weights[i])
+                            printf("%1.2g ", Weights[i]);
+                    printf("]\n");
 
-                /*
-                printf("Using vecI:\n");
-                for (int j = 0; j < K; j++) {
-                    for (int kk = 0; kk < K; kk++)
-                        printf(" %6.3f", EIGEN(N)->vecI[IX(j,kk,K)]);
-                    printf("\n");
+                    /*
+                       printf("Using vecI:\n");
+                       for (int j = 0; j < K; j++) {
+                       for (int kk = 0; kk < K; kk++)
+                       printf(" %6.3f", EIGEN(N)->vecI[IX(j,kk,K)]);
+                       printf("\n");
+                       }
+                    */
                 }
-                */
             }
 #endif
 
