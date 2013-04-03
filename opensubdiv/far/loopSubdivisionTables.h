@@ -298,6 +298,10 @@ FarLoopSubdivisionTables<U>::computeVertexPointsB( int offset, int level, int st
 template <class U> void
 FarLoopSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
 
+    /* not implemented yet */
+    printf("[warn] Limit surface evalution of Loop subdivs not implemented yet.\n");
+    return;
+
     assert(this->_mesh);
     FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
 
