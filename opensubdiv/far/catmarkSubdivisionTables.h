@@ -417,17 +417,16 @@ FarCatmarkSubdivisionTables<U>::Orient(HbrHalfedge<U> *edge, double& u, double& 
                    *eD = edge->GetNext()->GetNext()->GetNext();
 
     /* find e0 pointing to extraordinary vertex, if one exists */
-    if      (eD->GetOrgVertex()->GetValence() != 4) { e0 = eD; u = 0.0; v = 1.0; }
-    else if (eC->GetOrgVertex()->GetValence() != 4) { e0 = eC; u = 1.0; v = 1.0; }
-    else if (eB->GetOrgVertex()->GetValence() != 4) { e0 = eB; u = 1.0; v = 0.0; }
+    // XXX shouldn't we set e0 based on orientation in patch?
+    if      (eD->GetOrgVertex()->GetValence() != 4) { e0 = eA; u = 0.0; v = 1.0; }
+    else if (eC->GetOrgVertex()->GetValence() != 4) { e0 = eA; u = 1.0; v = 1.0; }
+    else if (eB->GetOrgVertex()->GetValence() != 4) { e0 = eA; u = 1.0; v = 0.0; }
     else    /* eA has irreg vert or patch is reg */ { e0 = eA; u = 0.0; v = 0.0; }
     assert(e0 != NULL);
 
     int N = e0->GetOrgVertex()->GetValence();
     vector<HbrVertex<U>*> PatchCV(2*N+8, NULL);
 
-#define USE_PAPER_ORIENTATION 1
-#if USE_PAPER_ORIENTATION
     PatchCV[0] = e0->GetOrgVertex();
     PatchCV[1] = e0->GetOpposite()->GetNext()->GetDestVertex();
     PatchCV[2] = e0->GetOpposite()->GetPrev()->GetOrgVertex();
@@ -450,31 +449,6 @@ FarCatmarkSubdivisionTables<U>::Orient(HbrHalfedge<U> *edge, double& u, double& 
     PatchCV[2*N+5] = e0->GetNext()->GetOpposite()->GetPrev()->GetOrgVertex();
     PatchCV[2*N+6] = e0->GetNext()->GetOpposite()->GetNext()->GetDestVertex();
     PatchCV[2*N+7] = e0->GetOpposite()->GetPrev()->GetOpposite()->GetNext()->GetDestVertex();
-
-#else /* USE_PRESNTATION_ORIENTATION */
-    PatchCV[0] = e0->GetOrgVertex();
-    PatchCV[1] = e0->GetNext()->GetOrgVertex();
-    PatchCV[2] = e0->GetNext()->GetNext()->GetOrgVertex();
-    PatchCV[3] = e0->GetNext()->GetNext()->GetNext()->GetOrgVertex();
-
-    int i = 4;
-    for (HbrHalfedge<U> *h = e0->GetPrev()->GetOpposite()->GetPrev();
-            h != e0->GetOpposite();
-            h = h->GetOpposite()->GetPrev()) {
-        PatchCV[i++] = h->GetPrev()->GetOrgVertex();
-        PatchCV[i++] = h->GetOrgVertex();
-    }
-    assert(i == 2*N);
-
-    PatchCV[2*N+0] = e0->GetOpposite()->GetPrev()->GetOrgVertex();
-    PatchCV[2*N+1] = e0->GetNext()->GetOpposite()->GetPrev()->GetOpposite()->GetNext()->GetOrgVertex();
-    PatchCV[2*N+2] = e0->GetNext()->GetNext()->GetOpposite()->GetNext()->GetDestVertex();
-    PatchCV[2*N+3] = e0->GetNext()->GetNext()->GetOpposite()->GetPrev()->GetOrgVertex();
-    PatchCV[2*N+4] = e0->GetPrev()->GetOpposite()->GetNext()->GetOpposite()->GetPrev()->GetOrgVertex();
-    PatchCV[2*N+5] = e0->GetNext()->GetOpposite()->GetPrev()->GetOrgVertex();
-    PatchCV[2*N+6] = e0->GetNext()->GetOpposite()->GetNext()->GetDestVertex();
-    PatchCV[2*N+7] = e0->GetOpposite()->GetPrev()->GetOpposite()->GetNext()->GetDestVertex();
-#endif
 
     return PatchCV;
 }
@@ -516,8 +490,9 @@ FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
 
             /* determine which vertices to combine (specified by global far indices)
              * and the vertex's u-v parameterization within */
-            double u, v;
+            double u = 0, v = 0;
             vector<HbrVertex<U>*> PatchVertices = this->Orient(edge, u, v);
+            double uf = u, vf = v;
 
             // determine in which domain omega_nk the parameter lies
             const int n = invilog2_roundup(std::max(u, v));

@@ -608,7 +608,7 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme, int exa
     }
 
     if (exact && level < 2) {
-        printf("Warning: exact evaluation requires at least two levels of subdivision. "
+        printf("[warn] Exact evaluation requires at least two levels of subdivision. "
                "Bumping subdiv level to 2.\n");
         g_level = level = 2;
     }
