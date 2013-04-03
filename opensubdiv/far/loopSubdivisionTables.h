@@ -308,8 +308,7 @@ FarLoopSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
       "../data/lpdata50.dat";
 #endif
 
-    if (this->eigen == NULL)
-        this->eigen = this->read_eval(filename, &this->Nmax);
+    this->read_eval(filename);
     assert(this->eigen != NULL);
 
     dispatch->StageMatrix(nverts, nverts);

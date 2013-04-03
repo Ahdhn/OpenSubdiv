@@ -67,12 +67,7 @@
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
-class EVALSTRUCT {
-  public:
-    double * val;
-    double * vecI;
-    double ** Phi;
-};
+struct EigenStruct { const double *L, *iV, *x[3]; };
 
 
 template <class U> class FarMesh;
@@ -213,9 +208,9 @@ public:
     std::vector<VertexKernelBatch> & getKernelBatches() const { return _batches; }
 
     /* for limit surface evaluation */
-    EVALSTRUCT ** read_eval ( char* filename, int * pNmax );
-    EVALSTRUCT ** eigen;
-    int Nmax;
+    void read_eval ( char* filename );
+    double *ccdata;
+    EigenStruct *eigen;
 
 protected:
     // mesh that owns this subdivisionTable
@@ -243,6 +238,7 @@ FarSubdivisionTables<U>::FarSubdivisionTables( FarMesh<U> * mesh, int maxlevel )
     _V_W(maxlevel+1),
     _batches(maxlevel),
     _vertsOffsets(maxlevel+1,0),
+    ccdata(NULL),
     eigen(NULL)
 {
     assert( maxlevel > 0 );
@@ -337,74 +333,87 @@ FarSubdivisionTables<U>::PushToLimitSurface( int level, void * clientdata ) {
 }
 
 template <class U>
-EVALSTRUCT **
-FarSubdivisionTables<U>::read_eval ( char * filename, int * pNmax )
+void
+FarSubdivisionTables<U>::read_eval ( char * filename )
 {
-   EVALSTRUCT ** ev;
-   FILE * f;
-   int Nmax, i, N, K;
+    // code from https://svn.blender.org/svnroot/bf-blender/branches/ndof/extern/qdune/primitives/CCSubdivision.cpp
+    FILE * f = fopen(filename, "rb");
+    if (f == NULL) {
+        printf("Could not load subdivision data!\n");
+        exit(1);
+    }
 
-#if defined(_WIN32) || defined(__APPLE__)
-   char* mode = (char*) "rb";
-#else
-   char* mode = (char*) "r";
-#endif
+    int Nmax;
+    fread (&Nmax, sizeof(int), 1, f);
+    // expecting Nmax==50
+    if (Nmax != 50) { // should never happen
+        printf("[ERROR] -> JS_SDPatch::getCCData(): Unexpected value for Nmax in subdivision data -> %d\n", Nmax);
+        exit(1);
+    }
+    int totdoubles = 0;
+    for (int i=0; i<Nmax-2; i++) {
+        const int N = i+3;
+        const int K = 2*N + 8;
+        totdoubles += K + K*K + 3*K*16;
+    }
+    ccdata = new double[totdoubles];
+    fread(ccdata, sizeof(double), totdoubles, f);
+    fclose(f);
 
-   if ( !(f = fopen ( filename, mode )) ) {
-       fprintf(stderr, "[error] Could not open %s.\n", filename);
-       exit(1);
-   };
+    // now set the actual EigenStructs as pointers to data in array
+    eigen = new EigenStruct[48];
+    int ofs1 = 0;
+    for (int i=0; i<48; i++) {
+        const int K = 2*(i + 3) + 8;
+        const int ofs2 = ofs1 + K;
+        const int ofs3 = ofs2 + K*K;
+        const int ofs4 = ofs3 + K*16;
+        const int ofs5 = ofs4 + K*16;
+        eigen[i].L = ccdata + ofs1;
+        eigen[i].iV = ccdata + ofs2;
+        eigen[i].x[0] = ccdata + ofs3;
+        eigen[i].x[1] = ccdata + ofs4;
+        eigen[i].x[2] = ccdata + ofs5;
+        ofs1 = ofs5 + K*16;
+    }
 
-   fread ( &Nmax, sizeof(int), 1, f );
-
-   if (Nmax > 50) {
-       fprintf(stderr, "Error: expected 50 valences, got %d.\n", Nmax);
-       return NULL;
-   }
-
-   ev = (EVALSTRUCT **) malloc ( (Nmax-2)*sizeof(EVALSTRUCT *) );
-
-   for ( i=0 ; i<Nmax-2 ; i++ )
-   {
-      N = i+3;
-      K = 2*N+8;
-
-      ev[i] = (EVALSTRUCT *) malloc ( sizeof(EVALSTRUCT) );
-      ev[i]->val = (double *) malloc ( K*sizeof(double) );
-      ev[i]->vecI = (double *) malloc ( K*K*sizeof(double) );
-      ev[i]->Phi = (double **) malloc ( 3*sizeof(double *) );
-      ev[i]->Phi[0] = (double *) malloc ( K*16*sizeof(double) );
-      ev[i]->Phi[1] = (double *) malloc ( K*16*sizeof(double) );
-      ev[i]->Phi[2] = (double *) malloc ( K*16*sizeof(double) );
-
-      fread ( ev[i]->val, sizeof(double), K, f );
-      fread ( ev[i]->vecI, sizeof(double), K*K, f );
-      fread ( ev[i]->Phi[0], sizeof(double), K*16, f );
-      fread ( ev[i]->Phi[1], sizeof(double), K*16, f );
-      fread ( ev[i]->Phi[2], sizeof(double), K*16, f );
-   }
-
-   fclose ( f );
-
-	*pNmax = Nmax;
-
-   return ( ev );
+    // make bspline evaluation basis
+    double buv[16][16];
+    memset(buv, 0, sizeof(double)*16*16);
+    // bspline basis (could use RiBSplineBasis, but want double prec by default)
+    double bsp[4][4] = {{-1.0/6.0,     0.5,    -0.5, 1.0/6.0},
+        {     0.5,    -1.0,     0.5,     0.0},
+        {    -0.5,     0.0,     0.5,     0.0},
+        { 1.0/6.0, 4.0/6.0, 1.0/6.0,     0.0}};
+    for (int i=0; i<16; i++) {
+        const int d = i >> 2, r = i & 3;
+        for (int v=0; v<4; v++)
+            for (int u=0; u<4; u++)
+                buv[i][v*4 + u] = bsp[u][d]*bsp[v][r];
+    }
+    double tmp[1728]; // max size needed for N==50
+    for (int rn=0; rn<Nmax-2; rn++) {
+        const int K = 2*(rn + 3) + 8;
+        for (int k=0; k<3; k++) {
+            memset(tmp, 0, sizeof(double)*K*16);
+            int idx = 0;
+            for (int i=0; i<K; i++) {
+                for (int j=0; j<16; j++) {
+                    double sc = eigen[rn].x[k][i + j*K]; // x==Phi here
+                    for (int y4=0; y4<16; y4+=4)
+                        for (int x=0; x<4; x++)
+                            tmp[idx + y4 + x] += sc*buv[j][y4 + x];
+                }
+                idx += 16;
+            }
+            // now replace 'Phi' by tmp array
+            memcpy(const_cast<double*>(&eigen[rn].x[k][0]), tmp, sizeof(double)*K*16);
+        }
+    }
 }
 
 template <class U>
 FarSubdivisionTables<U>::~FarSubdivisionTables() {
-    if (eigen != NULL) {
-        for (int i = 0; i < Nmax-2; i++) {
-            free(eigen[i]->val);
-            free(eigen[i]->vecI);
-            free(eigen[i]->Phi[0]);
-            free(eigen[i]->Phi[1]);
-            free(eigen[i]->Phi[2]);
-            free(eigen[i]->Phi);
-            free(eigen[i]);
-        }
-        free(eigen);
-    }
 }
 
 

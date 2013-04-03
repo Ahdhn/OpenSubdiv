@@ -66,6 +66,26 @@
 
 #include "../far/subdivisionTables.h"
 
+// returns integer log2(1.0/x)
+inline int invilog2_roundup(double x)
+{
+	if (x==0.0) return 33;
+	int xi = (int)(1.0/x);
+	int lg2 = 0;
+	while (xi > 0) {
+		lg2++;
+		xi >>= 1;
+	}
+	return lg2;
+}
+
+// pow(0,0) returns error, don't!
+inline double mypow(double x, double y)
+{
+	if ((x < 0.0) or ((x == 0.0) and (y == 0.0))) return 1.0;
+	return pow(x, y);
+}
+
 using namespace std;
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
@@ -87,8 +107,8 @@ public:
     /// Compute the positions of refined vertices using the specified kernels
     virtual void Apply( int level, void * data=0 ) const;
     virtual void PushLimitMatrix(int nverts, int offset);
-    static double EvalSpline(double coeffs[16], double u, double v, int i, int K);
-    virtual std::vector<HbrVertex<U>*> Orient(HbrHalfedge<U> *edge, float& u, float& v);
+    double EvalSpline(double *coeffs, double u, double v, int i, int K);
+    virtual std::vector<HbrVertex<U>*> Orient(HbrHalfedge<U> *edge, double& u, double& v);
 
     /// Face-vertices indexing table accessor
     FarTable<unsigned int> const & Get_F_IT( ) const { return _F_IT; }
@@ -392,15 +412,15 @@ template <class U> double
 FarCatmarkSubdivisionTables<U>::EvalSpline(double *C, double u, double v, int i, int K) {
     // from stam's patent application
     double s0, s1, s2, s3;
-    s0=C[i+0*K]+u*(C[i+1*K]+u*(C[i+2*K]+u*C[i+3*K]));
-    s1=C[i+4*K]+u*(C[i+5*K]+u*(C[i+6*K]+u*C[i+7*K]));
-    s2=C[i+8*K]+u*(C[i+9*K]+u*(C[i+10*K]+u*C[i+11*K]));
-    s3=C[i+12*K]+u*(C[i+13*K]+u*(C[i+14*K]+u*C[i+15*K]));
+    s0=C[i*0+K]*u+(C[i*1+K]*u+(C[i*2+K]*u+C[i*3+K]));
+    s1=C[i*4+K]*u+(C[i*5+K]*u+(C[i*6+K]*u+C[i*7+K]));
+    s2=C[i*8+K]*u+(C[i*9+K]*u+(C[i*10+K]*u+C[i*11+K]));
+    s3=C[i*12+K]*u+(C[i*13+K]*u+(C[i*14+K]*u+C[i*15+K]));
     return s0+v*(s1+v*(s2+v*s3));
 }
 
 template <class U> std::vector<HbrVertex<U>*>
-FarCatmarkSubdivisionTables<U>::Orient(HbrHalfedge<U> *edge, float& u, float& v)  {
+FarCatmarkSubdivisionTables<U>::Orient(HbrHalfedge<U> *edge, double& u, double& v)  {
     /* find extraordinary vertex */
     HbrHalfedge<U> *e0 = NULL,
                    *eA = edge,
@@ -409,10 +429,10 @@ FarCatmarkSubdivisionTables<U>::Orient(HbrHalfedge<U> *edge, float& u, float& v)
                    *eD = edge->GetNext()->GetNext()->GetNext();
 
     /* find e0 pointing to extraordinary vertex, if one exists */
-    if      (eD->GetOrgVertex()->GetValence() != 4) { e0 = eD; u = 0.0f; v = 1.0f; }
-    else if (eC->GetOrgVertex()->GetValence() != 4) { e0 = eC; u = 1.0f; v = 1.0f; }
-    else if (eB->GetOrgVertex()->GetValence() != 4) { e0 = eB; u = 1.0f; v = 0.0f; }
-    else    /* eA has irreg vert or patch is reg */ { e0 = eA; u = 0.0f; v = 0.0f; }
+    if      (eD->GetOrgVertex()->GetValence() != 4) { e0 = eD; u = 0.0; v = 1.0; }
+    else if (eC->GetOrgVertex()->GetValence() != 4) { e0 = eC; u = 1.0; v = 1.0; }
+    else if (eB->GetOrgVertex()->GetValence() != 4) { e0 = eB; u = 1.0; v = 0.0; }
+    else    /* eA has irreg vert or patch is reg */ { e0 = eA; u = 0.0; v = 0.0; }
     assert(e0 != NULL);
 
     int N = e0->GetOrgVertex()->GetValence();
@@ -452,7 +472,6 @@ FarCatmarkSubdivisionTables<U>::Orient(HbrHalfedge<U> *edge, float& u, float& v)
     PatchCV[2*N+7] = e0->GetOpposite()->GetPrev()->GetOpposite()->GetNext()->GetDestVertex();
 
 #else
-#warning Using new vertex orientation.
     PatchCV[0] = e0->GetOrgVertex();
     PatchCV[1] = e0->GetNext()->GetOrgVertex();
     PatchCV[2] = e0->GetNext()->GetNext()->GetOrgVertex();
@@ -493,8 +512,7 @@ FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
       "../data/ccdata50.dat";
 #endif
 
-    if (this->eigen == NULL)
-        this->eigen = this->read_eval(filename, &this->Nmax);
+    this->read_eval(filename);
     assert(this->eigen != NULL);
 
     dispatch->StageMatrix(nverts, nverts);
@@ -511,43 +529,49 @@ FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
 
             /* determine which vertices to combine (specified by global far indices)
              * and the vertex's u-v parameterization within */
-            float u, v;
+            double u, v;
             vector<HbrVertex<U>*> PatchVertices = this->Orient(edge, u, v);
-            u = CLAMP(u, .001, .999), v = CLAMP(v, .001, .999);
-            vector<int> IndexMap(PatchVertices.size(), 0);
-            for (int i = 0; i < PatchVertices.size(); i++)
-                IndexMap[i] = this->_mesh->GetFarVertexID(PatchVertices[i]) - offset;
-            int K = IndexMap.size(), N = (K-8) / 2;
+            u = CLAMP((double)u, 0.0, 1.0), v = CLAMP((double)v, 0.0, 1.0);
+
+            // determine in which domain omega_nk the parameter lies
+            //const int n = int(floor(MIN2(-log2(u), -log2(v))) + 1); // can be replaced by integer log2(1/x) (roundup)
+            const int n = invilog2_roundup(std::max(u, v));
+            const double pow2 = (double)(1 << (n-1));
+            u *= pow2, v *= pow2;
+            int k;
+            if (v < 0.5)
+                k = 0,  u = 2.0*u - 1.0,  v *= 2.0;
+            else if (u < 0.5)
+                k = 2,  u *= 2.0,  v = 2.0*v - 1.0;
+            else
+                k = 1,  u = 2.0*u - 1.0,  v = 2.0*v - 1.0;
+
+            const int K = PatchVertices.size(), N = (K-8) / 2;
+            const double *_eb = EIGEN(N).x[k] + 16; // skip first matrix, not used
+            const double *eb, *L = EIGEN(N).L;
             assert(K == 2*N+8);
 
-            /* build the K-vector of evaluation coeffs */
-            float n = floor(fmin(-log2(u),-log2(v)));
-            float pow2 = exp2(n-1);
-            u *= pow2,
-            v *= pow2;
-
-            int k;
-            if      (v < 0.5f) { k = 0; u=2.f*u-1.f; v=2.f*v;     }
-            else if (u < 0.5f) { k = 2; u=2.f*u;     v=2.f*v-1.f; }
-            else               { k = 1; u=2.f*u-1.f; v=2.f*v-1.f; }
-
-            //printf("Eval:\n");
-            float Eval[K];
-            for (int i = 0; i < K; i++) {
-                Eval[i] = pow(EIGEN(N)->val[i],n-1) *
-                          EvalSpline( &(EIGEN(N)->Phi[k][0]), u, v, i, K );
-                //printf("%d\t%g = pow(%g,%g) * %g\n", i,  Eval[i], EIGEN(N)->val[i], n-1, EvalSpline( &(EIGEN(N)->Phi[k][0]), u, v, i, K ));
+            int i;
+            vector<double> Eval(K, 0.0);
+            Eval[0] = 1.0;
+            for (i=1, eb=_eb; i<K; ++i, eb += 16) {
+                Eval[i] = mypow(L[i], n-1) *
+                    ((((((eb[ 0]*v + eb[ 1])*v + eb[ 2])*v + eb[ 3]) *u +
+                       (((eb[ 4]*v + eb[ 5])*v + eb[ 6])*v + eb[ 7]))*u +
+                       (((eb[ 8]*v + eb[ 9])*v + eb[10])*v + eb[11]))*u +
+                       (((eb[12]*v + eb[13])*v + eb[14])*v + eb[15]));
             }
 
             /* compute Eval * eigen[N].iV matvec (aka the final weights) */
             float Weights[K];
+            const double* vecI = EIGEN(N).iV;
             for (int i = 0; i < K; i++) {
                 Weights[i] = 0.0f;
                 for (int j = 0; j < K; j++)
-                    Weights[i] += EIGEN(N)->vecI[IX(i,j,K)] * Eval[i];
+                    Weights[i] += vecI[i+K*j] * Eval[i];
             }
 
-#if DEBUG
+#if 0
             if (edge->                                 GetOrgVertex()->GetValence() != 4 ||
                 edge->                      GetNext()->GetOrgVertex()->GetValence() != 4 ||
                 edge->           GetNext()->GetNext()->GetOrgVertex()->GetValence() != 4 ||
@@ -582,6 +606,11 @@ FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
                 }
             }
 #endif
+
+            /* Compute the mapping from patch index to relative FAR index */
+            vector<int> IndexMap(PatchVertices.size(), 0);
+            for (int i = 0; i < PatchVertices.size(); i++)
+                IndexMap[i] = this->_mesh->GetFarVertexID(PatchVertices[i]) - offset;
 
             /* insert weights into staged matrix */
             for (int i = 0; i < K; i++)
