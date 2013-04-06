@@ -1,7 +1,7 @@
 %!PS-Adobe-2.0 EPSF-2.0
 %%Title: ./graphs/perf_MonsterFrog.tex
-%%Creator: gnuplot 4.6 patchlevel 0
-%%CreationDate: Sun Dec  9 22:58:32 2012
+%%Creator: gnuplot 4.6 patchlevel 1
+%%CreationDate: Sat Apr  6 13:00:57 2013
 %%DocumentFonts: 
 %%BoundingBox: 50 50 410 302
 %%EndComments
@@ -47,7 +47,7 @@ gnudict begin
   } if
 } def
 %
-% Gnuplot Prolog Version 4.4 (August 2010)
+% Gnuplot Prolog Version 4.6 (September 2012)
 %
 %/SuppressPDFMark true def
 %
@@ -314,7 +314,8 @@ gnudict begin
 /PatternFill {gsave /PFa [ 9 2 roll ] def
   PFa 0 get PFa 2 get 2 div add PFa 1 get PFa 3 get 2 div add translate
   PFa 2 get -2 div PFa 3 get -2 div PFa 2 get PFa 3 get Rec
-  gsave 1 setgray fill grestore clip
+  TransparentPatterns {} {gsave 1 setgray fill grestore} ifelse
+  clip
   currentlinewidth 0.5 mul setlinewidth
   /PFs PFa 2 get dup mul PFa 3 get dup mul add sqrt def
   0 0 M PFa 5 get rotate PFs -2 div dup translate
@@ -428,11 +429,11 @@ systemdict /pdfmark known not {
 SDict begin [
   /Title (./graphs/perf_MonsterFrog.tex)
   /Subject (gnuplot plot)
-  /Creator (gnuplot 4.6 patchlevel 0)
-  /Author (mbdriscoll)
+  /Creator (gnuplot 4.6 patchlevel 1)
+  /Author (driscoll)
 %  /Producer (gnuplot)
 %  /Keywords ()
-  /CreationDate (Sun Dec  9 22:58:32 2012)
+  /CreationDate (Sat Apr  6 13:00:57 2013)
   /DOCINFO pdfmark
 end
 } ifelse
@@ -449,143 +450,111 @@ newpath
 1.000 UL
 LTb
 LCb setrgbcolor
-814 725 M
+814 882 M
 31 0 V
 5958 0 R
 -31 0 V
-814 797 M
+814 1070 M
 31 0 V
 5958 0 R
 -31 0 V
-814 860 M
+814 1215 M
 31 0 V
 5958 0 R
 -31 0 V
-stroke
-LTa
-LCa setrgbcolor
-814 917 M
-228 0 V
-5532 0 R
-229 0 V
-stroke
-LTb
-LCb setrgbcolor
-814 917 M
-63 0 V
-5926 0 R
--63 0 V
-stroke
-LTb
-814 1289 M
+814 1334 M
 31 0 V
 5958 0 R
 -31 0 V
-814 1507 M
+814 1434 M
 31 0 V
 5958 0 R
 -31 0 V
-814 1661 M
+814 1521 M
 31 0 V
 5958 0 R
 -31 0 V
-814 1781 M
-31 0 V
-5958 0 R
--31 0 V
-814 1879 M
-31 0 V
-5958 0 R
--31 0 V
-814 1961 M
-31 0 V
-5958 0 R
--31 0 V
-814 2033 M
-31 0 V
-5958 0 R
--31 0 V
-814 2096 M
+814 1598 M
 31 0 V
 5958 0 R
 -31 0 V
 stroke
 LTa
 LCa setrgbcolor
-814 2153 M
+814 1667 M
 5989 0 V
 stroke
 LTb
 LCb setrgbcolor
-814 2153 M
+814 1667 M
 63 0 V
 5926 0 R
 -63 0 V
 stroke
 LTb
-814 2525 M
+814 2119 M
 31 0 V
 5958 0 R
 -31 0 V
-814 2743 M
+814 2383 M
 31 0 V
 5958 0 R
 -31 0 V
-814 2897 M
+814 2570 M
 31 0 V
 5958 0 R
 -31 0 V
-814 3017 M
+814 2716 M
 31 0 V
 5958 0 R
 -31 0 V
-814 3115 M
+814 2835 M
 31 0 V
 5958 0 R
 -31 0 V
-814 3198 M
+814 2935 M
 31 0 V
 5958 0 R
 -31 0 V
-814 3269 M
+814 3022 M
 31 0 V
 5958 0 R
 -31 0 V
-814 3333 M
+814 3099 M
 31 0 V
 5958 0 R
 -31 0 V
 stroke
 LTa
 LCa setrgbcolor
-814 3389 M
+814 3168 M
 5989 0 V
 stroke
 LTb
 LCb setrgbcolor
-814 3389 M
+814 3168 M
 63 0 V
 5926 0 R
 -63 0 V
 stroke
 LTb
-814 3761 M
+814 3619 M
 31 0 V
 5958 0 R
 -31 0 V
-814 3979 M
+814 3884 M
 31 0 V
 5958 0 R
 -31 0 V
-814 4133 M
+814 4071 M
 31 0 V
 5958 0 R
 -31 0 V
-814 4253 M
+814 4217 M
 31 0 V
 5958 0 R
 -31 0 V
-814 4351 M
+814 4335 M
 31 0 V
 5958 0 R
 -31 0 V
@@ -752,16 +721,16 @@ LT0
 LC0 setrgbcolor
 0.55 0.00 0.00 C 1966 1097 M
 327 0 V
--881 595 R
-1197 -92 V
-1198 -20 V
-1199 -8 V
-1199 -3 V
-1412 1692 Pls
-2609 1600 Pls
-3807 1580 Pls
-5006 1572 Pls
-6205 1569 Pls
+-881 828 R
+2609 1814 L
+1198 -28 V
+1199 -20 V
+1199 -11 V
+1412 1925 Pls
+2609 1814 Pls
+3807 1786 Pls
+5006 1766 Pls
+6205 1755 Pls
 2129 1097 Pls
 1.000 UP
 3.000 UL
@@ -772,16 +741,16 @@ LT1
 LC1 setrgbcolor
 0.75 0.25 0.00 C 1966 877 M
 327 0 V
-1412 2424 M
-1197 -77 V
-1198 -23 V
-1199 2 V
-1199 -66 V
-1412 2424 Crs
-2609 2347 Crs
-3807 2324 Crs
-5006 2326 Crs
-6205 2260 Crs
+1412 2822 M
+1197 -61 V
+1198 -26 V
+1199 -45 V
+6205 2572 L
+1412 2822 Crs
+2609 2761 Crs
+3807 2735 Crs
+5006 2690 Crs
+6205 2572 Crs
 2129 877 Crs
 1.000 UP
 3.000 UL
@@ -792,16 +761,16 @@ LT2
 LC2 setrgbcolor
 0.78 0.78 0.00 C 3349 1097 M
 327 0 V
-1412 2841 M
-1197 551 V
-1198 444 V
-1199 108 V
-1199 64 V
-1412 2841 Star
-2609 3392 Star
-3807 3836 Star
-5006 3944 Star
-6205 4008 Star
+1412 2531 M
+1197 722 V
+1198 412 V
+1199 188 V
+1199 76 V
+1412 2531 Star
+2609 3253 Star
+3807 3665 Star
+5006 3853 Star
+6205 3929 Star
 3512 1097 Star
 1.000 UP
 3.000 UL
@@ -812,16 +781,16 @@ LT3
 LC3 setrgbcolor
 0.00 0.39 0.00 C 3349 877 M
 327 0 V
-1412 2486 M
-1197 282 V
-1198 -58 V
-1199 -5 V
-1199 33 V
-1412 2486 Box
-2609 2768 Box
-3807 2710 Box
-5006 2705 Box
-6205 2738 Box
+1412 2121 M
+1197 324 V
+1198 -61 V
+1199 -33 V
+1199 22 V
+1412 2121 Box
+2609 2445 Box
+3807 2384 Box
+5006 2351 Box
+6205 2373 Box
 3512 877 Box
 1.000 UP
 3.000 UL
@@ -832,16 +801,16 @@ LT4
 LC4 setrgbcolor
 0.00 0.00 0.55 C 4732 1097 M
 327 0 V
-1412 2691 M
-1197 497 V
-1198 447 V
-1199 281 V
-1199 -14 V
-1412 2691 BoxF
-2609 3188 BoxF
-3807 3635 BoxF
-5006 3916 BoxF
-6205 3902 BoxF
+1412 2320 M
+1197 671 V
+1198 435 V
+1199 385 V
+1199 -17 V
+1412 2320 BoxF
+2609 2991 BoxF
+3807 3426 BoxF
+5006 3811 BoxF
+6205 3794 BoxF
 4895 1097 BoxF
 1.000 UP
 3.000 UL
@@ -852,16 +821,16 @@ LT5
 LC5 setrgbcolor
 0.58 0.00 0.83 C 4732 877 M
 327 0 V
-1412 2884 M
-2609 2662 L
-1198 6 V
-1199 -30 V
-1199 -9 V
-1412 2884 Circle
-2609 2662 Circle
-3807 2668 Circle
-5006 2638 Circle
-6205 2629 Circle
+1412 2623 M
+2609 2360 L
+1198 -61 V
+1199 -18 V
+1199 -40 V
+1412 2623 Circle
+2609 2360 Circle
+3807 2299 Circle
+5006 2281 Circle
+6205 2241 Circle
 4895 877 Circle
 1.000 UP
 3.000 UL
@@ -872,14 +841,16 @@ LT6
 LC6 setrgbcolor
 0.00 0.00 0.00 C 6115 1097 M
 327 0 V
-1412 2804 M
-1197 525 V
-1198 235 V
-1199 60 V
-1412 2804 CircleF
-2609 3329 CircleF
-3807 3564 CircleF
-5006 3624 CircleF
+1412 2493 M
+1197 620 V
+1198 270 V
+1199 75 V
+1199 16 V
+1412 2493 CircleF
+2609 3113 CircleF
+3807 3383 CircleF
+5006 3458 CircleF
+6205 3474 CircleF
 6278 1097 CircleF
 1.000 UL
 LTb
