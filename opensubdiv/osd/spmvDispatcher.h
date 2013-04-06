@@ -211,7 +211,7 @@ public:
     }
 
     virtual inline double SparsityFactor() {
-        return (double) nnz / (double) (m * n);
+        return (double) nnz / ((double) m * (double) n);
     }
 };
 
