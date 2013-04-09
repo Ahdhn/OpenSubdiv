@@ -270,6 +270,8 @@ FarLoopSubdivisionTables<U>::computeVertexPointsB( int offset, int level, int st
     }
 }
 
+#define COEFF_A(n) (5.0 / 8.0 - pow( 3.0 + 2.0 * cos(2.0 * M_PI / n), 2.0) / 64.0)
+
 template <class U> void
 FarLoopSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
 
@@ -285,21 +287,22 @@ FarLoopSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
             // TODO handle models with boundaries
             if (vertex->HasLimit()) {
 
-                // Push to limit surface via stencil from Cheng '08.
+                // Push to limit surface via stencil from Hoppe '94.
                 int valence = vertex->GetValence();
                 double n = (double) valence;
-                double B_n = 3.0 /
-                    (11.0 - 8.0 * (0.375+ (0.375 + 0.25 * pow(cos(2.0 * M_PI / n), 2.0))));
                 HbrHalfedge<U> *edge = vertex->GetIncidentEdge();
 
+                double omega_n = 3.0 * n / (8.0 * COEFF_A(n));
+                double normalizer = omega_n + n;
+
                 // Target point
-                dispatch->StageElem(vi, vi, B_n);
+                dispatch->StageElem(vi, vi, omega_n / normalizer);
 
                 // Points in neighborhood
                 for (int i = 0; i < valence; i++) {
                     HbrVertex<U> *adjacent = edge->GetDestVertex();
                     int adjacent_idx = this->_mesh->GetFarVertexID(adjacent) - offset;
-                    dispatch->StageElem(vi, adjacent_idx, (1.0 - B_n) / n );
+                    dispatch->StageElem(vi, adjacent_idx, 1.0 / normalizer );
 
                     edge = edge->GetOpposite()->GetNext();
                 }
