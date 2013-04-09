@@ -480,6 +480,7 @@ FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
     dispatch->StageMatrix(nverts, nverts);
     {
         for(int vi = 0; vi < nverts; vi++) {
+#if 0
             /* Get Hbr handles */
             HbrVertex<U> *vertex = this->_mesh->GetHbrVertex(offset + vi);
             HbrHalfedge<U> *edge = vertex->GetIncidentEdge();
@@ -487,41 +488,6 @@ FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
 
             /* Ground truth */
             assert(face->GetNumVertices() == 4);
-
-            /* determine which vertices to combine (specified by global far indices)
-             * and the vertex's u-v parameterization within */
-            double u = 0, v = 0;
-            vector<HbrVertex<U>*> PatchVertices = this->Orient(edge, u, v);
-            double uf = u, vf = v;
-
-            // determine in which domain omega_nk the parameter lies
-            const int n = invilog2_roundup(std::max(u, v));
-            const double pow2 = (double)(1 << (n-1));
-            u *= pow2, v *= pow2;
-            int k;
-            if (v < 0.5)
-                k = 0,  u = 2.0*u - 1.0,  v *= 2.0;
-            else if (u < 0.5)
-                k = 2,  u *= 2.0,  v = 2.0*v - 1.0;
-            else
-                k = 1,  u = 2.0*u - 1.0,  v = 2.0*v - 1.0;
-
-            const int K = PatchVertices.size(), N = (K-8) / 2;
-            assert(K == 2*N+8);
-
-            const double *vecI = EIGEN(N).iV;
-            const double *eb = EIGEN(N).x[k];
-            const double *L = EIGEN(N).L;
-
-            vector<double> Eval(K);
-            for (int i=0; i<K; ++i, eb += 16)
-                Eval[i] = mypow(L[i], n-1) * EvalSpline(eb, u, v);
-
-            /* Compute Eval * eigen[N].iV matvec (aka the final weights) */
-            vector<double> Weights(K, 0.0);
-            for (int i = 0; i < K; i++)
-                for (int j = 0; j < K; j++)
-                    Weights[i] += vecI[i+K*j] * Eval[i];
 
             /* Compute the mapping from patch index to relative FAR index */
             vector<int> IndexMap(K, 0);
@@ -531,6 +497,9 @@ FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
             /* insert weights into staged matrix */
             for (int i = 0; i < K; i++)
                 dispatch->StageElem(vi, IndexMap[i], Weights[i]);
+#else
+                dispatch->StageElem(vi, vi, 1.0);
+#endif
         }
     }
     dispatch->PushMatrix();
