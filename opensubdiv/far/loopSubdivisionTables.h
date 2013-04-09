@@ -301,26 +301,6 @@ FarLoopSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
     /* not implemented yet */
     printf("[warn] Limit surface evalution of Loop subdivs not implemented yet.\n");
     return;
-
-    assert(this->_mesh);
-    FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
-
-    char* filename = (char*)
-#if defined(_WIN32) || defined(__APPLE__)
-      "../data/lpdata50NT.dat";
-#else
-      "../data/lpdata50.dat";
-#endif
-
-    this->read_eval(filename);
-    assert(this->eigen != NULL);
-
-    dispatch->StageMatrix(nverts, nverts);
-    {
-        for(int i = 0; i < nverts; i++)
-            dispatch->StageElem(i, i, 1.0);
-    }
-    dispatch->PushMatrix();
 }
 
 } // end namespace OPENSUBDIV_VERSION

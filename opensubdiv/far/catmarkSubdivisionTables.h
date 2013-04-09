@@ -66,30 +66,6 @@
 
 #include "../far/subdivisionTables.h"
 
-
-#define EIGEN(n) (this->eigen[(n)-3])
-
-// returns integer log2(1.0/x)
-inline int invilog2_roundup(double x)
-{
-	if (x==0.0) return 33;
-	int xi = (int)(1.0/x);
-	int lg2 = 0;
-	while (xi > 0) {
-		lg2++;
-		xi >>= 1;
-	}
-	return lg2;
-}
-
-// pow(0,0) returns error, don't!
-inline double mypow(double x, double y)
-{
-	if ((x < 0.0) or ((x == 0.0) and (y == 0.0))) return 1.0;
-	return pow(x, y);
-}
-
-using namespace std;
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
@@ -110,8 +86,6 @@ public:
     /// Compute the positions of refined vertices using the specified kernels
     virtual void Apply( int level, void * data=0 ) const;
     virtual void PushLimitMatrix(int nverts, int offset);
-    static double EvalSpline(const double eb[16], const double u, const double v);
-    virtual std::vector<HbrVertex<U>*> Orient(HbrHalfedge<U> *edge, double& u, double& v);
 
     /// Face-vertices indexing table accessor
     FarTable<unsigned int> const & Get_F_IT( ) const { return _F_IT; }
@@ -164,35 +138,6 @@ FarCatmarkSubdivisionTables<U>::GetMemoryUsed() const {
         _F_ITa.GetMemoryUsed()+
         _F_IT.GetMemoryUsed();
 }
-
-#if 0 // REMOVEME
-template <class U> void
-FarCatmarkSubdivisionTables<U>::Apply( int level, void * clientdata ) const {
-
-    assert(this->_mesh and level>0);
-
-    typename FarSubdivisionTables<U>::VertexKernelBatch const * batch = & (this->_batches[level-1]);
-
-    FarDispatcher<U> const * dispatch = this->_mesh->GetDispatcher();
-    assert(dispatch);
-
-    int offset = this->GetFirstVertexOffset(level);
-    if (batch->kernelF>0)
-        dispatch->ApplyCatmarkFaceVerticesKernel(this->_mesh, offset, level, 0, batch->kernelF, clientdata);
-
-    offset += this->GetNumFaceVertices(level);
-    if (batch->kernelE>0)
-        dispatch->ApplyCatmarkEdgeVerticesKernel(this->_mesh, offset, level, 0, batch->kernelE, clientdata);
-
-    offset += this->GetNumEdgeVertices(level);
-    if (batch->kernelB.first < batch->kernelB.second)
-        dispatch->ApplyCatmarkVertexVerticesKernelB(this->_mesh, offset, level, batch->kernelB.first, batch->kernelB.second, clientdata);
-    if (batch->kernelA1.first < batch->kernelA1.second)
-        dispatch->ApplyCatmarkVertexVerticesKernelA(this->_mesh, offset, false, level, batch->kernelA1.first, batch->kernelA1.second, clientdata);
-    if (batch->kernelA2.first < batch->kernelA2.second)
-        dispatch->ApplyCatmarkVertexVerticesKernelA(this->_mesh, offset, true, level, batch->kernelA2.first, batch->kernelA2.second, clientdata);
-}
-#endif
 
 template <class U> void
 FarCatmarkSubdivisionTables<U>::Apply( int level, void * clientdata ) const {
@@ -407,99 +352,47 @@ FarCatmarkSubdivisionTables<U>::computeVertexPointsB( int offset, int level, int
     }
 }
 
-template <class U> std::vector<HbrVertex<U>*>
-FarCatmarkSubdivisionTables<U>::Orient(HbrHalfedge<U> *edge, double& u, double& v)  {
-    /* find extraordinary vertex */
-    HbrHalfedge<U> *e0 = NULL,
-                   *eA = edge,
-                   *eB = edge->GetNext(),
-                   *eC = edge->GetNext()->GetNext(),
-                   *eD = edge->GetNext()->GetNext()->GetNext();
-
-    /* find e0 pointing to extraordinary vertex, if one exists */
-    // XXX shouldn't we set e0 based on orientation in patch?
-    if      (eD->GetOrgVertex()->GetValence() != 4) { e0 = eA; u = 0.0; v = 1.0; }
-    else if (eC->GetOrgVertex()->GetValence() != 4) { e0 = eA; u = 1.0; v = 1.0; }
-    else if (eB->GetOrgVertex()->GetValence() != 4) { e0 = eA; u = 1.0; v = 0.0; }
-    else    /* eA has irreg vert or patch is reg */ { e0 = eA; u = 0.0; v = 0.0; }
-    assert(e0 != NULL);
-
-    int N = e0->GetOrgVertex()->GetValence();
-    vector<HbrVertex<U>*> PatchCV(2*N+8, NULL);
-
-    PatchCV[0] = e0->GetOrgVertex();
-    PatchCV[1] = e0->GetOpposite()->GetNext()->GetDestVertex();
-    PatchCV[2] = e0->GetOpposite()->GetPrev()->GetOrgVertex();
-    PatchCV[3] = e0->GetDestVertex();
-    PatchCV[4] = e0->GetNext()->GetDestVertex();
-
-    int i = 5;
-    for (HbrHalfedge<U> *h = e0->GetPrev()->GetOpposite();
-            h->GetDestVertex() != PatchCV[1];
-            h = h->GetPrev()->GetOpposite()) {
-        PatchCV[i++] = h->GetNext()->GetOrgVertex();
-        PatchCV[i++] = h->GetNext()->GetDestVertex();
-    }
-    assert(i == 2*N+1);
-
-    PatchCV[2*N+1] = e0->GetNext()->GetOpposite()->GetPrev()->GetOpposite()->GetNext()->GetDestVertex();
-    PatchCV[2*N+2] = e0->GetNext()->GetNext()->GetOpposite()->GetNext()->GetDestVertex();
-    PatchCV[2*N+3] = e0->GetNext()->GetNext()->GetOpposite()->GetPrev()->GetOrgVertex();
-    PatchCV[2*N+4] = e0->GetPrev()->GetOpposite()->GetNext()->GetOpposite()->GetPrev()->GetOrgVertex();
-    PatchCV[2*N+5] = e0->GetNext()->GetOpposite()->GetPrev()->GetOrgVertex();
-    PatchCV[2*N+6] = e0->GetNext()->GetOpposite()->GetNext()->GetDestVertex();
-    PatchCV[2*N+7] = e0->GetOpposite()->GetPrev()->GetOpposite()->GetNext()->GetDestVertex();
-
-    return PatchCV;
-}
-
-template <class U> double
-FarCatmarkSubdivisionTables<U>::EvalSpline(const double eb[16], const double u, const double v) {
-    return ((((((eb[ 0]*v + eb[ 1])*v + eb[ 2])*v + eb[ 3]) *u +
-              (((eb[ 4]*v + eb[ 5])*v + eb[ 6])*v + eb[ 7]))*u +
-              (((eb[ 8]*v + eb[ 9])*v + eb[10])*v + eb[11]))*u +
-              (((eb[12]*v + eb[13])*v + eb[14])*v + eb[15]));
-}
-
 template <class U> void
 FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
 
     assert(this->_mesh);
     FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
 
-    char* filename = (char*)
-#if defined(_WIN32) || defined(__APPLE__)
-      "../data/ccdata50NT.dat";
-#else
-      "../data/ccdata50.dat";
-#endif
-
-    this->read_eval(filename);
-    assert(this->eigen != NULL);
-
     dispatch->StageMatrix(nverts, nverts);
     {
         for(int vi = 0; vi < nverts; vi++) {
-#if 0
-            /* Get Hbr handles */
+            /* Get Hbr handle */
             HbrVertex<U> *vertex = this->_mesh->GetHbrVertex(offset + vi);
-            HbrHalfedge<U> *edge = vertex->GetIncidentEdge();
-            HbrFace<U>     *face = edge->GetFace();
 
-            /* Ground truth */
-            assert(face->GetNumVertices() == 4);
+            // TODO handle models with boundaries
+            if (vertex->HasLimit()) {
 
-            /* Compute the mapping from patch index to relative FAR index */
-            vector<int> IndexMap(K, 0);
-            for (int i = 0; i < K; i++)
-                IndexMap[i] = this->_mesh->GetFarVertexID( PatchVertices[i] ) - offset;
+                // Push to limit surface via stencil from Halstead '93.
+                int valence = vertex->GetValence();
+                double n = (double) valence;
+                double normalizer = n * (n + 5.0);
+                HbrHalfedge<U> *edge = vertex->GetIncidentEdge();
 
-            /* insert weights into staged matrix */
-            for (int i = 0; i < K; i++)
-                dispatch->StageElem(vi, IndexMap[i], Weights[i]);
-#else
-                dispatch->StageElem(vi, vi, 1.0);
-#endif
+                // Target point
+                dispatch->StageElem(vi, vi, n * n / normalizer);
+
+                // Points in neighborhood
+                for (int i = 0; i < valence; i++) {
+                    HbrVertex<U> *adjacent = edge->GetDestVertex(),
+                                 *opposite = edge->GetNext()->GetDestVertex();
+                    int adjacent_idx = this->_mesh->GetFarVertexID(adjacent) - offset,
+                        opposite_idx = this->_mesh->GetFarVertexID(opposite) - offset;
+
+                    dispatch->StageElem(vi, adjacent_idx, 4.0 / normalizer );
+                    dispatch->StageElem(vi, opposite_idx, 1.0 / normalizer );
+
+                    edge = edge->GetOpposite()->GetNext();
+                }
+
+            } else {
+                // No limit - just copy location
+                dispatch->StageElem(vi, vi, 1.0f);
+            }
         }
     }
     dispatch->PushMatrix();

@@ -607,11 +607,6 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme, int exa
         g_coarseVertexSharpness.push_back(hmesh->GetVertex(i)->GetSharpness());
     }
 
-    if (exact && level < 2) {
-        printf("[warn] Exact evaluation requires at least two levels of subdivision. "
-               "Bumping subdiv level to 2.\n");
-        g_level = level = 2;
-    }
     // TODO reconcile exact evaluation and hedits at levels greater than the tess factor
 
     // generate Osd mesh from Hbr mesh
