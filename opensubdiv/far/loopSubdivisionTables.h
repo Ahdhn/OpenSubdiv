@@ -107,31 +107,6 @@ FarLoopSubdivisionTables<U>::FarLoopSubdivisionTables( FarMesh<U> * mesh, int ma
     FarSubdivisionTables<U>(mesh, maxlevel)
 { }
 
-#if 0 // REMOVE ME
-template <class U> void
-FarLoopSubdivisionTables<U>::Apply( int level, void * clientdata ) const
-{
-    assert(this->_mesh and level>0);
-
-    typename FarSubdivisionTables<U>::VertexKernelBatch const * batch = & (this->_batches[level-1]);
-
-    FarDispatcher<U> const * dispatch = this->_mesh->GetDispatcher();
-    assert(dispatch);
-
-    int offset = this->GetFirstVertexOffset(level);
-    if (batch->kernelE>0)
-        dispatch->ApplyLoopEdgeVerticesKernel(this->_mesh, offset, level, 0, batch->kernelE, clientdata);
-
-    offset += this->GetNumEdgeVertices(level);
-    if (batch->kernelB.first < batch->kernelB.second)
-        dispatch->ApplyLoopVertexVerticesKernelB(this->_mesh, offset, level, batch->kernelB.first, batch->kernelB.second, clientdata);
-    if (batch->kernelA1.first < batch->kernelA1.second)
-        dispatch->ApplyLoopVertexVerticesKernelA(this->_mesh, offset, false, level, batch->kernelA1.first, batch->kernelA1.second, clientdata);
-    if (batch->kernelA2.first < batch->kernelA2.second)
-        dispatch->ApplyLoopVertexVerticesKernelA(this->_mesh, offset, true, level, batch->kernelA2.first, batch->kernelA2.second, clientdata);
-}
-#endif
-
 template <class U> void
 FarLoopSubdivisionTables<U>::Apply( int level, void * clientdata ) const
 {
@@ -298,9 +273,44 @@ FarLoopSubdivisionTables<U>::computeVertexPointsB( int offset, int level, int st
 template <class U> void
 FarLoopSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
 
-    /* not implemented yet */
-    printf("[warn] Limit surface evalution of Loop subdivs not implemented yet.\n");
-    return;
+    assert(this->_mesh);
+    FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
+
+    dispatch->StageMatrix(nverts, nverts);
+    {
+        for(int vi = 0; vi < nverts; vi++) {
+            /* Get Hbr handle */
+            HbrVertex<U> *vertex = this->_mesh->GetHbrVertex(offset + vi);
+
+            // TODO handle models with boundaries
+            if (vertex->HasLimit()) {
+
+                // Push to limit surface via stencil from Cheng '08.
+                int valence = vertex->GetValence();
+                double n = (double) valence;
+                double B_n = 3.0 /
+                    (11.0 - 8.0 * (0.375+ (0.375 + 0.25 * pow(cos(2.0 * M_PI / n), 2.0))));
+                HbrHalfedge<U> *edge = vertex->GetIncidentEdge();
+
+                // Target point
+                dispatch->StageElem(vi, vi, B_n);
+
+                // Points in neighborhood
+                for (int i = 0; i < valence; i++) {
+                    HbrVertex<U> *adjacent = edge->GetDestVertex();
+                    int adjacent_idx = this->_mesh->GetFarVertexID(adjacent) - offset;
+                    dispatch->StageElem(vi, adjacent_idx, (1.0 - B_n) / n );
+
+                    edge = edge->GetOpposite()->GetNext();
+                }
+
+            } else {
+                // No limit - just copy location
+                dispatch->StageElem(vi, vi, 1.0f);
+            }
+        }
+    }
+    dispatch->PushMatrix();
 }
 
 } // end namespace OPENSUBDIV_VERSION
