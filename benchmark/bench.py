@@ -5,7 +5,7 @@ from subprocess import *
 import numpy as np
 
 if sys.platform == 'darwin':
-    VIEWER_PATH = "/Users/mbdriscoll/cs284/OpenSubdiv/build/bin/glutViewer"
+    VIEWER_PATH = "/Users/mbdriscoll/OpenSubdiv/build/bin/glutViewer"
 else:
     VIEWER_PATH = "/home/driscoll/OpenSubdiv/build/bin/glutViewer"
 
@@ -49,6 +49,16 @@ modelMaxLevel = {
     "Cube":         7,
     "Icosahedron":  7,
 }
+
+modelSupportsExact = {
+    "BigGuy":       True,
+    "Bunny":        False,
+    "MonsterFrog":  True,
+    "Venus":        True,
+    "Cube":         True,
+    "Icosahedron":  True,
+}
+
 
 class ExecutionError(Exception):
     def __init__(self, message):
@@ -109,7 +119,7 @@ class Run(object):
 def escape_latex(string):
     return string.replace('_', '\\\\_')
 
-def do_run(model='cube', frames=1000, level=1, kernel='CPU', spyfile=None, regression=False, exact=False):
+def do_run(model='cube', frames=1000, level=1, kernel='CPU', spyfile=None, regression=False, exact=None):
     assert 0 < level <= 7, "Must select positive subdiv level from 1 to 7."
     cmd_line = [
         VIEWER_PATH,
