@@ -176,7 +176,6 @@ public:
      * avoid no-op calls into the matrix manipulation methods for adhoc kernels.
      */
     virtual int SupportsExactEvaluation() {
-        DEBUG_PRINTF("Pushing to limit surface.\n");
         return 1;
     }
 
