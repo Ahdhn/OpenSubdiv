@@ -59,6 +59,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <cfloat>
 #include <vector>
 
 #include "../version.h"
@@ -84,6 +85,7 @@ public:
 
     /// Compute the positions of refined vertices using the specified kernels
     virtual void Apply( int level, void * data=0 ) const;
+    virtual void PushLimitMatrix(int nverts, int offset);
 
     /// Face-vertices indexing table accessor
     FarTable<unsigned int> const & Get_F_IT( ) const { return _F_IT; }
@@ -120,6 +122,7 @@ private:
 
     FarTable<int>           _F_ITa;
     FarTable<unsigned int>  _F_IT;
+
 };
 
 template <class U>
@@ -135,35 +138,6 @@ FarCatmarkSubdivisionTables<U>::GetMemoryUsed() const {
         _F_ITa.GetMemoryUsed()+
         _F_IT.GetMemoryUsed();
 }
-
-#if 0 // REMOVEME
-template <class U> void
-FarCatmarkSubdivisionTables<U>::Apply( int level, void * clientdata ) const {
-
-    assert(this->_mesh and level>0);
-
-    typename FarSubdivisionTables<U>::VertexKernelBatch const * batch = & (this->_batches[level-1]);
-
-    FarDispatcher<U> const * dispatch = this->_mesh->GetDispatcher();
-    assert(dispatch);
-
-    int offset = this->GetFirstVertexOffset(level);
-    if (batch->kernelF>0)
-        dispatch->ApplyCatmarkFaceVerticesKernel(this->_mesh, offset, level, 0, batch->kernelF, clientdata);
-
-    offset += this->GetNumFaceVertices(level);
-    if (batch->kernelE>0)
-        dispatch->ApplyCatmarkEdgeVerticesKernel(this->_mesh, offset, level, 0, batch->kernelE, clientdata);
-
-    offset += this->GetNumEdgeVertices(level);
-    if (batch->kernelB.first < batch->kernelB.second)
-        dispatch->ApplyCatmarkVertexVerticesKernelB(this->_mesh, offset, level, batch->kernelB.first, batch->kernelB.second, clientdata);
-    if (batch->kernelA1.first < batch->kernelA1.second)
-        dispatch->ApplyCatmarkVertexVerticesKernelA(this->_mesh, offset, false, level, batch->kernelA1.first, batch->kernelA1.second, clientdata);
-    if (batch->kernelA2.first < batch->kernelA2.second)
-        dispatch->ApplyCatmarkVertexVerticesKernelA(this->_mesh, offset, true, level, batch->kernelA2.first, batch->kernelA2.second, clientdata);
-}
-#endif
 
 template <class U> void
 FarCatmarkSubdivisionTables<U>::Apply( int level, void * clientdata ) const {
@@ -376,6 +350,52 @@ FarCatmarkSubdivisionTables<U>::computeVertexPointsB( int offset, int level, int
         }
         vdst->AddVaryingWithWeight( vsrc[p], 1.0f, clientdata );
     }
+}
+
+template <class U> void
+FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
+
+    assert(this->_mesh);
+    FarDispatcher<U> * dispatch = this->_mesh->GetDispatcher();
+
+    dispatch->StageMatrix(nverts, nverts);
+    {
+        for(int vi = 0; vi < nverts; vi++) {
+            /* Get Hbr handle */
+            HbrVertex<U> *vertex = this->_mesh->GetHbrVertex(offset + vi);
+
+            // TODO handle models with boundaries
+            if (!vertex->OnBoundary()) {
+
+                // Push to limit surface via stencil from Halstead '93.
+                int valence = vertex->GetValence();
+                double n = (double) valence;
+                double normalizer = n * (n + 5.0);
+                HbrHalfedge<U> *edge = vertex->GetIncidentEdge();
+
+                // Target point
+                dispatch->StageElem(vi, vi, n * n / normalizer);
+
+                // Points in neighborhood
+                for (int i = 0; i < valence; i++) {
+                    HbrVertex<U> *adjacent = edge->GetDestVertex(),
+                                 *opposite = edge->GetNext()->GetDestVertex();
+                    int adjacent_idx = this->_mesh->GetFarVertexID(adjacent) - offset,
+                        opposite_idx = this->_mesh->GetFarVertexID(opposite) - offset;
+
+                    dispatch->StageElem(vi, adjacent_idx, 4.0 / normalizer );
+                    dispatch->StageElem(vi, opposite_idx, 1.0 / normalizer );
+
+                    edge = edge->GetOpposite()->GetNext();
+                }
+
+            } else {
+                // No limit - just copy location
+                dispatch->StageElem(vi, vi, 1.0f);
+            }
+        }
+    }
+    dispatch->PushMatrix();
 }
 
 } // end namespace OPENSUBDIV_VERSION

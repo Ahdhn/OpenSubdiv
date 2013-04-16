@@ -89,7 +89,6 @@ OsdMesh::~OsdMesh() {
 
     if(_farMesh)
         delete _farMesh;
-
 }
 
 void
@@ -133,7 +132,7 @@ OsdMesh::createEditTables( FarVertexEditTables<OsdVertex> const *editTables ) {
 }
 
 bool
-OsdMesh::Create(OsdHbrMesh *hbrMesh, int level, int kernel, std::vector<int> * remap) {
+OsdMesh::Create(OsdHbrMesh *hbrMesh, int level, int kernel, int exact, std::vector<int> * remap) {
 
     if (_dispatcher)
         delete _dispatcher;
@@ -145,6 +144,7 @@ OsdMesh::Create(OsdHbrMesh *hbrMesh, int level, int kernel, std::vector<int> * r
     }
 
     _level = level;
+    _exact = exact;
 
     // create Far mesh
     OSD_DEBUG("Create MeshFactory\n");
@@ -204,7 +204,7 @@ OsdMesh::Subdivide(OsdVertexBuffer *vertex, OsdVertexBuffer *varying) {
     {
         _dispatcher->OnKernelLaunch();
 
-        _farMesh->Subdivide(_level+1);
+        _farMesh->Subdivide(_level+1, _exact);
 
         _dispatcher->OnKernelFinish();
     }

@@ -127,6 +127,7 @@ public:
     virtual void PushMatrix() { };
     virtual void FinalizeMatrix() { };
     virtual void ApplyMatrix(int offset) { };
+    virtual int SupportsExactEvaluation() { return 0; };
     void SetSrcOffset(int srcOffset) { this->srcOffset = srcOffset; };
     void SetDstOffset(int dstOffset) { this->dstOffset = dstOffset; };
     virtual int CopyNVerts(int nVerts, int index) { return 0; };

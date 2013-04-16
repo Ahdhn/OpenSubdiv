@@ -216,6 +216,8 @@ initializeShapes( ) {
 #include <shapes/catmark_square_hedit3.h>
     g_defaultShapes.push_back(SimpleShape(catmark_square_hedit3, "catmark_square_hedit3", kCatmark));
 
+#include <shapes/catmark_square_hedit4.h>
+    g_defaultShapes.push_back(SimpleShape(catmark_square_hedit4, "catmark_square_hedit4", kCatmark));
 
 
 #include <shapes/loop_cube_creases0.h>
@@ -281,6 +283,7 @@ Scheme             g_scheme;
 
 int g_numIndices = 0;
 int g_level = 2;
+int g_exact = 0;
 int g_kernel = OpenSubdiv::OsdKernelDispatcher::kCPU;
 float g_moveScale = 1.0f;
 
@@ -573,7 +576,7 @@ drawCoarseMesh(int mode) {
 
 //------------------------------------------------------------------------------
 void
-createOsdMesh( const char * shape, int level, int kernel, Scheme scheme=kCatmark ) {
+createOsdMesh( const char * shape, int level, int kernel, Scheme scheme, int exact ) {
     // start timer
     Stopwatch s;
     s.Start();
@@ -604,19 +607,22 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme=kCatmark
         g_coarseVertexSharpness.push_back(hmesh->GetVertex(i)->GetSharpness());
     }
 
+    // TODO reconcile exact evaluation and hedits at levels greater than the tess factor
+
     // generate Osd mesh from Hbr mesh
     if (g_osdmesh) delete g_osdmesh;
     g_osdmesh = new OpenSubdiv::OsdMesh();
-    g_osdmesh->Create(hmesh, level, kernel);
+    g_osdmesh->Create(hmesh, level, kernel, exact);
     if (g_vertexBuffer) {
         delete g_vertexBuffer;
         g_vertexBuffer = NULL;
     }
 
 #if REGRESSION
+    assert(!exact && "No support for regression testing of exact surfaces, yet.");
     if (g_cpu_osdmesh) delete g_cpu_osdmesh;
     g_cpu_osdmesh = new OpenSubdiv::OsdMesh();
-    g_cpu_osdmesh->Create(hmesh, level, OpenSubdiv::OsdKernelDispatcher::kCPU);
+    g_cpu_osdmesh->Create(hmesh, level, OpenSubdiv::OsdKernelDispatcher::kCPU, exact);
     if (g_cpu_vertexBuffer) {
         delete g_cpu_vertexBuffer;
         g_cpu_vertexBuffer = NULL;
@@ -624,7 +630,8 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme=kCatmark
 #endif
 
     // Hbr mesh can be deleted
-    delete hmesh;
+    // (mbd: let osd mesh own hmesh for limit surface evaluation)
+    // delete hmesh;
 
     // update element array buffer
     const std::vector<int> &indices = g_osdmesh->GetFarMesh()->GetFaceVertices(level);
@@ -660,6 +667,7 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme=kCatmark
     printf(" level=%d", level);
     printf(" kernel=%s", getKernelName(g_kernel));
     printf(" model=%s", g_defaultShapes[ g_currentShape ].name.c_str());
+    printf(" exact=%d",  g_exact);
 #endif
 }
 
@@ -742,16 +750,17 @@ display() {
 
     if (g_drawHUD) {
         glColor3f(1, 1, 1);
-        drawString(10, 10, "LEVEL = %d", g_level);
-        drawString(10, 30, "# of Vertices = %d (%d)", g_osdmesh->GetFarMesh()->GetNumVertices(), g_osdmesh->GetFarMesh()->GetSubdivision()->GetNumVertices(g_level));
-        drawString(10, 50, "KERNEL = %s", getKernelName(g_kernel));
-        drawString(10, 70, "CPU TIME = %.3f ms", g_cpuTime);
-        drawString(10, 90, "GPU TIME = %.3f ms", g_gpuTime);
-        drawString(10, 110, "SUBDIVISION = %s", g_scheme==kBilinear ? "BILINEAR" : (g_scheme == kLoop ? "LOOP" : "CATMARK"));
-        drawString(10, 130, "AVG VERT/MS = %4.f", g_vertPerMillisec);
-        drawString(10, 150, "MODEL = %s", g_defaultShapes[ g_currentShape ].name.c_str());
+        drawString(10, 10, "EXACT = %d", g_exact);
+        drawString(10, 30, "LEVEL = %d", g_level);
+        drawString(10, 50, "# of Vertices = %d (%d)", g_osdmesh->GetFarMesh()->GetNumVertices(), g_osdmesh->GetFarMesh()->GetSubdivision()->GetNumVertices(g_level));
+        drawString(10, 70, "KERNEL = %s", getKernelName(g_kernel));
+        drawString(10, 90, "CPU TIME = %.3f ms", g_cpuTime);
+        drawString(10, 110, "GPU TIME = %.3f ms", g_gpuTime);
+        drawString(10, 130, "SUBDIVISION = %s", g_scheme==kBilinear ? "BILINEAR" : (g_scheme == kLoop ? "LOOP" : "CATMARK"));
+        drawString(10, 150, "AVG VERT/MS = %4.f", g_vertPerMillisec);
+        drawString(10, 170, "MODEL = %s", g_defaultShapes[ g_currentShape ].name.c_str());
 #ifdef OPENSUBDIV_HAS_MKL
-        drawString(10, 170, "DUMP SPY = %d", osdSpMVKernel_DumpSpy_FileName != NULL);
+        drawString(10, 190, "DUMP SPY = %d", osdSpMVKernel_DumpSpy_FileName != NULL);
 #endif
 
         drawString(10, g_height-30, "w:   toggle wireframe");
@@ -761,6 +770,7 @@ display() {
         drawString(10, g_height-110, "n/p: change model");
         drawString(10, g_height-130, "1-7: subdivision level");
         drawString(10, g_height-150, "space: freeze/unfreeze time");
+        drawString(10, g_height-170, "l: toggle exact/approx evaluation");
     }
 
     glFinish();
@@ -815,10 +825,17 @@ void quit() {
 }
 
 //------------------------------------------------------------------------------
+void exactMenu(int k) {
+
+    g_exact = k;
+    createOsdMesh( g_defaultShapes[ g_currentShape ].data, g_level, g_kernel, g_defaultShapes[ g_currentShape ].scheme, g_exact );
+}
+
+//------------------------------------------------------------------------------
 void kernelMenu(int k) {
 
     g_kernel = k;
-    createOsdMesh( g_defaultShapes[ g_currentShape ].data, g_level, g_kernel, g_defaultShapes[ g_currentShape ].scheme );
+    createOsdMesh( g_defaultShapes[ g_currentShape ].data, g_level, g_kernel, g_defaultShapes[ g_currentShape ].scheme, g_exact );
 }
 
 //------------------------------------------------------------------------------
@@ -835,7 +852,7 @@ modelMenu(int m) {
 
     glutSetWindowTitle( g_defaultShapes[m].name.c_str() );
 
-    createOsdMesh( g_defaultShapes[m].data, g_level, g_kernel, g_defaultShapes[ g_currentShape ].scheme );
+    createOsdMesh( g_defaultShapes[m].data, g_level, g_kernel, g_defaultShapes[ g_currentShape ].scheme, g_exact );
 }
 
 //------------------------------------------------------------------------------
@@ -844,7 +861,7 @@ levelMenu(int l) {
 
     g_level = l;
 
-    createOsdMesh( g_defaultShapes[g_currentShape].data, g_level, g_kernel, g_defaultShapes[ g_currentShape ].scheme );
+    createOsdMesh( g_defaultShapes[g_currentShape].data, g_level, g_kernel, g_defaultShapes[ g_currentShape ].scheme, g_exact );
 }
 
 //------------------------------------------------------------------------------
@@ -872,6 +889,7 @@ keyboard(unsigned char key, int x, int y) {
         case '5':
         case '6':
         case '7': levelMenu(key-'0'); break;
+        case 'l': exactMenu((g_exact+1)%2); break;
         case 'n': modelMenu(++g_currentShape); break;
         case 'p': modelMenu(--g_currentShape); break;
         case 0x1b: g_drawHUD = (g_drawHUD+1)%2; break;
@@ -987,10 +1005,15 @@ int main(int argc, char ** argv) {
                OpenSubdiv::OsdKernelDispatcher::KernelType(i)))
             glutAddMenuEntry(getKernelName(i), i);
 
+    int amenu = glutCreateMenu(exactMenu);
+    glutAddMenuEntry("Approx", 0);
+    glutAddMenuEntry("Exact", 1);
+
     glutCreateMenu(menu);
     glutAddSubMenu("Level", lmenu);
     glutAddSubMenu("Model", smenu);
     glutAddSubMenu("Kernel", kmenu);
+    glutAddSubMenu("Accuracy", amenu);
     glutAttachMenu(GLUT_RIGHT_BUTTON);
 
     glutDisplayFunc(display);
@@ -1008,6 +1031,8 @@ int main(int argc, char ** argv) {
     for (int i = 1; i < argc; ++i) {
         if (!strcmp(argv[i], "-l") || !strcmp(argv[i], "--level"))
             g_level = atoi(argv[++i]);
+        else if (!strcmp(argv[i], "-e") || !strcmp(argv[i], "--exact"))
+            g_exact = 1;
         else if (!strcmp(argv[i], "-c") || !strcmp(argv[i], "--count"))
             g_repeatCount = atoi(argv[++i]);
         else if (!strcmp(argv[i], "-m") || !strcmp(argv[i], "--model"))

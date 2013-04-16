@@ -62,6 +62,14 @@
 #include <iostream>
 
 #include "../version.h"
+
+#include "../osd/mutex.h"
+
+#include "../hbr/mesh.h"
+#include "../hbr/bilinear.h"
+#include "../hbr/catmark.h"
+#include "../hbr/loop.h"
+
 #include "../far/subdivisionTables.h"
 #include "../far/vertexEditTables.h"
 
@@ -120,15 +128,9 @@ public:
     /// Returns the total number of vertices in the mesh across across all depths
     int GetNumVertices() const { return (int)(_vertices.size()); }
 
-    /// Computational strategy
-    enum Strategy {
-        AdHoc  = 0,
-        SpMV   = 1,
-    };
-
     /// Apply the subdivision tables to compute the positions of the vertices up
     /// to 'level'
-    void Subdivide(int level=-1);
+    void Subdivide(int level=-1, int exact=0);
 
 private:
 
@@ -136,7 +138,14 @@ private:
     // declaration of the templated vertex class U.
     template <class X, class Y> friend class FarMeshFactory;
 
-    FarMesh() : _subdivisionTables(0), _vertexEditTables(0), _dispatcher(0) { }
+    FarMesh(HbrMesh<U> * _hbrMesh, const std::vector<int>& remap, const std::vector<int>& unmap) :
+        _subdivisionTables(0),
+        _vertexEditTables(0),
+        _dispatcher(0),
+        _hbrMesh(_hbrMesh),
+        _unmapTable(unmap),
+        _remapTable(remap)
+    { }
 
     // non-copyable, so these are not implemented:
     FarMesh(FarMesh<U> const &);
@@ -165,13 +174,35 @@ private:
 
     // number of vertices at level 0 of subdivision
     int _numCoarseVertices;
+
+    // mbd: hack so subdiv tables can query hbr
+    HbrMesh<U> * _hbrMesh;
+    const std::vector<int> _unmapTable;
+    const std::vector<int> _remapTable;
+public:
+    HbrVertex<U> * GetHbrVertex( int farVertexID );
+    int GetFarVertexID( HbrVertex<U> *v );
 };
+
+template <class U> int
+FarMesh<U>::GetFarVertexID( HbrVertex<U> *v ) {
+    int i = v->GetID();
+    assert( (0 <= i) and (i < _remapTable.size()) );
+    return _remapTable[i];
+}
+
+template <class U> HbrVertex<U> *
+FarMesh<U>::GetHbrVertex( int i ) {
+    assert( (0 <= i) and (i < _unmapTable.size()) );
+    return _hbrMesh->GetVertex( _unmapTable[i] );
+}
 
 template <class U>
 FarMesh<U>::~FarMesh()
 {
     delete _subdivisionTables;
     delete _vertexEditTables;
+    delete _hbrMesh;
 }
 
 template <class U> int
@@ -194,17 +225,20 @@ FarMesh<U>::GetPtexCoordinates(int level) const {
 }
 
 template <class U> void
-FarMesh<U>::Subdivide(int level) {
-
-    if (_vertexEditTables != NULL) {
-        std::cerr << "Warning: SpMV strategy doesn't support vertex edits." << std::endl;
-        return;
-    }
+FarMesh<U>::Subdivide(int level, int exact) {
 
     if (not _dispatcher->MatrixReady()) {
 
-        for (int i=1; i<level; ++i)
+        for (int i=1; i<level; ++i) {
             _subdivisionTables->Apply(i);
+
+            // edits only work for table-driven strategy, not spmv
+            if (_vertexEditTables)
+                _vertexEditTables->Apply(i, _dispatcher);
+        }
+
+        if (exact == 1 && _dispatcher->SupportsExactEvaluation())
+            _subdivisionTables->PushToLimitSurface(level-1); //XXX level-1?
 
         _dispatcher->FinalizeMatrix();
     }

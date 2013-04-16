@@ -116,6 +116,11 @@ public:
     // Return vertex data
     const T& GetData() const { return data; }
 
+    // Returns true if the vertex has a limit
+    bool HasLimit() {
+        return GetMesh()->GetSubdivision()->HasLimit(GetMesh(), this);
+    }
+
     // Returns the facevarying data which is matched to the face.
     // This may either be the "generic" facevarying item (fvardata, so
     // data.GetFace() == face) or one specifically registered to the

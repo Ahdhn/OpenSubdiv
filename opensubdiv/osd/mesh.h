@@ -95,7 +95,7 @@ public:
     //   - subdivision kernel one of (kCPU, kOPENMP, kCUDA, kGLSL, kCL, kMKL, kCLSPMV, kCUSPARSE)
     //   - optional "remapping" vector that connects Osd and Hbr vertex indices
     //     (for regression)
-    bool Create(OsdHbrMesh *hbrMesh, int level, int kernel, std::vector<int> * remap=0);
+    bool Create(OsdHbrMesh *hbrMesh, int level, int kernel, int exact, std::vector<int> * remap=0);
 
     FarMesh<OsdVertex> *GetFarMesh() { return _farMesh; }
 
@@ -133,9 +133,12 @@ protected:
     FarMesh<OsdVertex> *_farMesh;
 
     int _level;
+    int _exact;
 
     OsdKernelDispatcher * _dispatcher;
 
+    // mbd: for connectivity queries during limit surface eval
+    OpenSubdiv::OsdHbrMesh * _hbrMesh;
 };
 
 } // end namespace OPENSUBDIV_VERSION

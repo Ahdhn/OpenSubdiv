@@ -91,5 +91,3 @@ if(MAYA_FOUND)
         add_subdirectory(mayaPtexViewer_siggraph2012)
     endif()
 endif()
-
-add_subdirectory(headlessViewer)

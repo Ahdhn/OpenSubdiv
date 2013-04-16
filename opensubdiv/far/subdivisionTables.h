@@ -100,7 +100,7 @@ template <class U> class FarSubdivisionTables {
 public:
 
     /// Destructor
-    virtual ~FarSubdivisionTables<U>() {}
+    virtual ~FarSubdivisionTables<U>();
 
     /// Return the highest level of subdivision possible with these tables
     int GetMaxLevel() const { return (int)(_vertsOffsets.size()); }
@@ -110,6 +110,8 @@ public:
 
     /// Compute the positions of refined vertices using the specified kernels
     virtual void Apply( int level, void * clientdata=0 ) const=0;
+    virtual void PushToLimitSurface( int level, void * clientdata=0 );
+    virtual void PushLimitMatrix(int nverts, int offset) = 0;
 
     /// Pointer back to the mesh owning the table
     FarMesh<U> * GetMesh() { return _mesh; }
@@ -215,7 +217,6 @@ protected:
     std::vector<VertexKernelBatch> _batches; // batches of vertices for kernel execution
 
     std::vector<int> _vertsOffsets; // offset to the first vertex of each level
-private:
 };
 
 template <class U>
@@ -309,6 +310,21 @@ FarSubdivisionTables<U>::GetMemoryUsed() const {
            _V_IT.GetMemoryUsed()+
            _V_W.GetMemoryUsed();
 }
+
+template <class U> void
+FarSubdivisionTables<U>::PushToLimitSurface( int level, void * clientdata ) {
+
+    int nverts = this->GetNumVertices( level );
+    int offset = this->GetFirstVertexOffset( level );
+
+    /* Build and push projection matrix */
+    this->PushLimitMatrix(nverts, offset);
+}
+
+template <class U>
+FarSubdivisionTables<U>::~FarSubdivisionTables() {
+}
+
 
 } // end namespace OPENSUBDIV_VERSION
 using namespace OPENSUBDIV_VERSION;

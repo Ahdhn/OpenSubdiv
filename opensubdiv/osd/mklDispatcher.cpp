@@ -14,9 +14,9 @@ void
 CpuCooMatrix::append_element(int i, int j, float val) {
 #ifdef DEBUG
     assert(0 <= i);
-    assert(i < StagedOp->m);
+    assert(i < m);
     assert(0 <= j);
-    assert(j < StagedOp->n);
+    assert(j < n);
 #endif
 
     rows.push_back(i+1); // one-based indexing
