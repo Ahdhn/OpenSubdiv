@@ -365,7 +365,7 @@ FarCatmarkSubdivisionTables<U>::PushLimitMatrix( int nverts, int offset ) {
             HbrVertex<U> *vertex = this->_mesh->GetHbrVertex(offset + vi);
 
             // TODO handle models with boundaries
-            if (vertex->HasLimit()) {
+            if (!vertex->OnBoundary()) {
 
                 // Push to limit surface via stencil from Halstead '93.
                 int valence = vertex->GetValence();
