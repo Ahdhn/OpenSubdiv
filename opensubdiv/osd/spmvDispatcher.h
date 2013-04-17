@@ -25,7 +25,7 @@ template <class CooMatrix_t, class CsrMatrix_t, class VertexBuffer_t>
 class OsdSpMVKernelDispatcher : public OsdCpuKernelDispatcher
 {
 public:
-    OsdSpMVKernelDispatcher( int levels, bool logical )
+    OsdSpMVKernelDispatcher( int levels, bool logical=false )
         : OsdCpuKernelDispatcher(levels), logical(logical), StagedOp(NULL), SubdivOp(NULL)
     { }
 

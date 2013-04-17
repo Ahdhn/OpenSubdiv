@@ -498,9 +498,9 @@ const char *getKernelName(int kernel) {
     else if (kernel == OpenSubdiv::OsdKernelDispatcher::kCUSPARSE)
         return "CuSPARSE";
     else if (kernel == OpenSubdiv::OsdKernelDispatcher::kCCPU)
-        return "Logical SpMV - CPU";
+        return "CustomCPU";
     else if (kernel == OpenSubdiv::OsdKernelDispatcher::kCGPU)
-        return "Logical SpMV - GPU";
+        return "CustomGPU";
     return "Unknown";
 }
 
