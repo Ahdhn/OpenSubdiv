@@ -497,6 +497,10 @@ const char *getKernelName(int kernel) {
         return "MKL";
     else if (kernel == OpenSubdiv::OsdKernelDispatcher::kCUSPARSE)
         return "CuSPARSE";
+    else if (kernel == OpenSubdiv::OsdKernelDispatcher::kCCPU)
+        return "CustomCPU";
+    else if (kernel == OpenSubdiv::OsdKernelDispatcher::kCGPU)
+        return "CustomGPU";
     return "Unknown";
 }
 

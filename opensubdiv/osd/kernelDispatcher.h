@@ -85,6 +85,8 @@ public:
                       kMKL = 5,
                       kCLSPMV = 6,
                       kCUSPARSE = 7,
+                      kCCPU= 8,
+                      kCGPU= 9,
                       kMAX };
 
 
