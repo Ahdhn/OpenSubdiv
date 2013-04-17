@@ -75,15 +75,8 @@ CpuCsrMatrix::CpuCsrMatrix(const CpuCooMatrix* StagedOp, int nve, mode_t mode) :
     nnz = rows[m]-1;
 }
 
-#define USE_MKL_SPMV 0
-
 void
-CpuCsrMatrix::spmv(float* d_out, float* d_in) {
-#if USE_MKL_SPMV
-    assert(mode == CsrMatrix::ELEMENT);
-    mkl_scsrgemv((char*)"N", &m, vals, rows, cols, d_in, d_out);
-#else
-
+CpuCsrMatrix::logical_spmv(float* d_out, float* d_in) {
     omp_set_num_threads( omp_get_num_procs() );
 
     #pragma omp parallel for
@@ -110,18 +103,16 @@ CpuCsrMatrix::spmv(float* d_out, float* d_in) {
             _mm_storel_pi( (__m64*) &d_out[ out_idx+4 ], out45v );
         }
     }
+}
 
-#endif
+void
+CpuCsrMatrix::spmv(float* d_out, float* d_in) {
+    assert(mode == CsrMatrix::ELEMENT);
+    mkl_scsrgemv((char*)"N", &m, vals, rows, cols, d_in, d_out);
 }
 
 CpuCsrMatrix*
 CpuCsrMatrix::gemm(CpuCsrMatrix* rhs) {
-#if USE_MKL_SPMV
-    if (rhs->mode != this->mode) {
-        rhs->expand();
-        this->expand();
-    }
-#endif
 
     CpuCsrMatrix* A = this;
     CpuCsrMatrix* B = rhs;
@@ -153,7 +144,6 @@ CpuCsrMatrix::gemm(CpuCsrMatrix* rhs) {
 
 void
 CpuCsrMatrix::expand() {
-#if USE_MKL_SPMV
     if (mode == CsrMatrix::VERTEX) {
         int* new_rows = (int*) malloc((nve*m+1) * sizeof(int));
         int* new_cols = (int*) malloc(nve*nnz * sizeof(int));
@@ -190,7 +180,6 @@ CpuCsrMatrix::expand() {
         mode = CsrMatrix::ELEMENT;
         new_rows[m] = nnz+1;
     }
-#endif
 }
 
 void
@@ -219,18 +208,24 @@ CpuCsrMatrix::~CpuCsrMatrix() {
 }
 
 
-OsdMklKernelDispatcher::OsdMklKernelDispatcher(int levels) :
-    OsdSpMVKernelDispatcher<CpuCooMatrix,CpuCsrMatrix,OsdCpuVertexBuffer>(levels)
+OsdMklKernelDispatcher::OsdMklKernelDispatcher(int levels, bool logical) :
+    OsdSpMVKernelDispatcher<CpuCooMatrix,CpuCsrMatrix,OsdCpuVertexBuffer>(levels,logical)
 { }
 
 static OsdMklKernelDispatcher::OsdKernelDispatcher *
 Create(int levels) {
-    return new OsdMklKernelDispatcher(levels);
+    return new OsdMklKernelDispatcher(levels, false);
+}
+
+static OsdMklKernelDispatcher::OsdKernelDispatcher *
+CreateLogical(int levels) {
+    return new OsdMklKernelDispatcher(levels, true);
 }
 
 void
 OsdMklKernelDispatcher::Register() {
     Factory::GetInstance().Register(Create, kMKL);
+    Factory::GetInstance().Register(CreateLogical, kCCPU);
 }
 
 } // end namespace OPENSUBDIV_VERSION

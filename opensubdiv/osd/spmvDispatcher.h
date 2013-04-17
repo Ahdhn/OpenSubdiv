@@ -25,8 +25,8 @@ template <class CooMatrix_t, class CsrMatrix_t, class VertexBuffer_t>
 class OsdSpMVKernelDispatcher : public OsdCpuKernelDispatcher
 {
 public:
-    OsdSpMVKernelDispatcher( int levels )
-        : OsdCpuKernelDispatcher(levels), StagedOp(NULL), SubdivOp(NULL)
+    OsdSpMVKernelDispatcher( int levels, bool logical )
+        : OsdCpuKernelDispatcher(levels), logical(logical), StagedOp(NULL), SubdivOp(NULL)
     { }
 
     virtual ~OsdSpMVKernelDispatcher() {
@@ -125,7 +125,9 @@ public:
         if (osdSpMVKernel_DumpSpy_FileName != NULL)
             SubdivOp->dump(osdSpMVKernel_DumpSpy_FileName);
 
-        SubdivOp->expand();
+        if (!logical)
+            SubdivOp->expand();
+
         this->PrintReport();
     }
 
@@ -139,7 +141,10 @@ public:
         float* V_in = (float*) _currentVertexBuffer->Map();
         float* V_out = (float*) V_in + offset * numElems;
 
-        SubdivOp->spmv(V_out, V_in);
+        if (logical)
+            SubdivOp->logical_spmv(V_out, V_in);
+        else
+            SubdivOp->spmv(V_out, V_in);
 
         _currentVertexBuffer->Unmap();
     }
@@ -181,6 +186,7 @@ public:
 
     CooMatrix_t* StagedOp;
     CsrMatrix_t* SubdivOp;
+    bool logical;
 };
 
 
@@ -211,6 +217,7 @@ public:
         m(StagedOp->m), n(StagedOp->n), nnz(StagedOp->nnz), nve(nve), mode(mode) { }
 
     virtual void spmv(float* d_out, float* d_in) = 0;
+    virtual void logical_spmv(float* d_out, float* d_in) = 0;
     virtual void expand() = 0;
     virtual void dump(std::string ofilename) = 0;
 
