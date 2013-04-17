@@ -1,6 +1,9 @@
 #include "../version.h"
 #include "../osd/mklDispatcher.h"
 
+#include <omp.h>
+#include <xmmintrin.h>
+
 char* osdSpMVKernel_DumpSpy_FileName = NULL;
 
 namespace OpenSubdiv {
@@ -72,18 +75,53 @@ CpuCsrMatrix::CpuCsrMatrix(const CpuCooMatrix* StagedOp, int nve, mode_t mode) :
     nnz = rows[m]-1;
 }
 
+#define USE_MKL_SPMV 0
+
 void
 CpuCsrMatrix::spmv(float* d_out, float* d_in) {
+#if USE_MKL_SPMV
     assert(mode == CsrMatrix::ELEMENT);
     mkl_scsrgemv((char*)"N", &m, vals, rows, cols, d_in, d_out);
+#else
+
+    omp_set_num_threads( omp_get_num_procs() );
+
+    #pragma omp parallel for
+    for(int i = 0; i < m; i++) {
+
+        register __m128
+            out03v = _mm_setzero_ps(),
+            out45v = _mm_setzero_ps();
+        int out_idx = 6*i;
+
+        for (int k = rows[i]-1; k < rows[i+1]-1; k++) {
+
+            int in_idx = 6*(cols[k]-1);
+
+            __m128 ignore,
+                   in03v = _mm_loadu_ps( &d_in[in_idx] ),
+                   in45v = _mm_loadl_pi( ignore, (const __m64*) &d_in[in_idx+4] ),
+                   weightv = _mm_load1_ps( &vals[k] );
+
+            out03v = _mm_add_ps(out03v, _mm_mul_ps(weightv, in03v));
+            out45v = _mm_add_ps(out45v, _mm_mul_ps(weightv, in45v));
+
+            _mm_storeu_ps( &d_out[ out_idx ], out03v );
+            _mm_storel_pi( (__m64*) &d_out[ out_idx+4 ], out45v );
+        }
+    }
+
+#endif
 }
 
 CpuCsrMatrix*
 CpuCsrMatrix::gemm(CpuCsrMatrix* rhs) {
+#if USE_MKL_SPMV
     if (rhs->mode != this->mode) {
         rhs->expand();
         this->expand();
     }
+#endif
 
     CpuCsrMatrix* A = this;
     CpuCsrMatrix* B = rhs;
@@ -115,6 +153,7 @@ CpuCsrMatrix::gemm(CpuCsrMatrix* rhs) {
 
 void
 CpuCsrMatrix::expand() {
+#if USE_MKL_SPMV
     if (mode == CsrMatrix::VERTEX) {
         int* new_rows = (int*) malloc((nve*m+1) * sizeof(int));
         int* new_cols = (int*) malloc(nve*nnz * sizeof(int));
@@ -151,6 +190,7 @@ CpuCsrMatrix::expand() {
         mode = CsrMatrix::ELEMENT;
         new_rows[m] = nnz+1;
     }
+#endif
 }
 
 void
@@ -196,3 +236,31 @@ OsdMklKernelDispatcher::Register() {
 } // end namespace OPENSUBDIV_VERSION
 
 } // end namespace OpenSubdiv
+
+
+// storing this here temporarily
+#if 0
+    // unrolled
+    for(int i = 0; i < m; i++) {
+        for (int k = rows[i]-1; k < rows[i+1]-1; k++) {
+            float weight = vals[k];
+            int in_idx  = 6*(cols[k]-1),
+                out_idx = 6*i;
+            d_out[out_idx+0] += weight * d_in[ in_idx + 0 ];
+            d_out[out_idx+1] += weight * d_in[ in_idx + 1 ];
+            d_out[out_idx+2] += weight * d_in[ in_idx + 2 ];
+            d_out[out_idx+3] += weight * d_in[ in_idx + 3 ];
+            d_out[out_idx+4] += weight * d_in[ in_idx + 4 ];
+            d_out[out_idx+5] += weight * d_in[ in_idx + 5 ];
+        }
+    }
+
+    // naive
+    for(int i = 0; i < m; i++) {
+        for (int k = rows[i]-1; k < rows[i+1]-1; k++) {
+            for (int w = 0; w < 6; w++) {
+                d_out[6*i+w] += vals[k] * d_in[ 6*(cols[k]-1) + w ];
+            }
+        }
+    }
+#endif
