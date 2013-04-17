@@ -231,31 +231,3 @@ OsdMklKernelDispatcher::Register() {
 } // end namespace OPENSUBDIV_VERSION
 
 } // end namespace OpenSubdiv
-
-
-// storing this here temporarily
-#if 0
-    // unrolled
-    for(int i = 0; i < m; i++) {
-        for (int k = rows[i]-1; k < rows[i+1]-1; k++) {
-            float weight = vals[k];
-            int in_idx  = 6*(cols[k]-1),
-                out_idx = 6*i;
-            d_out[out_idx+0] += weight * d_in[ in_idx + 0 ];
-            d_out[out_idx+1] += weight * d_in[ in_idx + 1 ];
-            d_out[out_idx+2] += weight * d_in[ in_idx + 2 ];
-            d_out[out_idx+3] += weight * d_in[ in_idx + 3 ];
-            d_out[out_idx+4] += weight * d_in[ in_idx + 4 ];
-            d_out[out_idx+5] += weight * d_in[ in_idx + 5 ];
-        }
-    }
-
-    // naive
-    for(int i = 0; i < m; i++) {
-        for (int k = rows[i]-1; k < rows[i+1]-1; k++) {
-            for (int w = 0; w < 6; w++) {
-                d_out[6*i+w] += vals[k] * d_in[ 6*(cols[k]-1) + w ];
-            }
-        }
-    }
-#endif

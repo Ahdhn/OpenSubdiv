@@ -229,12 +229,18 @@ OsdCusparseKernelDispatcher::~OsdCusparseKernelDispatcher() {
 
 static OsdCusparseKernelDispatcher::OsdKernelDispatcher *
 Create(int levels) {
-    return new OsdCusparseKernelDispatcher(levels);
+    return new OsdCusparseKernelDispatcher(levels, false);
+}
+
+static OsdCusparseKernelDispatcher::OsdKernelDispatcher *
+CreateLogical(int levels) {
+    return new OsdCusparseKernelDispatcher(levels, true);
 }
 
 void
 OsdCusparseKernelDispatcher::Register() {
     Factory::GetInstance().Register(Create, kCUSPARSE);
+    Factory::GetInstance().Register(CreateLogical, kCGPU);
 }
 
 void
