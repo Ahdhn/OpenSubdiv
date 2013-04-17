@@ -231,6 +231,11 @@ OsdCusparseKernelDispatcher::~OsdCusparseKernelDispatcher() {
     handle = NULL;
 }
 
+void
+OsdCusparseKernelDispatcher::FinalizeMatrix() {
+    this->OsdSpMVKernelDispatcher<CudaCooMatrix, CudaCsrMatrix, OsdCudaVertexBuffer>::FinalizeMatrix();
+}
+
 static OsdCusparseKernelDispatcher::OsdKernelDispatcher *
 Create(int levels) {
     return new OsdCusparseKernelDispatcher(levels, false);

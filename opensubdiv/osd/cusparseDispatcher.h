@@ -27,8 +27,7 @@ public:
     CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve=1, mode_t=VERTEX);
     void spmv(float* d_out, float* d_in);
     void logical_spmv(float* d_out, float* d_in);
-    virtual CudaCsrMatrix* gemm(CudaCsrMatrix* rhs);
-    virtual ~CudaCsrMatrix();
+    virtual CudaCsrMatrix* gemm(CudaCsrMatrix* rhs); virtual ~CudaCsrMatrix();
     void expand();
     void dump(std::string ofilename);
 
@@ -51,6 +50,7 @@ class OsdCusparseKernelDispatcher :
 public:
     OsdCusparseKernelDispatcher(int levels, bool logical);
     ~OsdCusparseKernelDispatcher();
+    virtual void FinalizeMatrix();
     static void Register();
     void Synchronize();
 };
