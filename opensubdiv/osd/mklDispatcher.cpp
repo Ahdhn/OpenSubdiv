@@ -77,10 +77,6 @@ CpuCsrMatrix::CpuCsrMatrix(const CpuCooMatrix* StagedOp, int nve, mode_t mode) :
 
 #define USE_MKL_SPMV 0
 
-#define ALIGN_IDX(i) (((i)/6)*8 + ((i)%6))
-float *d_out_aligned = NULL,
-      *d_in_aligned = NULL;
-
 void
 CpuCsrMatrix::spmv(float* d_out, float* d_in) {
 #if USE_MKL_SPMV
@@ -88,55 +84,31 @@ CpuCsrMatrix::spmv(float* d_out, float* d_in) {
     mkl_scsrgemv((char*)"N", &m, vals, rows, cols, d_in, d_out);
 #else
 
-    if (d_out_aligned == NULL)
-        posix_memalign((void**) &d_out_aligned, 16, m*8*sizeof(float));
-    if (d_in_aligned == NULL)
-        posix_memalign((void**) &d_in_aligned,  16, n*8*sizeof(float));
+    omp_set_num_threads( omp_get_num_procs() );
 
     #pragma omp parallel for
-    for(int i = 0; i < n; i++) {
-        int src_idx = i*6,
-            dst_idx = i*8;
-        __m128 ignore,
-               v03 = _mm_loadu_ps( &d_in[ src_idx ] ),
-               v45 = _mm_loadl_pi( ignore, (const __m64*) &d_in[ src_idx+4 ] );
-        _mm_store_ps( &d_in_aligned[ dst_idx ], v03 );
-        _mm_storel_pi( (__m64*) &d_in_aligned[ dst_idx+4 ], v45 );
-    }
-
-    #pragma omp parallel for schedule(static)
     for(int i = 0; i < m; i++) {
 
         register __m128
             out03v = _mm_setzero_ps(),
             out45v = _mm_setzero_ps();
+        int out_idx = 6*i;
 
         for (int k = rows[i]-1; k < rows[i+1]-1; k++) {
-            int in_idx  = ALIGN_IDX( 6*(cols[k]-1) ),
-                out_idx = ALIGN_IDX( 6*i );
+
+            int in_idx = 6*(cols[k]-1);
 
             __m128 ignore,
-                   in03v = _mm_load_ps( &d_in_aligned[ in_idx ] ),
-                   in45v = _mm_loadl_pi( ignore, (const __m64*) &d_in_aligned[ in_idx+4 ] ),
+                   in03v = _mm_loadu_ps( &d_in[in_idx] ),
+                   in45v = _mm_loadl_pi( ignore, (const __m64*) &d_in[in_idx+4] ),
                    weightv = _mm_load1_ps( &vals[k] );
 
             out03v = _mm_add_ps(out03v, _mm_mul_ps(weightv, in03v));
             out45v = _mm_add_ps(out45v, _mm_mul_ps(weightv, in45v));
 
-            _mm_store_ps( &d_out_aligned[ out_idx ], out03v );
-            _mm_storel_pi( (__m64*) &d_out_aligned[ out_idx+4 ], out45v );
+            _mm_storeu_ps( &d_out[ out_idx ], out03v );
+            _mm_storel_pi( (__m64*) &d_out[ out_idx+4 ], out45v );
         }
-    }
-
-    #pragma omp parallel for
-    for(int i = 0; i < m; i++) {
-        int src_idx = i*8,
-            dst_idx = i*6;
-        __m128 ignore,
-               v03 = _mm_load_ps( &d_out_aligned[ src_idx ] ),
-               v45 = _mm_loadl_pi( ignore, (const __m64*) &d_out_aligned[ src_idx+4 ] );
-        _mm_storeu_ps( &d_out[ dst_idx ], v03 );
-        _mm_storel_pi( (__m64*) &d_out[ dst_idx+4 ], v45 );
     }
 
 #endif
