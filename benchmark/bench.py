@@ -18,8 +18,9 @@ kernelNum = {
 	"MKL":        5,
 	"ClSpMV":     6,
 	"CuSPARSE":   7,
-	"uBLAS":      8,
-	"MAX":        9
+	"CustomCPU":  8,
+	"CustomGPU":  9,
+	"MAX":        10
 }
 
 activeKernels = [
@@ -30,6 +31,7 @@ activeKernels = [
     "OpenCL",
     "MKL",
     "CuSPARSE",
+    "CustomCPU",
 ]
 
 modelNum = {
@@ -49,16 +51,6 @@ modelMaxLevel = {
     "Cube":         7,
     "Icosahedron":  7,
 }
-
-modelSupportsExact = {
-    "BigGuy":       True,
-    "Bunny":        False,
-    "MonsterFrog":  True,
-    "Venus":        True,
-    "Cube":         True,
-    "Icosahedron":  True,
-}
-
 
 class ExecutionError(Exception):
     def __init__(self, message):
@@ -119,7 +111,7 @@ class Run(object):
 def escape_latex(string):
     return string.replace('_', '\\\\_')
 
-def do_run(model='cube', frames=1000, level=1, kernel='CPU', spyfile=None, regression=False, exact=None):
+def do_run(model='cube', frames=1000, level=1, kernel='CPU', spyfile=None, regression=False, exact=True):
     assert 0 < level <= 7, "Must select positive subdiv level from 1 to 7."
     cmd_line = [
         VIEWER_PATH,

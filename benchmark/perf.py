@@ -28,7 +28,7 @@ def gen_dat_file(ofile, db):
             if len(run_list) == 1:
                 print >>ofile, " %f %f" % (run_list[0].mean(), run_list[0].std()),
             elif len(run_list) == 0:
-                print >>ofile, " ?",
+                print >>ofile, " ? ?",
         print >>ofile
 
 
