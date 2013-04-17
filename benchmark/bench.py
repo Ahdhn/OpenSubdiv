@@ -16,11 +16,10 @@ kernelNum = {
 	"GLSL":       3,
 	"OpenCL":     4,
 	"MKL":        5,
-	"ClSpMV":     6,
-	"CuSPARSE":   7,
-	"CustomCPU":  8,
-	"CustomGPU":  9,
-	"MAX":        10
+	"CuSPARSE":   6,
+	"CustomCPU":  7,
+	"CustomGPU":  8,
+	"MAX":        9
 }
 
 activeKernels = [

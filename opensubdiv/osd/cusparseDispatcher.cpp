@@ -118,6 +118,10 @@ CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve, mode_t mode
 }
 
 void
+CudaCsrMatrix::logical_spmv(float *d_out, float* d_in) {
+}
+
+void
 CudaCsrMatrix::spmv(float *d_out, float* d_in) {
     cusparseStatus_t status;
     cusparseOperation_t op = CUSPARSE_OPERATION_NON_TRANSPOSE;
@@ -212,10 +216,10 @@ CudaCsrMatrix::dump(std::string ofilename) {
     assert(!"No support for dumping matrices to file on GPUs. Use MKL kernel.");
 }
 
-OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher(int levels) :
+OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher(int levels, bool logical) :
     OsdSpMVKernelDispatcher<CudaCooMatrix,
                             CudaCsrMatrix,
-                            OsdCudaVertexBuffer>(levels) {
+                            OsdCudaVertexBuffer>(levels, logical) {
     /* make cusparse handle if null */
     assert (handle == NULL);
     cusparseCreate(&handle);

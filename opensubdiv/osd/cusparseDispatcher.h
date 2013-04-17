@@ -26,6 +26,7 @@ public:
     CudaCsrMatrix(int m, int n, int nnz=0, int nve=1, mode_t=VERTEX);
     CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve=1, mode_t=VERTEX);
     void spmv(float* d_out, float* d_in);
+    void logical_spmv(float* d_out, float* d_in);
     virtual CudaCsrMatrix* gemm(CudaCsrMatrix* rhs);
     virtual ~CudaCsrMatrix();
     void expand();
@@ -37,13 +38,18 @@ public:
     float* vals;
 
     cusparseHybMat_t hyb;
+
+    // ellpack data
+    float* ell_vals;
+    int* ell_cols;
+    int ell_k;
 };
 
 class OsdCusparseKernelDispatcher :
     public OsdSpMVKernelDispatcher<CudaCooMatrix,CudaCsrMatrix,OsdCudaVertexBuffer>
 {
 public:
-    OsdCusparseKernelDispatcher(int levels);
+    OsdCusparseKernelDispatcher(int levels, bool logical);
     ~OsdCusparseKernelDispatcher();
     static void Register();
     void Synchronize();
