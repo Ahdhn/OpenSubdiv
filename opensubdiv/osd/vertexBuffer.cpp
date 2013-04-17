@@ -65,6 +65,8 @@
 #include "../osd/vertexBuffer.h"
 
 #include <iostream>
+#include <cstdlib>
+#include <cassert>
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
@@ -112,7 +114,7 @@ OsdCpuVertexBuffer::OsdCpuVertexBuffer(int numElements, int numVertices) :
     OsdVertexBuffer(numElements), _cpuVbo(NULL), _vboSize(0), _vbo(0)
 {
     _vboSize = numElements * numVertices;
-    _cpuVbo = new float[numElements * numVertices];
+    assert( !posix_memalign((void**) &_cpuVbo, 16, numElements * numVertices * sizeof(float)) );
 }
 
 OsdCpuVertexBuffer::~OsdCpuVertexBuffer() {
