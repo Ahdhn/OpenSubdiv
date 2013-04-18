@@ -111,29 +111,13 @@ my_cusparseScsrmv(cusparseHandle_t handle, cusparseOperation_t transA,
     return CUSPARSE_STATUS_SUCCESS;
 }
 
-
-// Threads per block
-#define TPB 128
-
 void
 LogicalSpMV(int m, int n, int k, int *cols, float *vals, float *v_in, float *v_out) {
 
     cudaMemsetAsync(v_out, 0, m*6*sizeof(float));
 
-    int blks = (m + TPB - 1) / TPB;
-    logical_spmv_kernel<<<blks,TPB>>>(m, n, k, cols, vals, v_in, v_out);
-
-#if 0
-    cudaDeviceSynchronize();
-
-    float h_out[m*6];
-    cudaMemcpy( &h_out[0], v_out, m*6*sizeof(float), cudaMemcpyDeviceToHost );
-
-    printf("\nvals: ");
-    for(int i = 0; i < 15; i++)
-        printf(" %f", h_out[i]);
-    printf("\n");
-#endif
+    int blks = (m + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    logical_spmv_kernel<<<blks,THREADS_PER_BLOCK>>>(m, n, k, cols, vals, v_in, v_out);
 }
 
 } /* extern C */

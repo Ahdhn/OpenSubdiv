@@ -238,6 +238,7 @@ CudaCsrMatrix::ellize() {
     std::vector<float> h_ell_vals(m*k, 0.0f);
     std::vector<int>   h_ell_cols(m*k, 0);
 
+    // convert to zero-based indices while we're at it...
     for (int i = 0; i < m; i++) {
         for (int j = h_rows[i]-1, z = 0; j < h_rows[i+1]-1; j++, z++) {
             h_ell_cols[ i*k + z ] = h_cols[j]-1;

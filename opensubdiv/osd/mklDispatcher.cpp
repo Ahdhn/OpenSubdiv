@@ -79,43 +79,6 @@ void
 CpuCsrMatrix::logical_spmv(float* d_out, float* d_in) {
     omp_set_num_threads( omp_get_num_procs() );
 
-#if 0
-    int k = 0;
-    for (int i = 0; i < m; i++)
-        k = std::max(k, rows[i+1]-rows[i]);
-
-    std::vector<float> h_ell_vals(m*k, 0.0f);
-    std::vector<int>   h_ell_cols(m*k, 0);
-
-    for (int i = 0; i < m; i++) {
-        for (int j = rows[i]-1, z = 0; j < rows[i+1]-1; j++, z++) {
-            h_ell_cols[ i*k + z ] = cols[j]-1;
-            h_ell_vals[ i*k + z ] = vals[j];
-        }
-    }
-
-    memset(d_out, 0, m*6*sizeof(float));
-
-    for (int row = 0; row < m; row++) {
-        for (int offset = 0; offset < k; offset++) {
-            int col      = h_ell_cols[row*k + offset];
-            float weight = h_ell_vals[row*k + offset];
-            for (int j = 0; j < 6; j++)
-                d_out[row*6+j] += weight * d_in[col*6+j];
-        }
-    }
-
-    memset(d_out, 0, m*6*sizeof(float));
-    for(int row = 0; row < m; row++) {
-        for (int k = rows[row]-1; k < rows[row+1]-1; k++) {
-            int col = cols[k]-1;
-            float weight = vals[k];
-            for (int j = 0; j < 6; j++)
-                d_out[row*6+j] += weight * d_in[col*6+j];
-        }
-    }
-#endif
-
     #pragma omp parallel for
     for(int i = 0; i < m; i++) {
 
