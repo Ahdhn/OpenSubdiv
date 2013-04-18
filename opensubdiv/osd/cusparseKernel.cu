@@ -46,9 +46,27 @@ spmv(int m, int nnz, const int* M_rows, const int* M_cols, const float* M_vals, 
     V_out[row] = answer;
 }
 
+
+
+
+
 __global__ void
-logical_spmv(int m, int n, int k, int *cols, float *vals, float *v_in, float *v_out) {
+logical_spmv_kernel(int m, int n, int k, const int *cols, const float *vals, const float *v_in, float *v_out) {
+
+    int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    if (tid >= m)
+        return;
+
+    int row = tid;
+
+    for (int offset = 0; offset < k; offset++) {
+        float weight = vals[row*k + offset];
+        int   col    = cols[row*k + offset];
+        for (int i = 0; i < 6; i++)
+            v_out[row*6+i] += weight * v_in[col*6+i];
+    }
 }
+
 
 extern "C" {
 
@@ -93,10 +111,29 @@ my_cusparseScsrmv(cusparseHandle_t handle, cusparseOperation_t transA,
     return CUSPARSE_STATUS_SUCCESS;
 }
 
+
+// Threads per block
+#define TPB 128
+
 void
 LogicalSpMV(int m, int n, int k, int *cols, float *vals, float *v_in, float *v_out) {
-    int blks = (m + k - 1) / k;
-    logical_spmv<<<blks,k>>>(m, n, k, cols, vals, v_in, v_out);
+
+    cudaMemsetAsync(v_out, 0, m*6*sizeof(float));
+
+    int blks = (m + TPB - 1) / TPB;
+    logical_spmv_kernel<<<blks,TPB>>>(m, n, k, cols, vals, v_in, v_out);
+
+#if 0
+    cudaDeviceSynchronize();
+
+    float h_out[m*6];
+    cudaMemcpy( &h_out[0], v_out, m*6*sizeof(float), cudaMemcpyDeviceToHost );
+
+    printf("\nvals: ");
+    for(int i = 0; i < 15; i++)
+        printf(" %f", h_out[i]);
+    printf("\n");
+#endif
 }
 
 } /* extern C */

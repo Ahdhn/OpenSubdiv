@@ -228,8 +228,8 @@ CudaCsrMatrix::ellize() {
     std::vector<int> h_cols(nnz);
 
     cudaMemcpy(&h_rows[0], rows, (m+1) * sizeof(int), cudaMemcpyDeviceToHost);
-    cudaMemcpy(&h_cols[0], rows, (nnz) * sizeof(int), cudaMemcpyDeviceToHost);
-    cudaMemcpy(&h_vals[0], rows, (nnz) * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(&h_cols[0], cols, (nnz) * sizeof(int), cudaMemcpyDeviceToHost);
+    cudaMemcpy(&h_vals[0], vals, (nnz) * sizeof(float), cudaMemcpyDeviceToHost);
 
     int k = 0;
     for (int i = 0; i < m; i++)
@@ -239,8 +239,8 @@ CudaCsrMatrix::ellize() {
     std::vector<int>   h_ell_cols(m*k, 0);
 
     for (int i = 0; i < m; i++) {
-        for (int j = h_rows[i], z = 0; j < h_rows[i+1]; j++, z++) {
-            h_ell_cols[ i*k + z ] = h_cols[j];
+        for (int j = h_rows[i]-1, z = 0; j < h_rows[i+1]-1; j++, z++) {
+            h_ell_cols[ i*k + z ] = h_cols[j]-1;
             h_ell_vals[ i*k + z ] = h_vals[j];
         }
     }

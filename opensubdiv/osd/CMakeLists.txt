@@ -223,7 +223,7 @@ if( CUDA_FOUND )
         ${CUDA_cusparse_LIBRARY}
     )
     if (UNIX)
-        list( APPEND CUDA_NVCC_FLAGS -Xcompiler -fPIC )
+        list( APPEND CUDA_NVCC_FLAGS -Xcompiler -fPIC -arch sm_20 )
     endif()
 endif()
 
