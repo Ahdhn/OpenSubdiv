@@ -46,6 +46,10 @@ spmv(int m, int nnz, const int* M_rows, const int* M_cols, const float* M_vals, 
     V_out[row] = answer;
 }
 
+__global__ void
+logical_spmv(int m, int n, int k, int *cols, float *vals, float *v_in, float *v_out) {
+}
+
 extern "C" {
 
 #include <cusparse_v2.h>
@@ -87,6 +91,12 @@ my_cusparseScsrmv(cusparseHandle_t handle, cusparseOperation_t transA,
     spmv<<<blks,THREADS_PER_BLOCK>>>(m, nnz, M_rows, M_cols, M_vals, V_in, V_out);
 
     return CUSPARSE_STATUS_SUCCESS;
+}
+
+void
+LogicalSpMV(int m, int n, int k, int *cols, float *vals, float *v_in, float *v_out) {
+    int blks = (m + k - 1) / k;
+    logical_spmv<<<blks,k>>>(m, n, k, cols, vals, v_in, v_out);
 }
 
 } /* extern C */

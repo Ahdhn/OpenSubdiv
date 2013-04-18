@@ -27,6 +27,10 @@ my_cusparseScsrmv(cusparseHandle_t handle, cusparseOperation_t transA,
     const int *csrRowPtrA, const int *csrColIndA,
     const float *x, float* beta,
     float *y );
+
+void
+LogicalSpMV(int m, int n, int k, int *cols, float *vals, float *v_in, float *v_out);
+
 }
 
 namespace OpenSubdiv {
@@ -119,6 +123,7 @@ CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve, mode_t mode
 
 void
 CudaCsrMatrix::logical_spmv(float *d_out, float* d_in) {
+    LogicalSpMV(m, n, ell_k, ell_cols, ell_vals, d_in, d_out);
 }
 
 void
