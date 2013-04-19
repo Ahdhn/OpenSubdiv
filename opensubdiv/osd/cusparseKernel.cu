@@ -54,20 +54,26 @@ spmv(int m, int nnz, const int* M_rows, const int* M_cols, const float* M_vals, 
 __global__ void
 logical_spmv_ell_kernel(int m, int n, int k, const int *cols, const float *vals, const float *v_in, float *v_out) {
 
+    __shared__ float cache[THREADS_PER_BLOCK];
     int offset = threadIdx.x;
 
     for (int row = blockIdx.x; row < m; row += gridDim.x) {
+        float weight = (offset < k) ? vals[row*k + offset] : 0.0f;
+        int      col = (offset < k) ? cols[row*k + offset] : 0;
 
-        if (offset >= k) continue;
+        for (int i = 0; i < 6; i++) {
+            cache[offset] = weight * v_in[col*6+i];
 
-        float weight = vals[row*k + offset];
+            __syncthreads();
+            for (int j = blockDim.x/2; j != 0; j /= 2) {
+                if (offset < j)
+                    cache[offset] += cache[offset + j];
+                __syncthreads();
+            }
 
-        if (weight <= 0.0f) continue;
-
-        int col = cols[row*k + offset];
-
-        for (int i = 0; i < 6; i++)
-            atomicAdd( &v_out[row*6+i], weight * v_in[col*6+i] );
+            if (offset == 0)
+                v_out[row*6+i] = cache[0];
+        }
     }
 }
 
