@@ -59,17 +59,13 @@ logical_spmv_ell_kernel(int m, int n, int k, const int *cols, const float *vals,
     int offset = threadIdx.x,
         elem   = threadIdx.y;
 
-    // process rows cyclically
     for (int row = blockIdx.x; row < m; row += gridDim.x) {
 
-        // fetch matrix elements
         float weight = (offset < k) ? vals[row*k + offset] : 0.0f;
         int      col = (offset < k) ? cols[row*k + offset] : 0;
 
-        // apply weight to src vector element
         cache[elem*THREADS_PER_ROW + offset] = weight * v_in[col*6+elem];
 
-        // reduce weighted inputs in shared memory
         __syncthreads();
         for (int j = blockDim.x/2; j != 0; j /= 2) {
             if (offset < j)
@@ -77,7 +73,6 @@ logical_spmv_ell_kernel(int m, int n, int k, const int *cols, const float *vals,
             __syncthreads();
         }
 
-        // write out result
         if (offset == 0)
             v_out[row*6+elem] = cache[elem*THREADS_PER_ROW];
     }

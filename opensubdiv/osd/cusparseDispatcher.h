@@ -44,6 +44,10 @@ public:
     float* ell_vals;
     int* ell_cols;
     int ell_k;
+
+    // COO data
+    float *coo_vals;
+    int *coo_rows, *coo_cols;
 };
 
 class OsdCusparseKernelDispatcher :

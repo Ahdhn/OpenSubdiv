@@ -124,8 +124,8 @@ CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve, mode_t mode
 
 void
 CudaCsrMatrix::logical_spmv(float *d_out, float* d_in) {
-    //LogicalSpMV_ell(m, n, ell_k, ell_cols, ell_vals, d_in, d_out);
-    LogicalSpMV_csr(m, n, ell_k, rows, cols, vals, d_in, d_out);
+    LogicalSpMV_ell(m, n, ell_k, ell_cols, ell_vals, d_in, d_out);
+    //LogicalSpMV_csr(m, n, ell_k, rows, cols, vals, d_in, d_out);
 }
 
 void
@@ -233,18 +233,28 @@ CudaCsrMatrix::ellize() {
     cudaMemcpy(&h_cols[0], cols, (nnz) * sizeof(int), cudaMemcpyDeviceToHost);
     cudaMemcpy(&h_vals[0], vals, (nnz) * sizeof(float), cudaMemcpyDeviceToHost);
 
-    int k = 0;
-    for (int i = 0; i < m; i++)
-        k = std::max(k, h_rows[i+1]-h_rows[i]);
+    int k = 16;
 
     std::vector<float> h_ell_vals(m*k, 0.0f);
     std::vector<int>   h_ell_cols(m*k, 0);
 
+    std::vector<float> h_coo_vals;
+    std::vector<int>   h_coo_rows,
+                       h_coo_cols;
+
     // convert to zero-based indices while we're at it...
     for (int i = 0; i < m; i++) {
-        for (int j = h_rows[i]-1, z = 0; j < h_rows[i+1]-1; j++, z++) {
+        int j, z;
+        // regular part
+        for (j = h_rows[i]-1, z = 0; j < h_rows[i+1]-1 && z < k; j++, z++) {
             h_ell_cols[ i*k + z ] = h_cols[j]-1;
             h_ell_vals[ i*k + z ] = h_vals[j];
+        }
+        // irregular part
+        for ( ; j < h_rows[i+1]-1; j++) {
+            h_coo_rows.push_back( j           );
+            h_coo_cols.push_back( h_cols[j]-1 );
+            h_coo_vals.push_back( h_vals[j]   );
         }
     }
 
