@@ -83,6 +83,38 @@ logical_spmv_ell_kernel(int m, int n, int k, const int *cols, const float *vals,
     }
 }
 
+__global__ void
+logical_spmv_csr_kernel(int m, int n,
+    const int *rows, const int *cols, const float *vals,
+    const float *v_in, float *v_out)
+{
+    __shared__ float cache[THREADS_PER_ROW*6];
+    int offset = threadIdx.x,
+        elem   = threadIdx.y;
+
+    for (int row = blockIdx.x; row < m; row += gridDim.x) {
+
+        int base = rows[row];
+        int idx = base-1 + offset;
+        int nnz = rows[row+1] - base;
+
+        float weight = (offset < nnz) ? vals[idx]   : 0.0f;
+        int      col = (offset < nnz) ? cols[idx]-1 : 0   ;
+
+        cache[elem*THREADS_PER_ROW + offset] = weight * v_in[col*6+elem];
+
+        __syncthreads();
+        for (int j = blockDim.x/2; j != 0; j /= 2) {
+            if (offset < j)
+                cache[elem*THREADS_PER_ROW + offset] += cache[elem*THREADS_PER_ROW + offset + j];
+            __syncthreads();
+        }
+
+        if (offset == 0)
+            v_out[row*6+elem] = cache[elem*THREADS_PER_ROW];
+    }
+}
+
 
 extern "C" {
 
@@ -128,12 +160,21 @@ my_cusparseScsrmv(cusparseHandle_t handle, cusparseOperation_t transA,
 }
 
 void
-LogicalSpMV(int m, int n, int k, int *cols, float *vals, float *v_in, float *v_out) {
+LogicalSpMV_ell(int m, int n, int k, int *cols, float *vals, float *v_in, float *v_out) {
     assert( k <= THREADS_PER_ROW);
 
     int nBlocks = min(m, 32768);
     dim3 nThreads(THREADS_PER_ROW,6);
     logical_spmv_ell_kernel<<<nBlocks,nThreads>>>(m, n, k, cols, vals, v_in, v_out);
+}
+
+void
+LogicalSpMV_csr(int m, int n, int k, int *rows, int *cols, float *vals, float *v_in, float *v_out) {
+    assert( k <= THREADS_PER_ROW);
+
+    int nBlocks = min(m, 32768);
+    dim3 nThreads(THREADS_PER_ROW,6);
+    logical_spmv_csr_kernel<<<nBlocks,nThreads>>>(m, n, rows, cols, vals, v_in, v_out);
 }
 
 } /* extern C */
