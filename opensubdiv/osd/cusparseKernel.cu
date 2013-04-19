@@ -1,6 +1,11 @@
-#include <stdio.h>
+#include <iostream>
 
-#define THREADS_PER_BLOCK 128
+#include <stdio.h>
+#include <assert.h>
+
+#define THREADS_PER_BLOCK 32
+
+using namespace std;
 
 __global__ void
 expand(int src_numthreads, int nve,
@@ -46,24 +51,23 @@ spmv(int m, int nnz, const int* M_rows, const int* M_cols, const float* M_vals, 
     V_out[row] = answer;
 }
 
-
-
-
-
 __global__ void
-logical_spmv_kernel(int m, int n, int k, const int *cols, const float *vals, const float *v_in, float *v_out) {
+logical_spmv_ell_kernel(int m, int n, int k, const int *cols, const float *vals, const float *v_in, float *v_out) {
 
-    int tid = blockIdx.x * blockDim.x + threadIdx.x;
-    if (tid >= m)
-        return;
+    int offset = threadIdx.x;
 
-    int row = tid;
+    for (int row = blockIdx.x; row < m; row += gridDim.x) {
 
-    for (int offset = 0; offset < k; offset++) {
+        if (offset >= k) continue;
+
         float weight = vals[row*k + offset];
-        int   col    = cols[row*k + offset];
+
+        if (weight <= 0.0f) continue;
+
+        int col = cols[row*k + offset];
+
         for (int i = 0; i < 6; i++)
-            v_out[row*6+i] += weight * v_in[col*6+i];
+            atomicAdd( &v_out[row*6+i], weight * v_in[col*6+i] );
     }
 }
 
@@ -116,8 +120,10 @@ LogicalSpMV(int m, int n, int k, int *cols, float *vals, float *v_in, float *v_o
 
     cudaMemsetAsync(v_out, 0, m*6*sizeof(float));
 
-    int blks = (m + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    logical_spmv_kernel<<<blks,THREADS_PER_BLOCK>>>(m, n, k, cols, vals, v_in, v_out);
+    assert( k <= THREADS_PER_BLOCK );
+
+    int nBlocks = min(m, 32768);
+    logical_spmv_ell_kernel<<<nBlocks,THREADS_PER_BLOCK>>>(m, n, k, cols, vals, v_in, v_out);
 }
 
 } /* extern C */
