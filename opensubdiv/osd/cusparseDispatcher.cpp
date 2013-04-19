@@ -252,7 +252,7 @@ CudaCsrMatrix::ellize() {
         }
         // irregular part
         for ( ; j < h_rows[i+1]-1; j++) {
-            h_coo_rows.push_back( j           );
+            h_coo_rows.push_back( i           );
             h_coo_cols.push_back( h_cols[j]-1 );
             h_coo_vals.push_back( h_vals[j]   );
         }

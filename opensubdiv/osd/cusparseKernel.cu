@@ -56,25 +56,28 @@ __global__ void
 logical_spmv_ell_kernel(int m, int n, int k, const int *cols, const float *vals, const float *v_in, float *v_out) {
 
     __shared__ float cache[THREADS_PER_ROW*6];
-    int offset = threadIdx.x,
-        elem   = threadIdx.y;
+    int offsetTPR = threadIdx.x,
+        elem      = threadIdx.y,
+        offset16  = offsetTPR % 16;
 
-    for (int row = blockIdx.x; row < m; row += gridDim.x) {
+    for (int ctrl_row = 2*blockIdx.x; ctrl_row < m; ctrl_row += 2*gridDim.x) {
 
-        float weight = (offset < k) ? vals[row*k + offset] : 0.0f;
-        int      col = (offset < k) ? cols[row*k + offset] : 0;
+        int row = ctrl_row + (offsetTPR / 16);
 
-        cache[elem*THREADS_PER_ROW + offset] = weight * v_in[col*6+elem];
+        float weight = vals[row*k + offset16];
+        int      col = cols[row*k + offset16];
+
+        cache[elem*THREADS_PER_ROW + offsetTPR] = weight * v_in[col*6+elem];
 
         __syncthreads();
-        for (int j = blockDim.x/2; j != 0; j /= 2) {
-            if (offset < j)
-                cache[elem*THREADS_PER_ROW + offset] += cache[elem*THREADS_PER_ROW + offset + j];
+        for (int j = blockDim.x/4; j != 0; j /= 2) {
+            if (offset16  < j)
+                cache[elem*THREADS_PER_ROW + offsetTPR] += cache[elem*THREADS_PER_ROW + offsetTPR + j];
             __syncthreads();
         }
 
-        if (offset == 0)
-            v_out[row*6+elem] = cache[elem*THREADS_PER_ROW];
+        if (offset16 == 0)
+            v_out[row*6+elem] = cache[elem*THREADS_PER_ROW + offsetTPR];
     }
 }
 
@@ -158,7 +161,7 @@ void
 LogicalSpMV_ell(int m, int n, int k, int *cols, float *vals, float *v_in, float *v_out) {
     assert( k <= THREADS_PER_ROW);
 
-    int nBlocks = min(m, 32768);
+    int nBlocks = min(m/2, 32768);
     dim3 nThreads(THREADS_PER_ROW,6);
     logical_spmv_ell_kernel<<<nBlocks,nThreads>>>(m, n, k, cols, vals, v_in, v_out);
 }
