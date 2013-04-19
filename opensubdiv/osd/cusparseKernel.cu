@@ -4,6 +4,7 @@
 #include <assert.h>
 
 #define THREADS_PER_BLOCK 32
+#define THREADS_PER_ROW   32
 
 using namespace std;
 
@@ -54,26 +55,25 @@ spmv(int m, int nnz, const int* M_rows, const int* M_cols, const float* M_vals, 
 __global__ void
 logical_spmv_ell_kernel(int m, int n, int k, const int *cols, const float *vals, const float *v_in, float *v_out) {
 
-    __shared__ float cache[THREADS_PER_BLOCK];
-    int offset = threadIdx.x;
+    __shared__ float cache[THREADS_PER_ROW*6];
+    int offset = threadIdx.x,
+        elem   = threadIdx.y;
 
     for (int row = blockIdx.x; row < m; row += gridDim.x) {
         float weight = (offset < k) ? vals[row*k + offset] : 0.0f;
         int      col = (offset < k) ? cols[row*k + offset] : 0;
 
-        for (int i = 0; i < 6; i++) {
-            cache[offset] = weight * v_in[col*6+i];
+        cache[elem*THREADS_PER_ROW + offset] = weight * v_in[col*6+elem];
 
+        __syncthreads();
+        for (int j = blockDim.x/2; j != 0; j /= 2) {
+            if (offset < j)
+                cache[elem*THREADS_PER_ROW + offset] += cache[elem*THREADS_PER_ROW + offset + j];
             __syncthreads();
-            for (int j = blockDim.x/2; j != 0; j /= 2) {
-                if (offset < j)
-                    cache[offset] += cache[offset + j];
-                __syncthreads();
-            }
-
-            if (offset == 0)
-                v_out[row*6+i] = cache[0];
         }
+
+        if (offset == 0)
+            v_out[row*6+elem] = cache[elem*THREADS_PER_ROW];
     }
 }
 
@@ -126,10 +126,11 @@ LogicalSpMV(int m, int n, int k, int *cols, float *vals, float *v_in, float *v_o
 
     cudaMemsetAsync(v_out, 0, m*6*sizeof(float));
 
-    assert( k <= THREADS_PER_BLOCK );
+    assert( k <= THREADS_PER_ROW);
 
     int nBlocks = min(m, 32768);
-    logical_spmv_ell_kernel<<<nBlocks,THREADS_PER_BLOCK>>>(m, n, k, cols, vals, v_in, v_out);
+    dim3 nThreads(THREADS_PER_ROW,6);
+    logical_spmv_ell_kernel<<<nBlocks,nThreads>>>(m, n, k, cols, vals, v_in, v_out);
 }
 
 } /* extern C */
