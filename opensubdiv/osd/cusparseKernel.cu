@@ -4,6 +4,7 @@
 #include <assert.h>
 
 #define THREADS_PER_BLOCK 1024
+#define VERTS_PER_BLOCK (THREADS_PER_BLOCK/6)
 #define THREADS_PER_ROW   32
 
 using namespace std;
@@ -65,25 +66,35 @@ logical_spmv_ell_kernel(const int m, const int n, const int k,
     const int  * __restrict__ cols, const float * __restrict__ vals,
     const float * __restrict__ v_in, float * __restrict__ v_out)
 {
-    int vertsPerBlock = THREADS_PER_BLOCK / 6;
-    int v_offset = threadIdx.x / 6,                   // vertex offset within block
-        row = blockIdx.x * vertsPerBlock + v_offset,  // row within matrix
-        elem = threadIdx.x % 6;                     // elem within vertex
 
-    if (row >= m || v_offset > vertsPerBlock )
+    int tid = threadIdx.x,                                 // index within block
+        v_offset = threadIdx.x / 6,                        // vertex offset within block
+        e_offset = threadIdx.x % 6,                        // elem offset within vertex
+        row     = v_offset + blockIdx.x * VERTS_PER_BLOCK, // row within matrix
+        tid_row = tid      + blockIdx.x * VERTS_PER_BLOCK; // row as a function of thread id, w/o 6
+
+    if (row >= m || v_offset >= VERTS_PER_BLOCK)
         return;
 
-    float sum = 0.0f;
+    register float sum = 0.0f;
+
+    extern __shared__ int cache[];
+    int   *column = (int   *) &cache[ 0 ];
+    float *weight = (float *) &cache[ VERTS_PER_BLOCK ];
 
     int lda = m + 512 - m % 512;
     for (int i = 0; i < k; i++) {
-        float weight = vals[ row + i*lda ];
-        int   col    = cols[ row + i*lda ];
+        if (e_offset == 0) {
+            weight[v_offset] = vals[ row + i*lda ];
+            column[v_offset] = cols[ row + i*lda ];
+        }
 
-        sum += weight * v_in[col*6 + elem];
+        __syncthreads();
+
+        sum += weight[v_offset] * v_in[ column[v_offset]*6 + e_offset ];
     }
 
-    v_out[row*6 + elem] = sum;
+    v_out[row*6 + e_offset] = sum;
 }
 
 __global__ void
@@ -165,10 +176,10 @@ my_cusparseScsrmv(cusparseHandle_t handle, cusparseOperation_t transA,
 void
 LogicalSpMV_ell(int m, int n, int k, int *ell_cols, float *ell_vals, int *coo_rows, int *coo_cols, float *coo_vals, float *v_in, float *v_out) {
 
-    int vertsPerBlock = THREADS_PER_BLOCK / 6;
-    int nBlocks = (m + vertsPerBlock - 1) / vertsPerBlock;
+    int nBlocks = (m + VERTS_PER_BLOCK - 1) / VERTS_PER_BLOCK;
+    int sharedMemSize = VERTS_PER_BLOCK * (sizeof(int) + sizeof(float)); // measured in bytes
 
-    logical_spmv_ell_kernel<<<nBlocks,THREADS_PER_BLOCK>>>
+    logical_spmv_ell_kernel<<<nBlocks,THREADS_PER_BLOCK,sharedMemSize>>>
         (m, n, k, ell_cols, ell_vals, v_in, v_out);
 
 #if 0
