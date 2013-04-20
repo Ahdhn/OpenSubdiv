@@ -75,7 +75,7 @@ logical_spmv_ell_kernel(const int m, const int n, const int k,
 
     float sum = 0.0f;
 
-    int lda = m + 256 - m % 256;
+    int lda = m + 512 - m % 512;
     for (int i = 0; i < k; i++) {
         float weight = vals[ row + i*lda ];
         int   col    = cols[ row + i*lda ];

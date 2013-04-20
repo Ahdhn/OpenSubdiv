@@ -246,7 +246,7 @@ CudaCsrMatrix::ellize() {
     while ( cdf[k] > std::max(4096, m/3) && k < 39)
         k++;
 
-    int lda = m + 256 - m % 256;
+    int lda = m + 512 - m % 512; // texture alignment
     std::vector<float> h_ell_vals(lda*k, 0.0f);
     std::vector<int>   h_ell_cols(lda*k, 0);
 
