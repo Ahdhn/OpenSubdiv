@@ -84,9 +84,9 @@ logical_spmv_ell_kernel(const int m, const int n, const int k,
 
     int lda = m + 512 - m % 512;
     for (int i = 0; i < k; i++) {
-        if (e_offset == 0) {
-            weight[v_offset] = vals[ row + i*lda ];
-            column[v_offset] = cols[ row + i*lda ];
+        if (tid < VERTS_PER_BLOCK) {
+            weight[tid] = vals[ tid_row + i*lda ];
+            column[tid] = cols[ tid_row + i*lda ];
         }
 
         __syncthreads();
