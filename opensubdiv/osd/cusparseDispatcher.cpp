@@ -249,8 +249,8 @@ CudaCsrMatrix::ellize() {
         int j, z;
         // regular part
         for (j = h_rows[i]-1, z = 0; j < h_rows[i+1]-1 && z < k; j++, z++) {
-            h_ell_cols[ i*k + z ] = h_cols[j]-1;
-            h_ell_vals[ i*k + z ] = h_vals[j];
+            h_ell_cols[ i + z*m ] = h_cols[j]-1;
+            h_ell_vals[ i + z*m ] = h_vals[j];
         }
         // irregular part
         for ( ; j < h_rows[i+1]-1; j++) {
