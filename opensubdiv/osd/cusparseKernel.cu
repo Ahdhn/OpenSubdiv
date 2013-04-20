@@ -66,35 +66,24 @@ logical_spmv_ell_kernel(const int m, const int n, const int k,
     const int  * __restrict__ cols, const float * __restrict__ vals,
     const float * __restrict__ v_in, float * __restrict__ v_out)
 {
+    int tid  = threadIdx.x + blockIdx.x * blockDim.x,
+        row  = tid / 6,
+        elem = tid % 6;
 
-    int tid = threadIdx.x,                                 // index within block
-        v_offset = threadIdx.x / 6,                        // vertex offset within block
-        e_offset = threadIdx.x % 6,                        // elem offset within vertex
-        row     = v_offset + blockIdx.x * VERTS_PER_BLOCK, // row within matrix
-        tid_row = tid      + blockIdx.x * VERTS_PER_BLOCK; // row as a function of thread id, w/o 6
-
-    if (row >= m || v_offset >= VERTS_PER_BLOCK)
+    if (row >= m)
         return;
 
+    int lda = m + 512 - m % 512;
     register float sum = 0.0f;
 
-    extern __shared__ int cache[];
-    int   *column = (int   *) &cache[ 0 ];
-    float *weight = (float *) &cache[ VERTS_PER_BLOCK ];
-
-    int lda = m + 512 - m % 512;
     for (int i = 0; i < k; i++) {
-        if (tid < VERTS_PER_BLOCK) {
-            weight[tid] = vals[ tid_row + i*lda ];
-            column[tid] = cols[ tid_row + i*lda ];
-        }
-
-        __syncthreads();
-
-        sum += weight[v_offset] * v_in[ column[v_offset]*6 + e_offset ];
+        int idx = row + i*lda;
+        float weight = vals[ idx ];
+        int   column = cols[ idx ];
+        sum += weight * v_in[ column*6 + elem ];
     }
 
-    v_out[row*6 + e_offset] = sum;
+    v_out[row*6 + elem] = sum;
 }
 
 __global__ void
@@ -176,10 +165,10 @@ my_cusparseScsrmv(cusparseHandle_t handle, cusparseOperation_t transA,
 void
 LogicalSpMV_ell(int m, int n, int k, int *ell_cols, float *ell_vals, int *coo_rows, int *coo_cols, float *coo_vals, float *v_in, float *v_out) {
 
-    int nBlocks = (m + VERTS_PER_BLOCK - 1) / VERTS_PER_BLOCK;
-    int sharedMemSize = VERTS_PER_BLOCK * (sizeof(int) + sizeof(float)); // measured in bytes
+    int nBlocks = (m*6 + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
 
-    logical_spmv_ell_kernel<<<nBlocks,THREADS_PER_BLOCK,sharedMemSize>>>
+    cudaFuncSetCacheConfig( logical_spmv_ell_kernel, cudaFuncCachePreferL1 );
+    logical_spmv_ell_kernel<<<nBlocks,THREADS_PER_BLOCK>>>
         (m, n, k, ell_cols, ell_vals, v_in, v_out);
 
 #if 0
