@@ -235,10 +235,9 @@ CudaCsrMatrix::ellize() {
 
     int k = 16;
 
-    // TODO pad ell arrays to 256 bytes
-    // TOOD store ell in col major?
-    std::vector<float> h_ell_vals(m*k, 0.0f);
-    std::vector<int>   h_ell_cols(m*k, 0);
+    int lda = m + 256 - m % 256;
+    std::vector<float> h_ell_vals(lda*k, 0.0f);
+    std::vector<int>   h_ell_cols(lda*k, 0);
 
     std::vector<float> h_coo_vals;
     std::vector<int>   h_coo_rows,
@@ -249,8 +248,8 @@ CudaCsrMatrix::ellize() {
         int j, z;
         // regular part
         for (j = h_rows[i]-1, z = 0; j < h_rows[i+1]-1 && z < k; j++, z++) {
-            h_ell_cols[ i + z*m ] = h_cols[j]-1;
-            h_ell_vals[ i + z*m ] = h_vals[j];
+            h_ell_cols[ i + z*lda ] = h_cols[j]-1;
+            h_ell_vals[ i + z*lda ] = h_vals[j];
         }
         // irregular part
         for ( ; j < h_rows[i+1]-1; j++) {

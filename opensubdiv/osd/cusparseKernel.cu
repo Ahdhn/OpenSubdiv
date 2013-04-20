@@ -62,11 +62,12 @@ logical_spmv_ell_kernel(const int m, const int n, const int k,
     if (row >= m)
         return;
 
+    int lda = m + 256 - m % 256;
     for (int elem = 0; elem < 6; elem++) {
         register float sum = 0.0f;
         for (int i = 0; i < k; i++) {
-            float weight = vals[ row + i*m ];
-            int   col    = cols[ row + i*m ];
+            float weight = vals[ row + i*lda ];
+            int   col    = cols[ row + i*lda ];
 
             sum += weight * v_in[col*6 + elem];
         }
