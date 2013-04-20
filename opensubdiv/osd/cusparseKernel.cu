@@ -70,17 +70,22 @@ logical_spmv_ell_kernel(const int m, const int n, const int k,
     if (row >= m)
         return;
 
-    int lda = m + 256 - m % 256;
-    for (int elem = 0; elem < 6; elem++) {
-        register float sum = 0.0f;
-        for (int i = 0; i < k; i++) {
-            float weight = vals[ row + i*lda ];
-            int   col    = cols[ row + i*lda ];
+    __shared__ float sums[6];
 
-            sum += weight * v_in[col*6 + elem];
-        }
-        v_out[row*6 + elem] = sum;
+    for (int elem = 0; elem < 6; elem++)
+        sums[elem] = 0.0f;
+
+    int lda = m + 256 - m % 256;
+    for (int i = 0; i < k; i++) {
+        float weight = vals[ row + i*lda ];
+        int   col    = cols[ row + i*lda ];
+
+        for (int elem = 0; elem < 6; elem++)
+            sums[elem] += weight * v_in[col*6 + elem];
     }
+
+    for (int elem = 0; elem < 6; elem++)
+        v_out[row*6 + elem] = sums[elem];
 }
 
 __global__ void
