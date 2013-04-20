@@ -65,12 +65,12 @@ logical_spmv_ell_kernel(const int m, const int n, const int k,
     const int  * __restrict__ cols, const float * __restrict__ vals,
     const float * __restrict__ v_in, float * __restrict__ v_out)
 {
+    int vertsPerBlock = THREADS_PER_BLOCK / 6;
+    int v_offset = threadIdx.x / 6,                   // vertex offset within block
+        row = blockIdx.x * vertsPerBlock + v_offset,  // row within matrix
+        elem = threadIdx.x % 6;                     // elem within vertex
 
-    int row6   = threadIdx.x + blockIdx.x * blockDim.x,
-        row    = row6 / 6,
-        elem   = row6 % 6;
-
-    if (row >= m)
+    if (row >= m || v_offset > vertsPerBlock )
         return;
 
     float sum = 0.0f;
@@ -165,7 +165,8 @@ my_cusparseScsrmv(cusparseHandle_t handle, cusparseOperation_t transA,
 void
 LogicalSpMV_ell(int m, int n, int k, int *ell_cols, float *ell_vals, int *coo_rows, int *coo_cols, float *coo_vals, float *v_in, float *v_out) {
 
-    int nBlocks = (m*6 + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    int vertsPerBlock = THREADS_PER_BLOCK / 6;
+    int nBlocks = (m + vertsPerBlock - 1) / vertsPerBlock;
 
     logical_spmv_ell_kernel<<<nBlocks,THREADS_PER_BLOCK>>>
         (m, n, k, ell_cols, ell_vals, v_in, v_out);
