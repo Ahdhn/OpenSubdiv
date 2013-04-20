@@ -53,31 +53,24 @@ spmv(int m, int nnz, const int* M_rows, const int* M_cols, const float* M_vals, 
 }
 
 __global__ void
-logical_spmv_ell_kernel(int m, int n, int k, const int *cols, const float *vals, const float *v_in, float *v_out) {
+logical_spmv_ell_kernel(const int m, const int n, const int k,
+    const int  * __restrict__ cols, const float * __restrict__ vals,
+    const float * __restrict__ v_in, float * __restrict__ v_out)
+{
 
-    __shared__ float cache[THREADS_PER_ROW*6];
-    int offsetTPR = threadIdx.x,
-        elem      = threadIdx.y,
-        offset16  = offsetTPR % 16;
+    int row = threadIdx.x + blockIdx.x * blockDim.x;
+    if (row >= m)
+        return;
 
-    for (int ctrl_row = 2*blockIdx.x; ctrl_row < m; ctrl_row += 2*gridDim.x) {
+    for (int elem = 0; elem < 6; elem++) {
+        register float sum = 0.0f;
+        for (int i = 0; i < k; i++) {
+            float weight = vals[ row*k + i ];
+            int   col    = cols[ row*k + i ];
 
-        int row = ctrl_row + (offsetTPR / 16);
-
-        float weight = vals[row*k + offset16];
-        int      col = cols[row*k + offset16];
-
-        cache[elem*THREADS_PER_ROW + offsetTPR] = weight * v_in[col*6+elem];
-
-        __syncthreads();
-        for (int j = blockDim.x/4; j != 0; j /= 2) {
-            if (offset16  < j)
-                cache[elem*THREADS_PER_ROW + offsetTPR] += cache[elem*THREADS_PER_ROW + offsetTPR + j];
-            __syncthreads();
+            sum += weight * v_in[col*6 + elem];
         }
-
-        if (offset16 == 0)
-            v_out[row*6+elem] = cache[elem*THREADS_PER_ROW + offsetTPR];
+        v_out[row*6 + elem] = sum;
     }
 }
 
@@ -159,11 +152,8 @@ my_cusparseScsrmv(cusparseHandle_t handle, cusparseOperation_t transA,
 
 void
 LogicalSpMV_ell(int m, int n, int k, int *cols, float *vals, float *v_in, float *v_out) {
-    assert( k <= THREADS_PER_ROW);
-
-    int nBlocks = min(m/2, 32768);
-    dim3 nThreads(THREADS_PER_ROW,6);
-    logical_spmv_ell_kernel<<<nBlocks,nThreads>>>(m, n, k, cols, vals, v_in, v_out);
+    int nBlocks = (m + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    logical_spmv_ell_kernel<<<nBlocks,THREADS_PER_BLOCK>>>(m, n, k, cols, vals, v_in, v_out);
 }
 
 void

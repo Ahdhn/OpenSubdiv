@@ -235,6 +235,8 @@ CudaCsrMatrix::ellize() {
 
     int k = 16;
 
+    // TODO pad ell arrays to 256 bytes
+    // TOOD store ell in col major?
     std::vector<float> h_ell_vals(m*k, 0.0f);
     std::vector<int>   h_ell_cols(m*k, 0);
 
@@ -259,10 +261,10 @@ CudaCsrMatrix::ellize() {
     }
 
     ell_k = k;
-    cudaMalloc(&ell_vals, (m*k) * sizeof(float));
-    cudaMalloc(&ell_cols, (m*k) * sizeof(int));
-    cudaMemcpy(ell_vals, &h_ell_vals[0], (m*k) * sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(ell_cols, &h_ell_cols[0], (m*k) * sizeof(int),   cudaMemcpyHostToDevice);
+    cudaMalloc(&ell_vals, h_ell_vals.size() * sizeof(float));
+    cudaMalloc(&ell_cols, h_ell_cols.size() * sizeof(int));
+    cudaMemcpy(ell_vals, &h_ell_vals[0], h_ell_vals.size() * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(ell_cols, &h_ell_cols[0], h_ell_cols.size() * sizeof(int),   cudaMemcpyHostToDevice);
 }
 
 OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher(int levels, bool logical) :
