@@ -233,7 +233,18 @@ CudaCsrMatrix::ellize() {
     cudaMemcpy(&h_cols[0], cols, (nnz) * sizeof(int), cudaMemcpyDeviceToHost);
     cudaMemcpy(&h_vals[0], vals, (nnz) * sizeof(float), cudaMemcpyDeviceToHost);
 
+    // determine width of ELL table using Bell and Garland's approach
+    std::vector<int> histogram(40, 0);
+    for (int i = 0; i < m; i++)
+        histogram[ h_rows[i+1] - h_rows[i] ] += 1;
+
+    std::vector<int> cdf(40, 0);
+    for (int i = 38; i >= 0; i--)
+        cdf[i] = histogram[i] + cdf[i+1];
+
     int k = 16;
+    while ( cdf[k] > std::max(4096, m/3) && k < 39)
+        k++;
 
     int lda = m + 256 - m % 256;
     std::vector<float> h_ell_vals(lda*k, 0.0f);
@@ -258,6 +269,10 @@ CudaCsrMatrix::ellize() {
             h_coo_vals.push_back( h_vals[j]   );
         }
     }
+
+#if BENCHMARKING
+    printf(" irreg=%d k=%d", (int) h_coo_vals.size(), k);
+#endif
 
     ell_k = k;
     cudaMalloc(&ell_vals, h_ell_vals.size() * sizeof(float));
