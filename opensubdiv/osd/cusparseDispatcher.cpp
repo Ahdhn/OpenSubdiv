@@ -29,7 +29,7 @@ my_cusparseScsrmv(cusparseHandle_t handle, cusparseOperation_t transA,
     float *y );
 
 void
-LogicalSpMV_ell(int m, int n, int k, int *cols, float *vals, float *v_in, float *v_out);
+LogicalSpMV_ell(int m, int n, int k, int *ell_cols, float *ell_vals, int *coo_rows, int *coo_cols, float *coo_vals, float *v_in, float *v_out);
 void LogicalSpMV_csr(int m, int n, int k, int *rows, int *cols, float *vals, float *v_in, float *v_out);
 
 }
@@ -124,7 +124,7 @@ CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve, mode_t mode
 
 void
 CudaCsrMatrix::logical_spmv(float *d_out, float* d_in) {
-    LogicalSpMV_ell(m, n, ell_k, ell_cols, ell_vals, d_in, d_out);
+    LogicalSpMV_ell(m, n, ell_k, ell_cols, ell_vals, coo_rows, coo_cols, coo_vals, d_in, d_out);
     //LogicalSpMV_csr(m, n, ell_k, rows, cols, vals, d_in, d_out);
 }
 

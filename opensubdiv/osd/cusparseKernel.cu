@@ -53,6 +53,14 @@ spmv(int m, int nnz, const int* M_rows, const int* M_cols, const float* M_vals, 
 }
 
 __global__ void
+logical_spmv_coo_kernel(const int m, const int n, const int k,
+    const int  * __restrict__ rows, const int * __restrict__ cols, const float * __restrict__ vals,
+    const float * __restrict__ v_in, float * __restrict__ v_out)
+{
+    // TODO
+}
+
+__global__ void
 logical_spmv_ell_kernel(const int m, const int n, const int k,
     const int  * __restrict__ cols, const float * __restrict__ vals,
     const float * __restrict__ v_in, float * __restrict__ v_out)
@@ -152,9 +160,10 @@ my_cusparseScsrmv(cusparseHandle_t handle, cusparseOperation_t transA,
 }
 
 void
-LogicalSpMV_ell(int m, int n, int k, int *cols, float *vals, float *v_in, float *v_out) {
+LogicalSpMV_ell(int m, int n, int k, int *ell_cols, float *ell_vals, int *coo_rows, int *coo_cols, float *coo_vals, float *v_in, float *v_out) {
     int nBlocks = (m + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    logical_spmv_ell_kernel<<<nBlocks,THREADS_PER_BLOCK>>>(m, n, k, cols, vals, v_in, v_out);
+    logical_spmv_ell_kernel<<<nBlocks,THREADS_PER_BLOCK>>>(m, n, k, ell_cols, ell_vals, v_in, v_out);
+    logical_spmv_coo_kernel<<<nBlocks,THREADS_PER_BLOCK>>>(m, n, k, coo_rows, coo_cols, coo_vals, v_in, v_out);
 }
 
 void
