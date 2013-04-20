@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-#define THREADS_PER_BLOCK 32
+#define THREADS_PER_BLOCK 1024
 #define THREADS_PER_ROW   32
 
 using namespace std;
@@ -66,26 +66,24 @@ logical_spmv_ell_kernel(const int m, const int n, const int k,
     const float * __restrict__ v_in, float * __restrict__ v_out)
 {
 
-    int row = threadIdx.x + blockIdx.x * blockDim.x;
+    int row6   = threadIdx.x + blockIdx.x * blockDim.x,
+        row    = row6 / 6,
+        elem   = row6 % 6;
+
     if (row >= m)
         return;
 
-    __shared__ float sums[6];
-
-    for (int elem = 0; elem < 6; elem++)
-        sums[elem] = 0.0f;
+    float sum = 0.0f;
 
     int lda = m + 256 - m % 256;
     for (int i = 0; i < k; i++) {
         float weight = vals[ row + i*lda ];
         int   col    = cols[ row + i*lda ];
 
-        for (int elem = 0; elem < 6; elem++)
-            sums[elem] += weight * v_in[col*6 + elem];
+        sum += weight * v_in[col*6 + elem];
     }
 
-    for (int elem = 0; elem < 6; elem++)
-        v_out[row*6 + elem] = sums[elem];
+    v_out[row*6 + elem] = sum;
 }
 
 __global__ void
@@ -166,9 +164,16 @@ my_cusparseScsrmv(cusparseHandle_t handle, cusparseOperation_t transA,
 
 void
 LogicalSpMV_ell(int m, int n, int k, int *ell_cols, float *ell_vals, int *coo_rows, int *coo_cols, float *coo_vals, float *v_in, float *v_out) {
-    int nBlocks = (m + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    logical_spmv_ell_kernel<<<nBlocks,THREADS_PER_BLOCK>>>(m, n, k, ell_cols, ell_vals, v_in, v_out);
-    logical_spmv_coo_kernel<<<nBlocks,THREADS_PER_BLOCK>>>(m, n, k, coo_rows, coo_cols, coo_vals, v_in, v_out);
+
+    int nBlocks = (m*6 + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+
+    logical_spmv_ell_kernel<<<nBlocks,THREADS_PER_BLOCK>>>
+        (m, n, k, ell_cols, ell_vals, v_in, v_out);
+
+#if 0
+    logical_spmv_coo_kernel<<<nBlocks,THREADS_PER_BLOCK>>>
+        (m, n, k, coo_rows, coo_cols, coo_vals, v_in, v_out);
+#endif
 }
 
 void
