@@ -93,35 +93,26 @@ logical_spmv_ell_kernel(const int m, const int n, const int k,
     }
 
     __shared__ float cache[6*THREADS_PER_BLOCK];
-    int offset = 6*threadIdx.x;
-    cache[offset+0] = sum0;
-    cache[offset+1] = sum1;
-    cache[offset+2] = sum2;
-    cache[offset+3] = sum3;
-    cache[offset+4] = sum4;
-    cache[offset+5] = sum5;
+    int base = 6*threadIdx.x;
+    cache[base+0] = sum0;
+    cache[base+1] = sum1;
+    cache[base+2] = sum2;
+    cache[base+3] = sum3;
+    cache[base+4] = sum4;
+    cache[base+5] = sum5;
 
+    int effectiveThreads = min(blockDim.x, m - blockIdx.x * blockDim.x);
+    v_out += 6 * (blockIdx.x * blockDim.x);
 
     __syncthreads();
 
-    if (blockIdx.x + 1 == gridDim.x) {
-        // optimize me
-#if 1
-        v_out[ 6*row + 0 ] = cache[offset+0];
-        v_out[ 6*row + 1 ] = cache[offset+1];
-        v_out[ 6*row + 2 ] = cache[offset+2];
-        v_out[ 6*row + 3 ] = cache[offset+3];
-        v_out[ 6*row + 4 ] = cache[offset+4];
-        v_out[ 6*row + 5 ] = cache[offset+5];
-#endif
-        return;
-
-    } else {
-        v_out += 6 * (blockIdx.x * blockDim.x);
-        for (int i = 0; i < 6; i++)
-            v_out[ i*THREADS_PER_BLOCK + threadIdx.x] = cache[ i*THREADS_PER_BLOCK + threadIdx.x ];
-    }
-
+    int offset = threadIdx.x, stride = effectiveThreads;
+    v_out[ offset ] = cache[ offset ]; offset += stride;
+    v_out[ offset ] = cache[ offset ]; offset += stride;
+    v_out[ offset ] = cache[ offset ]; offset += stride;
+    v_out[ offset ] = cache[ offset ]; offset += stride;
+    v_out[ offset ] = cache[ offset ]; offset += stride;
+    v_out[ offset ] = cache[ offset ]; offset += stride;
 }
 
 __global__ void
