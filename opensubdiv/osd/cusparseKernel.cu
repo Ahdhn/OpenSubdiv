@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-#define THREADS_PER_BLOCK 1024
+#define THREADS_PER_BLOCK 256
 #define THREADS_PER_ROW   32
 
 using namespace std;
