@@ -69,7 +69,7 @@ logical_spmv_ell_kernel(const int m, const int n, const int k,
     if (row >= m)
         return;
 
-    float
+    register float
         sum0 = 0.0f,
         sum1 = 0.0f,
         sum2 = 0.0f,
@@ -81,8 +81,8 @@ logical_spmv_ell_kernel(const int m, const int n, const int k,
 
     for (int i = 0; i < k; i++) {
         int idx = row + i*lda;
-        int col = cols[ idx ]*6;
-        float weight = vals[ idx ];
+        int col = cols[idx]*6;
+        float weight = vals[idx];
 
         sum0 += weight * v_in[col + 0];
         sum1 += weight * v_in[col + 1];
@@ -92,13 +92,36 @@ logical_spmv_ell_kernel(const int m, const int n, const int k,
         sum5 += weight * v_in[col + 5];
     }
 
-    row *= 6;
-    v_out[row + 0] = sum0;
-    v_out[row + 1] = sum1;
-    v_out[row + 2] = sum2;
-    v_out[row + 3] = sum3;
-    v_out[row + 4] = sum4;
-    v_out[row + 5] = sum5;
+    __shared__ float cache[6*THREADS_PER_BLOCK];
+    int offset = 6*threadIdx.x;
+    cache[offset+0] = sum0;
+    cache[offset+1] = sum1;
+    cache[offset+2] = sum2;
+    cache[offset+3] = sum3;
+    cache[offset+4] = sum4;
+    cache[offset+5] = sum5;
+
+
+    __syncthreads();
+
+    if (blockIdx.x + 1 == gridDim.x) {
+        // optimize me
+#if 1
+        v_out[ 6*row + 0 ] = cache[offset+0];
+        v_out[ 6*row + 1 ] = cache[offset+1];
+        v_out[ 6*row + 2 ] = cache[offset+2];
+        v_out[ 6*row + 3 ] = cache[offset+3];
+        v_out[ 6*row + 4 ] = cache[offset+4];
+        v_out[ 6*row + 5 ] = cache[offset+5];
+#endif
+        return;
+
+    } else {
+        v_out += 6 * (blockIdx.x * blockDim.x);
+        for (int i = 0; i < 6; i++)
+            v_out[ i*THREADS_PER_BLOCK + threadIdx.x] = cache[ i*THREADS_PER_BLOCK + threadIdx.x ];
+    }
+
 }
 
 __global__ void
