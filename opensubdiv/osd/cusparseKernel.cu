@@ -4,7 +4,6 @@
 #include <assert.h>
 
 #define THREADS_PER_BLOCK 1024
-#define VERTS_PER_BLOCK (THREADS_PER_BLOCK/6)
 #define THREADS_PER_ROW   32
 
 using namespace std;
@@ -66,24 +65,40 @@ logical_spmv_ell_kernel(const int m, const int n, const int k,
     const int  * __restrict__ cols, const float * __restrict__ vals,
     const float * __restrict__ v_in, float * __restrict__ v_out)
 {
-    int tid  = threadIdx.x + blockIdx.x * blockDim.x,
-        row  = tid / 6,
-        elem = tid % 6;
-
+    int row = threadIdx.x + blockIdx.x * blockDim.x;
     if (row >= m)
         return;
 
+    float
+        sum0 = 0.0f,
+        sum1 = 0.0f,
+        sum2 = 0.0f,
+        sum3 = 0.0f,
+        sum4 = 0.0f,
+        sum5 = 0.0f;
+
     int lda = m + 512 - m % 512;
-    register float sum = 0.0f;
 
     for (int i = 0; i < k; i++) {
         int idx = row + i*lda;
+        int col = cols[ idx ]*6;
         float weight = vals[ idx ];
-        int   column = cols[ idx ];
-        sum += weight * v_in[ column*6 + elem ];
+
+        sum0 += weight * v_in[col + 0];
+        sum1 += weight * v_in[col + 1];
+        sum2 += weight * v_in[col + 2];
+        sum3 += weight * v_in[col + 3];
+        sum4 += weight * v_in[col + 4];
+        sum5 += weight * v_in[col + 5];
     }
 
-    v_out[row*6 + elem] = sum;
+    row *= 6;
+    v_out[row + 0] = sum0;
+    v_out[row + 1] = sum1;
+    v_out[row + 2] = sum2;
+    v_out[row + 3] = sum3;
+    v_out[row + 4] = sum4;
+    v_out[row + 5] = sum5;
 }
 
 __global__ void
@@ -165,9 +180,10 @@ my_cusparseScsrmv(cusparseHandle_t handle, cusparseOperation_t transA,
 void
 LogicalSpMV_ell(int m, int n, int k, int *ell_cols, float *ell_vals, int *coo_rows, int *coo_cols, float *coo_vals, float *v_in, float *v_out) {
 
-    int nBlocks = (m*6 + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    int nBlocks = (m + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
 
-    cudaFuncSetCacheConfig( logical_spmv_ell_kernel, cudaFuncCachePreferL1 );
+    //cudaFuncSetCacheConfig( logical_spmv_ell_kernel, cudaFuncCachePreferL1 );
+
     logical_spmv_ell_kernel<<<nBlocks,THREADS_PER_BLOCK>>>
         (m, n, k, ell_cols, ell_vals, v_in, v_out);
 
