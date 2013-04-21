@@ -31,6 +31,7 @@ activeKernels = [
     "MKL",
     "CuSPARSE",
     "CustomCPU",
+    "CustomGPU",
 ]
 
 modelNum = {

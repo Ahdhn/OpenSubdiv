@@ -36,6 +36,7 @@ plot \
     "$2" using 1:10 w linespoint ls 5, \
     "$2" using 1:12 w linespoint ls 6, \
     "$2" using 1:14 w linespoint ls 7, \
-    "$2" using 1:16 w linespoint ls 8
+    "$2" using 1:16 w linespoint ls 8, \
+    "$2" using 1:18 w linespoint ls 9
 
 EOF

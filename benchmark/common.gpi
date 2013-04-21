@@ -9,6 +9,8 @@ set style line 4 lw 3 lt rgb "dark-green"
 set style line 5 lw 3 lt rgb "dark-blue"
 set style line 6 lw 3 lt rgb "dark-violet"
 set style line 7 lw 3 lt rgb "black"
+set style line 8 lw 3 lt rgb "dark-cyan"
+set style line 9 lw 3 lt rgb "dark-magenta"
 
 # key font size
 set key font ",2"
