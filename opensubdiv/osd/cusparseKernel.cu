@@ -102,11 +102,11 @@ logical_spmv_ell_kernel(const int m, const int n, const int k,
     cache[base+5] = sum5;
 
     int effectiveThreads = min(blockDim.x, m - blockIdx.x * blockDim.x);
+    int offset = threadIdx.x, stride = effectiveThreads;
     v_out += 6 * (blockIdx.x * blockDim.x);
 
     __syncthreads();
 
-    int offset = threadIdx.x, stride = effectiveThreads;
     v_out[ offset ] = cache[ offset ]; offset += stride;
     v_out[ offset ] = cache[ offset ]; offset += stride;
     v_out[ offset ] = cache[ offset ]; offset += stride;
