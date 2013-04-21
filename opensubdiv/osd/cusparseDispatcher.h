@@ -46,6 +46,7 @@ public:
     int ell_k;
 
     // COO data
+    int coo_nnz;
     float *coo_vals;
     int *coo_rows, *coo_cols;
 };
