@@ -54,8 +54,8 @@ spmv(int m, int nnz, const int* M_rows, const int* M_cols, const float* M_vals, 
 
 __global__ void
 logical_spmv_coo_kernel(const int nnz,
-    const int  * __restrict__ rows, const int * __restrict__ cols, const float * __restrict__ vals,
-    const float * __restrict__ v_in, float * __restrict__ v_out)
+    const int  * __restrict__ rows, const int * __restrict__ cols, float * __restrict__ vals,
+    float * __restrict__ scratch, const float * __restrict__ v_in, float * __restrict__ v_out)
 {
     int nz = threadIdx.x + blockIdx.x * blockDim.x;
     if (nz >= nnz)
@@ -65,8 +65,18 @@ logical_spmv_coo_kernel(const int nnz,
         col = cols[nz];
     float weight = vals[nz];
 
-    for (int i = 0; i < 6; i++)
-        atomicAdd( &v_out[row*6+i], weight * v_in[col*6+i] );
+    for (int i = 0; i < 6; i++) {
+        scratch[nz*6+i] = weight * v_in[col*6+i];
+
+        for(int reach = nz / 2; reach > 0; reach /= 2) {
+            int target = nz - reach;
+            if (target >= 0 && rows[target] == row)
+                scratch[nz*6+i] += vals[target*6+i];
+        }
+
+        if (rows[nz+1] != row)
+            v_out[row*6+i] = scratch[nz*6+i];
+    }
 }
 
 
@@ -203,7 +213,7 @@ my_cusparseScsrmv(cusparseHandle_t handle, cusparseOperation_t transA,
 }
 
 void
-LogicalSpMV_ell(int m, int n, int k, int *ell_cols, float *ell_vals, int coo_nnz, int *coo_rows, int *coo_cols, float *coo_vals, float *v_in, float *v_out) {
+LogicalSpMV_ell(int m, int n, int k, int *ell_cols, float *ell_vals, int coo_nnz, int *coo_rows, int *coo_cols, float *coo_vals, float *coo_scratch, float *v_in, float *v_out) {
 
     int nBlocks = (m + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     logical_spmv_ell_kernel<<<nBlocks,THREADS_PER_BLOCK>>>
@@ -211,7 +221,7 @@ LogicalSpMV_ell(int m, int n, int k, int *ell_cols, float *ell_vals, int coo_nnz
 
     nBlocks = (coo_nnz + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     logical_spmv_coo_kernel<<<nBlocks,THREADS_PER_BLOCK>>>
-        (coo_nnz, coo_rows, coo_cols, coo_vals, v_in, v_out);
+        (coo_nnz, coo_rows, coo_cols, coo_vals, coo_scratch, v_in, v_out);
 }
 
 void

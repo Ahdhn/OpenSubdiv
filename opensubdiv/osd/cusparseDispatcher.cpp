@@ -29,7 +29,7 @@ my_cusparseScsrmv(cusparseHandle_t handle, cusparseOperation_t transA,
     float *y );
 
 void
-LogicalSpMV_ell(int m, int n, int k, int *ell_cols, float *ell_vals, int coo_nnz, int *coo_rows, int *coo_cols, float *coo_vals, float *v_in, float *v_out);
+LogicalSpMV_ell(int m, int n, int k, int *ell_cols, float *ell_vals, int coo_nnz, int *coo_rows, int *coo_cols, float *coo_vals, float *coo_scratch, float *v_in, float *v_out);
 void LogicalSpMV_csr(int m, int n, int k, int *rows, int *cols, float *vals, float *v_in, float *v_out);
 
 }
@@ -124,7 +124,7 @@ CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve, mode_t mode
 
 void
 CudaCsrMatrix::logical_spmv(float *d_out, float* d_in) {
-    LogicalSpMV_ell(m, n, ell_k, ell_cols, ell_vals, coo_nnz, coo_rows, coo_cols, coo_vals, d_in, d_out);
+    LogicalSpMV_ell(m, n, ell_k, ell_cols, ell_vals, coo_nnz, coo_rows, coo_cols, coo_vals, coo_scratch, d_in, d_out);
 }
 
 void
@@ -269,9 +269,14 @@ CudaCsrMatrix::ellize() {
             assert( 0 <= i           && i           < m );
             assert( 0 <= h_cols[j]-1 && h_cols[j]-1 < n );
         }
+
+        // sentinel at end
+        h_coo_rows.push_back( m );
+        h_coo_cols.push_back( 0 );
+        h_coo_vals.push_back( 0.0 );
     }
 
-    coo_nnz = (int) h_coo_vals.size();
+    coo_nnz = (int) h_coo_vals.size() - 1;
 
 #if BENCHMARKING
     printf(" irreg=%d k=%d", coo_nnz, k);
@@ -286,6 +291,7 @@ CudaCsrMatrix::ellize() {
     cudaMalloc(&coo_rows, h_coo_rows.size() * sizeof(int));
     cudaMalloc(&coo_cols, h_coo_cols.size() * sizeof(int));
     cudaMalloc(&coo_vals, h_coo_vals.size() * sizeof(float));
+    cudaMalloc(&coo_scratch, coo_nnz*6*sizeof(float));
     cudaMemcpy(coo_rows, &h_coo_rows[0], h_coo_rows.size() * sizeof(int),   cudaMemcpyHostToDevice);
     cudaMemcpy(coo_cols, &h_coo_cols[0], h_coo_cols.size() * sizeof(int),   cudaMemcpyHostToDevice);
     cudaMemcpy(coo_vals, &h_coo_vals[0], h_coo_vals.size() * sizeof(float), cudaMemcpyHostToDevice);

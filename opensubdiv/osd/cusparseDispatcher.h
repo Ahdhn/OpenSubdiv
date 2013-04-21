@@ -47,7 +47,7 @@ public:
 
     // COO data
     int coo_nnz;
-    float *coo_vals;
+    float *coo_vals, *coo_scratch;
     int *coo_rows, *coo_cols;
 };
 
