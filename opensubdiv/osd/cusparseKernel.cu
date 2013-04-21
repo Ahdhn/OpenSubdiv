@@ -94,22 +94,23 @@ logical_spmv_ell_kernel(const int m, const int n, const int k,
         int col = cols[idx]*6;
         float weight = vals[idx];
 
-        sum0 += weight * v_in[col + 0];
-        sum1 += weight * v_in[col + 1];
-        sum2 += weight * v_in[col + 2];
-        sum3 += weight * v_in[col + 3];
-        sum4 += weight * v_in[col + 4];
-        sum5 += weight * v_in[col + 5];
+        const float *vertex = &v_in[col];
+        sum0 += weight * vertex[0];
+        sum1 += weight * vertex[1];
+        sum2 += weight * vertex[2];
+        sum3 += weight * vertex[3];
+        sum4 += weight * vertex[4];
+        sum5 += weight * vertex[5];
     }
 
     __shared__ float cache[6*THREADS_PER_BLOCK];
-    int base = 6*threadIdx.x;
-    cache[base+0] = sum0;
-    cache[base+1] = sum1;
-    cache[base+2] = sum2;
-    cache[base+3] = sum3;
-    cache[base+4] = sum4;
-    cache[base+5] = sum5;
+    float *cache_vertex = &cache[6*threadIdx.x];
+    cache_vertex[0] = sum0;
+    cache_vertex[1] = sum1;
+    cache_vertex[2] = sum2;
+    cache_vertex[3] = sum3;
+    cache_vertex[4] = sum4;
+    cache_vertex[5] = sum5;
 
     int effectiveThreads = min(blockDim.x, m - blockIdx.x * blockDim.x);
     int offset = threadIdx.x, stride = effectiveThreads;
