@@ -124,7 +124,7 @@ CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve, mode_t mode
 
 void
 CudaCsrMatrix::logical_spmv(float *d_out, float* d_in) {
-    LogicalSpMV_ell(m, n, ell_k, ell_cols, ell_vals, coo_nnz, coo_rows, coo_cols, coo_vals, coo_scratch, d_in, d_out);
+    LogicalSpMV_ell(m, n, ell_k, ell_cols, ell_vals, coo_nnz, coo_rows+1, coo_cols+1, coo_vals+1, coo_scratch, d_in, d_out);
 }
 
 void
@@ -253,6 +253,11 @@ CudaCsrMatrix::ellize() {
     std::vector<int>   h_coo_rows,
                        h_coo_cols;
 
+    // sentinel at front
+    h_coo_rows.push_back( -1 );
+    h_coo_cols.push_back( 0 );
+    h_coo_vals.push_back( 0.0 );
+
     // convert to zero-based indices while we're at it...
     for (int i = 0; i < m; i++) {
         int j, z;
@@ -269,11 +274,6 @@ CudaCsrMatrix::ellize() {
             assert( 0 <= i           && i           < m );
             assert( 0 <= h_cols[j]-1 && h_cols[j]-1 < n );
         }
-
-        // sentinel at end
-        h_coo_rows.push_back( m );
-        h_coo_cols.push_back( 0 );
-        h_coo_vals.push_back( 0.0 );
     }
 
     coo_nnz = (int) h_coo_vals.size() - 1;
