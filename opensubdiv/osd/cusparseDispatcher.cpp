@@ -266,6 +266,8 @@ CudaCsrMatrix::ellize() {
             h_coo_rows.push_back( i           );
             h_coo_cols.push_back( h_cols[j]-1 );
             h_coo_vals.push_back( h_vals[j]   );
+            assert( 0 <= i           && i           < m );
+            assert( 0 <= h_cols[j]-1 && h_cols[j]-1 < n );
         }
     }
 
@@ -280,6 +282,13 @@ CudaCsrMatrix::ellize() {
     cudaMalloc(&ell_cols, h_ell_cols.size() * sizeof(int));
     cudaMemcpy(ell_vals, &h_ell_vals[0], h_ell_vals.size() * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(ell_cols, &h_ell_cols[0], h_ell_cols.size() * sizeof(int),   cudaMemcpyHostToDevice);
+
+    cudaMalloc(&coo_rows, h_coo_rows.size() * sizeof(int));
+    cudaMalloc(&coo_cols, h_coo_cols.size() * sizeof(int));
+    cudaMalloc(&coo_vals, h_coo_vals.size() * sizeof(float));
+    cudaMemcpy(coo_rows, &h_coo_rows[0], h_coo_rows.size() * sizeof(int),   cudaMemcpyHostToDevice);
+    cudaMemcpy(coo_cols, &h_coo_cols[0], h_coo_cols.size() * sizeof(int),   cudaMemcpyHostToDevice);
+    cudaMemcpy(coo_vals, &h_coo_vals[0], h_coo_vals.size() * sizeof(float), cudaMemcpyHostToDevice);
 }
 
 OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher(int levels, bool logical) :

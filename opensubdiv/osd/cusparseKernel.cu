@@ -65,10 +65,10 @@ logical_spmv_coo_kernel(const int nnz,
         col = cols[nz];
     float weight = vals[nz];
 
-    #pragma unroll
     for (int i = 0; i < 6; i++)
         atomicAdd( &v_out[row*6+i], weight * v_in[col*6+i] );
 }
+
 
 __global__ void
 logical_spmv_ell_kernel(const int m, const int n, const int k,
@@ -209,11 +209,9 @@ LogicalSpMV_ell(int m, int n, int k, int *ell_cols, float *ell_vals, int coo_nnz
     logical_spmv_ell_kernel<<<nBlocks,THREADS_PER_BLOCK>>>
         (m, n, k, ell_cols, ell_vals, v_in, v_out);
 
-#if 0
     nBlocks = (coo_nnz + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     logical_spmv_coo_kernel<<<nBlocks,THREADS_PER_BLOCK>>>
         (coo_nnz, coo_rows, coo_cols, coo_vals, v_in, v_out);
-#endif
 }
 
 void
