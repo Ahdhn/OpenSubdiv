@@ -245,7 +245,7 @@ CudaCsrMatrix::ellize() {
     while ( cdf[k] > std::max(4096, m/3) && k < 39)
         k++;
 
-    int lda = m + 512 - m % 512; // texture alignment
+    int lda = m + ((512/sizeof(float)) - (m % (512/sizeof(float))));
     std::vector<float> h_ell_vals(lda*k, 0.0f);
     std::vector<int>   h_ell_cols(lda*k, 0);
 
@@ -288,10 +288,11 @@ CudaCsrMatrix::ellize() {
     cudaMemcpy(ell_vals, &h_ell_vals[0], h_ell_vals.size() * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(ell_cols, &h_ell_cols[0], h_ell_cols.size() * sizeof(int),   cudaMemcpyHostToDevice);
 
+    int coo_lda = coo_nnz + ((512/sizeof(float)) - (coo_nnz % (512/sizeof(float))));
     cudaMalloc(&coo_rows, h_coo_rows.size() * sizeof(int));
     cudaMalloc(&coo_cols, h_coo_cols.size() * sizeof(int));
     cudaMalloc(&coo_vals, h_coo_vals.size() * sizeof(float));
-    cudaMalloc(&coo_scratch, coo_nnz*6*sizeof(float));
+    cudaMalloc(&coo_scratch, coo_lda*6*sizeof(float));
     cudaMemcpy(coo_rows, &h_coo_rows[0], h_coo_rows.size() * sizeof(int),   cudaMemcpyHostToDevice);
     cudaMemcpy(coo_cols, &h_coo_cols[0], h_coo_cols.size() * sizeof(int),   cudaMemcpyHostToDevice);
     cudaMemcpy(coo_vals, &h_coo_vals[0], h_coo_vals.size() * sizeof(float), cudaMemcpyHostToDevice);

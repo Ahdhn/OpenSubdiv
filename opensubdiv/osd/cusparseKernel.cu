@@ -98,12 +98,14 @@ logical_spmv_coo_kernel0A(const int nnz,
     int col = cols[nz];
     float weight = vals[nz];
 
-    scratch[nz+0*nnz] = weight * v_in[col*6+0];
-    scratch[nz+1*nnz] = weight * v_in[col*6+1];
-    scratch[nz+2*nnz] = weight * v_in[col*6+2];
-    scratch[nz+3*nnz] = weight * v_in[col*6+3];
-    scratch[nz+4*nnz] = weight * v_in[col*6+4];
-    scratch[nz+5*nnz] = weight * v_in[col*6+5];
+    int lda = nnz + ((512/sizeof(float)) - (nnz % (512/sizeof(float))));
+
+    scratch[nz+0*lda] = weight * v_in[col*6+0];
+    scratch[nz+1*lda] = weight * v_in[col*6+1];
+    scratch[nz+2*lda] = weight * v_in[col*6+2];
+    scratch[nz+3*lda] = weight * v_in[col*6+3];
+    scratch[nz+4*lda] = weight * v_in[col*6+4];
+    scratch[nz+5*lda] = weight * v_in[col*6+5];
 }
 
 __global__ void
@@ -121,9 +123,11 @@ logical_spmv_coo_kernel1A(const int nnz, const int  * __restrict__ rows,
     __shared__ float cache[6*tpb];
     __shared__ int row_cache[tpb];
 
+    int lda = nnz + ((512/sizeof(float)) - (nnz % (512/sizeof(float))));
+
     row_cache[tid] = row;
     for (int i = 0; i < 6; i++)
-        cache[tid + i*tpb] = scratch[nz+i*nnz]; // TODO align to 512 byte boundaries
+        cache[tid + i*tpb] = scratch[nz+i*lda];
 
     __syncthreads();
 
@@ -148,7 +152,7 @@ logical_spmv_coo_kernel1A(const int nnz, const int  * __restrict__ rows,
     }
 
     for (int i = 0; i < 6; i++)
-        scratch[nz+i*nnz] = cache[tid+i*tpb];
+        scratch[nz+i*lda] = cache[tid+i*tpb];
 }
 
 __global__ void
@@ -159,10 +163,14 @@ logical_spmv_coo_kernel2A(const int nnz, const int  * __restrict__ rows,
     if (nz >= nnz)
         return;
 
-    int row = rows[nz], prev = rows[nz-1];
+    int lda = nnz + ((512/sizeof(float)) - (nnz % (512/sizeof(float))));
+
+    int row  = rows[nz],
+        prev = rows[nz-1];
+
     if (row != prev)
         for (int i = 0; i < 6; i++)
-            v_out[row*6+i] += scratch[nz+i*nnz];
+            v_out[row*6+i] += scratch[nz+i*lda];
 }
 
 
@@ -183,7 +191,7 @@ logical_spmv_ell_kernel(const int m, const int n, const int k,
         sum4 = 0.0f,
         sum5 = 0.0f;
 
-    int lda = m + 512 - m % 512;
+    int lda = m + ((512/sizeof(float)) - (m % (512/sizeof(float))));
 
     for (int i = 0; i < k; i++) {
         int idx = row + i*lda;
@@ -316,7 +324,7 @@ LogicalSpMV_ell(int m, int n, int k, int *ell_cols, float *ell_vals, const int c
     logical_spmv_coo_kernel0A<<<nBlocks,COO_THREADS_PER_BLOCK_0>>>
         (coo_nnz, coo_rows, coo_cols, coo_vals, coo_scratch, v_in, v_out);
 
-    const int tpb1 = COO_THREADS_PER_BLOCK_1
+    const int tpb1 = COO_THREADS_PER_BLOCK_1;
     for(int nLeft = coo_nnz, stride = 1; nLeft > 0; nLeft /= tpb1, stride *= tpb1) {
         nBlocks = (nLeft + COO_THREADS_PER_BLOCK_1 - 1) / COO_THREADS_PER_BLOCK_1;
         logical_spmv_coo_kernel1A<<<nBlocks,COO_THREADS_PER_BLOCK_1>>>
