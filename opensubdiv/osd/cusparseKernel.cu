@@ -120,39 +120,50 @@ logical_spmv_coo_kernel1A(const int nnz, const int  * __restrict__ rows,
     int row = rows[nz];
     const int tpb = COO_THREADS_PER_BLOCK_1;
     int effectiveThreads = min(blockDim.x, nnz - blockIdx.x * blockDim.x);
-    __shared__ float cache[6*tpb];
+    __shared__ float _cache[6*tpb];
     __shared__ int row_cache[tpb];
+    float *cache = &_cache[tid];
 
     int lda = nnz + ((512/sizeof(float)) - (nnz % (512/sizeof(float))));
 
     row_cache[tid] = row;
-    for (int i = 0; i < 6; i++)
-        cache[tid + i*tpb] = scratch[nz+i*lda];
+    cache[0*tpb] = scratch[nz+0*lda];
+    cache[1*tpb] = scratch[nz+1*lda];
+    cache[2*tpb] = scratch[nz+2*lda];
+    cache[3*tpb] = scratch[nz+3*lda];
+    cache[4*tpb] = scratch[nz+4*lda];
+    cache[5*tpb] = scratch[nz+5*lda];
 
     __syncthreads();
 
-    register float right0 = 0, right1 = 0, right2 = 0, right3 = 0, right4 = 0, right5 = 0;
+    register float right0 = 0, right1 = 0, right2 = 0,
+                   right3 = 0, right4 = 0, right5 = 0;
+
     for (int offset = 1; offset < blockDim.x; offset <<= 1) {
         if (tid+offset < effectiveThreads && row == row_cache[tid+offset]) {
-            right0 = cache[tid+offset + 0*tpb];
-            right1 = cache[tid+offset + 1*tpb];
-            right2 = cache[tid+offset + 2*tpb];
-            right3 = cache[tid+offset + 3*tpb];
-            right4 = cache[tid+offset + 4*tpb];
-            right5 = cache[tid+offset + 5*tpb];
+            right0 = cache[offset + 0*tpb];
+            right1 = cache[offset + 1*tpb];
+            right2 = cache[offset + 2*tpb];
+            right3 = cache[offset + 3*tpb];
+            right4 = cache[offset + 4*tpb];
+            right5 = cache[offset + 5*tpb];
         }
         __syncthreads();
-        cache[tid + 0*tpb] += right0; right0 = 0;
-        cache[tid + 1*tpb] += right1; right1 = 0;
-        cache[tid + 2*tpb] += right2; right2 = 0;
-        cache[tid + 3*tpb] += right3; right3 = 0;
-        cache[tid + 4*tpb] += right4; right4 = 0;
-        cache[tid + 5*tpb] += right5; right5 = 0;
+        cache[0*tpb] += right0; right0 = 0;
+        cache[1*tpb] += right1; right1 = 0;
+        cache[2*tpb] += right2; right2 = 0;
+        cache[3*tpb] += right3; right3 = 0;
+        cache[4*tpb] += right4; right4 = 0;
+        cache[5*tpb] += right5; right5 = 0;
         __syncthreads();
     }
 
-    for (int i = 0; i < 6; i++)
-        scratch[nz+i*lda] = cache[tid+i*tpb];
+    scratch[nz+0*lda] = cache[0*tpb];
+    scratch[nz+1*lda] = cache[1*tpb];
+    scratch[nz+2*lda] = cache[2*tpb];
+    scratch[nz+3*lda] = cache[3*tpb];
+    scratch[nz+4*lda] = cache[4*tpb];
+    scratch[nz+5*lda] = cache[5*tpb];
 }
 
 __global__ void
