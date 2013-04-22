@@ -138,12 +138,12 @@ logical_spmv_coo_kernel1A(const int nnz, const int  * __restrict__ rows,
             right5 = cache[tid+offset + 5*tpb];
         }
         __syncthreads();
-        cache[tid + 0*tpb] = right0; right0 = 0;
-        cache[tid + 1*tpb] = right1; right1 = 0;
-        cache[tid + 2*tpb] = right2; right2 = 0;
-        cache[tid + 3*tpb] = right3; right3 = 0;
-        cache[tid + 4*tpb] = right4; right4 = 0;
-        cache[tid + 5*tpb] = right5; right5 = 0;
+        cache[tid + 0*tpb] += right0; right0 = 0;
+        cache[tid + 1*tpb] += right1; right1 = 0;
+        cache[tid + 2*tpb] += right2; right2 = 0;
+        cache[tid + 3*tpb] += right3; right3 = 0;
+        cache[tid + 4*tpb] += right4; right4 = 0;
+        cache[tid + 5*tpb] += right5; right5 = 0;
         __syncthreads();
     }
 
@@ -160,14 +160,9 @@ logical_spmv_coo_kernel2A(const int nnz, const int  * __restrict__ rows,
         return;
 
     int row = rows[nz], prev = rows[nz-1];
-    if (row != prev) {
-        v_out[row*6+0] += scratch[nz+0*nnz];
-        v_out[row*6+1] += scratch[nz+1*nnz];
-        v_out[row*6+2] += scratch[nz+2*nnz];
-        v_out[row*6+3] += scratch[nz+3*nnz];
-        v_out[row*6+4] += scratch[nz+4*nnz];
-        v_out[row*6+5] += scratch[nz+5*nnz];
-    }
+    if (row != prev)
+        for (int i = 0; i < 6; i++)
+            v_out[row*6+i] += scratch[nz+i*nnz];
 }
 
 
@@ -317,6 +312,7 @@ LogicalSpMV_ell(int m, int n, int k, int *ell_cols, float *ell_vals, const int c
     logical_spmv_ell_kernel<<<nBlocks,THREADS_PER_BLOCK>>>
         (m, n, k, ell_cols, ell_vals, v_in, v_out);
 
+#define USE_COO_KERNEL_A 1
 #if USE_COO_KERNEL_A
     nBlocks = (coo_nnz + COO_THREADS_PER_BLOCK_0 - 1) / COO_THREADS_PER_BLOCK_0;
     logical_spmv_coo_kernel0A<<<nBlocks,COO_THREADS_PER_BLOCK_0>>>
@@ -335,6 +331,7 @@ LogicalSpMV_ell(int m, int n, int k, int *ell_cols, float *ell_vals, const int c
     nBlocks = (coo_nnz + COO_THREADS_PER_BLOCK_2 - 1) / COO_THREADS_PER_BLOCK_2;
     logical_spmv_coo_kernel2A<<<nBlocks,COO_THREADS_PER_BLOCK_2>>>
         (coo_nnz, coo_rows, coo_scratch, v_out);
+
 #else
     nBlocks = (coo_nnz + COO_THREADS_PER_BLOCK_2 - 1) / COO_THREADS_PER_BLOCK_2;
     logical_spmv_coo_kernelB<<<nBlocks,COO_THREADS_PER_BLOCK_2>>>
