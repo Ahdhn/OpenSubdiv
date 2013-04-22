@@ -312,18 +312,13 @@ LogicalSpMV_ell(int m, int n, int k, int *ell_cols, float *ell_vals, const int c
     logical_spmv_ell_kernel<<<nBlocks,THREADS_PER_BLOCK>>>
         (m, n, k, ell_cols, ell_vals, v_in, v_out);
 
-#define USE_COO_KERNEL_A 1
-#if USE_COO_KERNEL_A
     nBlocks = (coo_nnz + COO_THREADS_PER_BLOCK_0 - 1) / COO_THREADS_PER_BLOCK_0;
     logical_spmv_coo_kernel0A<<<nBlocks,COO_THREADS_PER_BLOCK_0>>>
         (coo_nnz, coo_rows, coo_cols, coo_vals, coo_scratch, v_in, v_out);
 
-    for(int nLeft = coo_nnz, stride = 1; nLeft > 0;
-            nLeft /= COO_THREADS_PER_BLOCK_1,
-            stride *= COO_THREADS_PER_BLOCK_1) {
-
+    const int tpb1 = COO_THREADS_PER_BLOCK_1
+    for(int nLeft = coo_nnz, stride = 1; nLeft > 0; nLeft /= tpb1, stride *= tpb1) {
         nBlocks = (nLeft + COO_THREADS_PER_BLOCK_1 - 1) / COO_THREADS_PER_BLOCK_1;
-        printf("\ntree reduce: %d blocks, %d left, %d stride\n", nBlocks, nLeft, stride);
         logical_spmv_coo_kernel1A<<<nBlocks,COO_THREADS_PER_BLOCK_1>>>
             (coo_nnz, coo_rows, stride, coo_scratch);
     }
@@ -331,12 +326,6 @@ LogicalSpMV_ell(int m, int n, int k, int *ell_cols, float *ell_vals, const int c
     nBlocks = (coo_nnz + COO_THREADS_PER_BLOCK_2 - 1) / COO_THREADS_PER_BLOCK_2;
     logical_spmv_coo_kernel2A<<<nBlocks,COO_THREADS_PER_BLOCK_2>>>
         (coo_nnz, coo_rows, coo_scratch, v_out);
-
-#else
-    nBlocks = (coo_nnz + COO_THREADS_PER_BLOCK_2 - 1) / COO_THREADS_PER_BLOCK_2;
-    logical_spmv_coo_kernelB<<<nBlocks,COO_THREADS_PER_BLOCK_2>>>
-        (coo_nnz, coo_rows, coo_cols, coo_vals, coo_scratch, v_in, v_out);
-#endif
 }
 
 void
