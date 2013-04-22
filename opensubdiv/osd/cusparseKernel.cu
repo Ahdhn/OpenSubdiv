@@ -6,6 +6,7 @@
 #define THREADS_PER_BLOCK 256
 #define COO_THREADS_PER_BLOCK_0 1024
 #define COO_THREADS_PER_BLOCK_1 1024
+#define COO_THREADS_PER_BLOCK_2 1024
 #define THREADS_PER_ROW   32
 
 using namespace std;
@@ -75,23 +76,37 @@ logical_spmv_coo_kernel0(const int nnz,
 }
 
 __global__ void
-logical_spmv_coo_kernel1(const int nnz,
-    const int  * __restrict__ rows, const int stride,
-    float * __restrict__ scratch)
+logical_spmv_coo_kernel1(const int nnz, const int  * __restrict__ rows,
+        const int stride, float * __restrict__ scratch)
 {
+    int tid = threadIdx.x;
     int nz = stride * (threadIdx.x + blockIdx.x * blockDim.x);
     if (nz >= nnz)
         return;
 
     int row = rows[nz];
+    const int tpb = COO_THREADS_PER_BLOCK_1;
+    __shared__ float cache[6*tpb];
+    // TODO cache rows
+
+    for (int i = 0; i < 6; i++)
+        cache[tid + i*tpb] = scratch[nz+i*nnz];
+
+    __syncthreads();
 
     for (int reach = blockDim.x / 2; reach > 0; reach /= 2) {
-        int target = stride * (threadIdx.x + reach + blockIdx.x * blockDim.x);
-        if ((threadIdx.x/reach) % 2 == 0  &&  row == rows[target]) {
-            for (int i=0; i<6; i++) scratch[nz+i*nnz] += scratch[target+i*nnz];
+        int target_tid = tid + reach;
+        int target_nz = stride * (target_tid + blockIdx.x * blockDim.x);
+        if (target_nz < nnz &&
+            (tid/reach) % 2 == 0 &&
+            row == rows[target_nz]) {
+            for (int i=0; i<6; i++) cache[tid+i*tpb] += cache[target_tid + i*tpb];
         }
         __syncthreads();
     }
+
+    for (int i = 0; i < 6; i++)
+        scratch[nz+i*nnz] = cache[tid + i*tpb];
 }
 
 __global__ void
@@ -102,8 +117,8 @@ logical_spmv_coo_kernel2(const int nnz, const int  * __restrict__ rows,
     if (nz >= nnz)
         return;
 
-    int row = rows[nz];
-    if (row != rows[nz-1]) {
+    int row = rows[nz], prev = rows[nz-1];
+    if (row != prev) {
         v_out[row*6+0] += scratch[nz+0*nnz];
         v_out[row*6+1] += scratch[nz+1*nnz];
         v_out[row*6+2] += scratch[nz+2*nnz];
@@ -264,16 +279,17 @@ LogicalSpMV_ell(int m, int n, int k, int *ell_cols, float *ell_vals, int coo_nnz
     logical_spmv_coo_kernel0<<<nBlocks,COO_THREADS_PER_BLOCK_0>>>
         (coo_nnz, coo_rows, coo_cols, coo_vals, coo_scratch, v_in, v_out);
 
-    // TODO run until reach <= COO_TBP_1/2
     for(int nLeft = coo_nnz, stride = 1; nLeft > 0;
-            nLeft /= COO_THREADS_PER_BLOCK_1, stride *= COO_THREADS_PER_BLOCK_1) {
+            nLeft = nLeft / COO_THREADS_PER_BLOCK_1,
+            stride *= COO_THREADS_PER_BLOCK_1) {
+
         nBlocks = (nLeft + COO_THREADS_PER_BLOCK_1 - 1) / COO_THREADS_PER_BLOCK_1;
-        //printf("launching %d blocks to handle %d elems, stride %d\n", nBlocks, nLeft, stride);
         logical_spmv_coo_kernel1<<<nBlocks,COO_THREADS_PER_BLOCK_1>>>
             (coo_nnz, coo_rows, stride, coo_scratch);
     }
 
-    logical_spmv_coo_kernel2<<<nBlocks,COO_THREADS_PER_BLOCK_1>>>
+    nBlocks = (coo_nnz + COO_THREADS_PER_BLOCK_2 - 1) / COO_THREADS_PER_BLOCK_2;
+    logical_spmv_coo_kernel2<<<nBlocks,COO_THREADS_PER_BLOCK_2>>>
         (coo_nnz, coo_rows, coo_scratch, v_out);
 }
 
