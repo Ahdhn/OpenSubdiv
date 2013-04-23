@@ -37,16 +37,16 @@ CpuCooMatrix::gemm(CpuCsrMatrix* rhs) {
     return answer;
 }
 
-CpuCsrMatrix::CpuCsrMatrix(int m, int n, int nnz, int nve, mode_t mode) :
-    CsrMatrix(m, n, nnz, nve, mode) {
+CpuCsrMatrix::CpuCsrMatrix(int m, int n, int nnz, int nve) :
+    CsrMatrix(m, n, nnz, nve) {
     rows = (int*) malloc((m+1) * sizeof(int));
     cols = (int*) malloc(nnz * sizeof(int));
     vals = (float*) malloc(nnz * sizeof(float));
     rows[m] = nnz+1;
 }
 
-CpuCsrMatrix::CpuCsrMatrix(const CpuCooMatrix* StagedOp, int nve, mode_t mode) :
-    CsrMatrix(StagedOp, nve, mode) {
+CpuCsrMatrix::CpuCsrMatrix(const CpuCooMatrix* StagedOp, int nve) :
+    CsrMatrix(StagedOp, nve) {
 
     m = StagedOp->m;
     n = StagedOp->n;
@@ -135,7 +135,7 @@ CpuCsrMatrix::gemm(CpuCsrMatrix* rhs) {
     CpuCsrMatrix* B = rhs;
 
     int c_nnz = std::min(A->m*B->n, (int) B->nnz*7); // XXX: shouldn't this be 4, not 7?
-    CpuCsrMatrix* C = new CpuCsrMatrix(A->m, B->n, c_nnz, B->nve, mode);
+    CpuCsrMatrix* C = new CpuCsrMatrix(A->m, B->n, c_nnz, B->nve);
 
     int request = 0; // output arrays pre allocated
     int sort = 8; // reorder nonzeroes in C

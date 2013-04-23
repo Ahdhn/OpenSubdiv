@@ -33,8 +33,8 @@ public:
     int* cols;
     float* vals;
 
-    CpuCsrMatrix(int m, int n, int nnz, int nve=1, mode_t mode=CsrMatrix::VERTEX);
-    CpuCsrMatrix(const CpuCooMatrix* StagedOp, int nve=1, mode_t mode=CsrMatrix::VERTEX);
+    CpuCsrMatrix(int m, int n, int nnz, int nve=1);
+    CpuCsrMatrix(const CpuCooMatrix* StagedOp, int nve=1);
     virtual ~CpuCsrMatrix();
 
     virtual void spmv(float* d_out, float* d_in);

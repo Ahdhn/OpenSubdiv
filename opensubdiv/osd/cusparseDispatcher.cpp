@@ -58,8 +58,8 @@ CudaCooMatrix::gemm(CudaCsrMatrix* rhs) {
     return answer;
 }
 
-CudaCsrMatrix::CudaCsrMatrix(int m, int n, int nnz, int nve, mode_t mode) :
-    CsrMatrix(m, n, nnz, nve, mode), rows(NULL), cols(NULL), vals(NULL)
+CudaCsrMatrix::CudaCsrMatrix(int m, int n, int nnz, int nve) :
+    CsrMatrix(m, n, nnz, nve), rows(NULL), cols(NULL), vals(NULL)
 {
     /* make cusparse matrix descriptor */
     cusparseCreateMatDescr(&desc);
@@ -70,8 +70,8 @@ CudaCsrMatrix::CudaCsrMatrix(int m, int n, int nnz, int nve, mode_t mode) :
     cudaMalloc( &d_out_scratch, m*nve*sizeof(float) );
 }
 
-CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve, mode_t mode) :
-    CsrMatrix(StagedOp, nve, mode), rows(NULL), cols(NULL), vals(NULL)
+CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve) :
+    CsrMatrix(StagedOp, nve), rows(NULL), cols(NULL), vals(NULL)
 {
     /* make cusparse matrix descriptor */
     cusparseCreateMatDescr(&desc);
