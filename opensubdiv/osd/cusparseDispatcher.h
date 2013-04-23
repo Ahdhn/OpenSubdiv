@@ -49,12 +49,16 @@ public:
     int coo_nnz;
     float *coo_vals, *coo_scratch;
     int *coo_rows, *coo_cols;
+
+    // scratch space for tranposes of input and output vectors
+    float *d_in_scratch, *d_out_scratch;
 };
 
 class OsdCusparseKernelDispatcher :
     public OsdSpMVKernelDispatcher<CudaCooMatrix,CudaCsrMatrix,OsdCudaVertexBuffer>
 {
 public:
+    typedef OsdSpMVKernelDispatcher<CudaCooMatrix, CudaCsrMatrix, OsdCudaVertexBuffer> super;
     OsdCusparseKernelDispatcher(int levels, bool logical);
     ~OsdCusparseKernelDispatcher();
     virtual void FinalizeMatrix();

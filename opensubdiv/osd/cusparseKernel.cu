@@ -12,6 +12,22 @@
 using namespace std;
 
 __global__ void
+transpose(float *odata, float *idata, int m, int n)
+{
+    int src_tid = threadIdx.x + blockIdx.x*blockDim.x;
+    if (src_tid >= m*n)
+        return;
+
+    int src_row = src_tid / n,
+        src_col = src_tid % n,
+        dst_row = src_col,
+        dst_col = src_row,
+        dst_tid = dst_row * m + dst_col;
+
+    odata[dst_tid] = idata[src_tid];
+}
+
+__global__ void
 expand(int src_numthreads, int nve,
   int* dst_rows, int* dst_cols, float* dst_vals,
   int* src_rows, int* src_cols, float* src_vals)
@@ -294,6 +310,12 @@ OsdCusparseExpand(int src_numrows, int factor,
     cudaMemcpy(&src_sentinel, &src_rows[src_numrows], sizeof(int), cudaMemcpyDeviceToHost);
     dst_sentinel = (src_sentinel - 1) * factor + 1;
     cudaMemcpy(&dst_rows[src_numrows*factor], &dst_sentinel, sizeof(int), cudaMemcpyHostToDevice);
+}
+
+void
+OsdTranspose(float *odata, float *idata, int m, int n) {
+    int nBlocks = (m*n + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    transpose<<<nBlocks,THREADS_PER_BLOCK>>>(odata, idata, m, n);
 }
 
 cusparseStatus_t

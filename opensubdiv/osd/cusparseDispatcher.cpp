@@ -19,6 +19,9 @@ extern "C" {
 void
 OsdCusparseExpand(int src_m, int factor, int* dst_rows, int* dst_cols, float* dst_vals, int* src_rows, int* src_cols, float* src_vals);
 
+void
+OsdTranspose(float *odata, float *idata, int m, int n);
+
 cusparseStatus_t
 my_cusparseScsrmv(cusparseHandle_t handle, cusparseOperation_t transA,
     int m, int n, int nnz, float* alpha,
@@ -71,6 +74,9 @@ CudaCsrMatrix::CudaCsrMatrix(int m, int n, int nnz, int nve, mode_t mode) :
     cusparseCreateMatDescr(&desc);
     cusparseSetMatType(desc,CUSPARSE_MATRIX_TYPE_GENERAL);
     cusparseSetMatIndexBase(desc,CUSPARSE_INDEX_BASE_ONE);
+
+    cudaMalloc( &d_in_scratch,  n*nve*sizeof(float) );
+    cudaMalloc( &d_out_scratch, m*nve*sizeof(float) );
 }
 
 CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve, mode_t mode) :
@@ -110,6 +116,8 @@ CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve, mode_t mode
     cudaMalloc(&rows, (m+1) * sizeof(int));
     cudaMalloc(&cols, nnz * sizeof(int));
     cudaMalloc(&vals, nnz * sizeof(float));
+    cudaMalloc( &d_in_scratch,  n*nve*sizeof(float) );
+    cudaMalloc( &d_out_scratch, m*nve*sizeof(float) );
 
     /* copy data to device */
     cudaMemcpy(rows, &h_rows[0], (m+1) * sizeof(int), cudaMemcpyHostToDevice);
@@ -136,10 +144,6 @@ CudaCsrMatrix::spmv(float *d_out, float* d_in) {
 
     //status = cusparseShybmv(handle, op, &alpha, desc, hyb, d_in, &beta, d_out);
 
-    printf("\n\t%d-%d = %d-%d * %d-%d (with %d nnz, %d nve)\n", m, nve, m, n, n, nve, nnz, nve);
-    assert( cusparseGetMatIndexBase(desc) == CUSPARSE_INDEX_BASE_ONE );
-    assert( cusparseGetMatType(desc) == CUSPARSE_MATRIX_TYPE_GENERAL );
-
     int csp_m = m,
         csp_n = nve,
         csp_k = n,
@@ -147,14 +151,14 @@ CudaCsrMatrix::spmv(float *d_out, float* d_in) {
         csp_ldb = csp_k,
         csp_ldc = csp_m;
 
-    assert( csp_ldb == std::max(1, csp_k) );
-    assert( csp_ldc == std::max(1, csp_m) );
+    OsdTranspose(d_in_scratch, d_in, csp_ldb, nve);
 
     status = cusparseScsrmm(handle, op, csp_m, csp_n, csp_k, csp_nnz,
-            &alpha, desc, vals, rows, cols, d_in, csp_ldb,
-            &beta, d_out, csp_ldc);
-
+            &alpha, desc, vals, rows, cols, d_in_scratch, csp_ldb,
+            &beta, d_out_scratch, csp_ldc);
     cusparseCheckStatus(status);
+
+    OsdTranspose(d_out, d_out_scratch, nve, csp_ldc);
 }
 
 CudaCsrMatrix*
@@ -202,6 +206,9 @@ CudaCsrMatrix::~CudaCsrMatrix() {
 
     if (hyb != NULL)
         cusparseDestroyHybMat(hyb);
+
+    cudaFree(d_in_scratch);
+    cudaFree(d_out_scratch);
 }
 
 void
@@ -323,9 +330,7 @@ CudaCsrMatrix::ellize() {
 }
 
 OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher(int levels, bool logical) :
-    OsdSpMVKernelDispatcher<CudaCooMatrix,
-                            CudaCsrMatrix,
-                            OsdCudaVertexBuffer>(levels, logical) {
+    super(levels, logical) {
     /* make cusparse handle if null */
     assert (handle == NULL);
     cusparseCreate(&handle);
@@ -339,7 +344,7 @@ OsdCusparseKernelDispatcher::~OsdCusparseKernelDispatcher() {
 
 void
 OsdCusparseKernelDispatcher::FinalizeMatrix() {
-    this->OsdSpMVKernelDispatcher<CudaCooMatrix, CudaCsrMatrix, OsdCudaVertexBuffer>::FinalizeMatrix();
+    this->super::FinalizeMatrix();
 
     if (logical)
         SubdivOp->ellize();
