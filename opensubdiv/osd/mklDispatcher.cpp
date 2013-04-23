@@ -107,8 +107,25 @@ CpuCsrMatrix::logical_spmv(float* d_out, float* d_in) {
 
 void
 CpuCsrMatrix::spmv(float* d_out, float* d_in) {
-    assert(mode == CsrMatrix::ELEMENT);
-    mkl_scsrgemv((char*)"N", &m, vals, rows, cols, d_in, d_out);
+    char *mkl_transa = (char*) "N";
+    int mkl_m = m,
+        mkl_n = nve,
+        mkl_k = n;
+    float mkl_alpha = 1.0f;
+    char *mkl_matdesrca = (char*) "G__C__";
+    float *mkl_val = vals;
+    int *mkl_indx = cols,
+        *mkl_pntrb = rows,
+        *mkl_pntre = rows+1;
+    float *mkl_b = d_in;
+    int mkl_ldb = nve;
+    float mkl_beta = 0.0f;
+    float *mkl_c = d_out;
+    int mkl_ldc = nve;
+
+    mkl_scsrmm(mkl_transa, &mkl_m, &mkl_n, &mkl_k, &mkl_alpha,
+            mkl_matdesrca, mkl_val, mkl_indx, mkl_pntrb, mkl_pntre,
+            mkl_b, &mkl_ldb, &mkl_beta, mkl_c, &mkl_ldc);
 }
 
 CpuCsrMatrix*
@@ -144,6 +161,13 @@ CpuCsrMatrix::gemm(CpuCsrMatrix* rhs) {
 
 void
 CpuCsrMatrix::expand() {
+    printf("Skipping expand in MKL kernel, changing to 0-indexing instead.\n");
+    for (int i = 0; i < m+1; i++)
+        rows[i] -= 1;
+    for (int i = 0; i < nnz; i++)
+        cols[i] -= 1;
+
+#if 0
     if (mode == CsrMatrix::VERTEX) {
         int* new_rows = (int*) malloc((nve*m+1) * sizeof(int));
         int* new_cols = (int*) malloc(nve*nnz * sizeof(int));
@@ -180,6 +204,7 @@ CpuCsrMatrix::expand() {
         mode = CsrMatrix::ELEMENT;
         new_rows[m] = nnz+1;
     }
+#endif
 }
 
 void
