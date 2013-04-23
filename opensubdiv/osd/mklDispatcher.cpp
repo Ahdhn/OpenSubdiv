@@ -161,50 +161,11 @@ CpuCsrMatrix::gemm(CpuCsrMatrix* rhs) {
 
 void
 CpuCsrMatrix::expand() {
-    printf("Skipping expand in MKL kernel, changing to 0-indexing instead.\n");
+    // skip expand in MKL kernel, change to 0-indexing instead
     for (int i = 0; i < m+1; i++)
         rows[i] -= 1;
     for (int i = 0; i < nnz; i++)
         cols[i] -= 1;
-
-#if 0
-    if (mode == CsrMatrix::VERTEX) {
-        int* new_rows = (int*) malloc((nve*m+1) * sizeof(int));
-        int* new_cols = (int*) malloc(nve*nnz * sizeof(int));
-        float* new_vals = (float*) malloc(nve*nnz * sizeof(float));
-
-        #pragma omp parallel for
-        for(int r = 0; r < m; r++) {
-            for(int k = 0; k < nve; k++) {
-                int i = rows[r]-1;
-                int stride = rows[r+1]-rows[r];
-                int new_base = i*nve + k*stride;
-                int old_base = rows[r];
-                new_rows[r*nve + k] = new_base+1;
-                for(i = rows[r]; i < rows[r+1]; i++) {
-                    int offset = i - old_base;
-                    int col_one = cols[i-1];
-                    float val = vals[i-1];
-                    new_cols[new_base+offset] = ((col_one-1)*nve + k) + 1;
-                    new_vals[new_base+offset] = val;
-                }
-            }
-        }
-
-        free(rows);
-        free(cols);
-        free(vals);
-
-        m *= nve;
-        n *= nve;
-        nnz *= nve;
-        rows = new_rows;
-        cols = new_cols;
-        vals = new_vals;
-        mode = CsrMatrix::ELEMENT;
-        new_rows[m] = nnz+1;
-    }
-#endif
 }
 
 void
