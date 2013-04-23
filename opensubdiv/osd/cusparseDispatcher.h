@@ -23,13 +23,12 @@ public:
 
 class CudaCsrMatrix : public CsrMatrix {
 public:
-    CudaCsrMatrix(int m, int n, int nnz=0, int nve=1, mode_t=VERTEX);
-    CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve=1, mode_t=VERTEX);
+    CudaCsrMatrix(int m, int n, int nnz=0, int nve=1);
+    CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve=1);
     virtual ~CudaCsrMatrix();
     void spmv(float* d_out, float* d_in);
     void logical_spmv(float* d_out, float* d_in);
     virtual CudaCsrMatrix* gemm(CudaCsrMatrix* rhs);
-    void expand();
     void ellize();
     void dump(std::string ofilename);
 
@@ -37,8 +36,6 @@ public:
     int* rows;
     int* cols;
     float* vals;
-
-    cusparseHybMat_t hyb;
 
     // ellpack data
     float* ell_vals;
@@ -49,12 +46,16 @@ public:
     int coo_nnz;
     float *coo_vals, *coo_scratch;
     int *coo_rows, *coo_cols;
+
+    // scratch space for tranposes of input and output vectors
+    float *d_in_scratch, *d_out_scratch;
 };
 
 class OsdCusparseKernelDispatcher :
     public OsdSpMVKernelDispatcher<CudaCooMatrix,CudaCsrMatrix,OsdCudaVertexBuffer>
 {
 public:
+    typedef OsdSpMVKernelDispatcher<CudaCooMatrix, CudaCsrMatrix, OsdCudaVertexBuffer> super;
     OsdCusparseKernelDispatcher(int levels, bool logical);
     ~OsdCusparseKernelDispatcher();
     virtual void FinalizeMatrix();

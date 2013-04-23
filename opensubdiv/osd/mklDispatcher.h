@@ -33,14 +33,13 @@ public:
     int* cols;
     float* vals;
 
-    CpuCsrMatrix(int m, int n, int nnz, int nve=1, mode_t mode=CsrMatrix::VERTEX);
-    CpuCsrMatrix(const CpuCooMatrix* StagedOp, int nve=1, mode_t mode=CsrMatrix::VERTEX);
+    CpuCsrMatrix(int m, int n, int nnz, int nve=1);
+    CpuCsrMatrix(const CpuCooMatrix* StagedOp, int nve=1);
     virtual ~CpuCsrMatrix();
 
     virtual void spmv(float* d_out, float* d_in);
     virtual void logical_spmv(float* d_out, float* d_in);
     virtual CpuCsrMatrix* gemm(CpuCsrMatrix* rhs);
-    virtual void expand();
     virtual void dump(std::string ofilename);
 };
 
@@ -49,7 +48,9 @@ class OsdMklKernelDispatcher :
     public OsdSpMVKernelDispatcher<CpuCooMatrix,CpuCsrMatrix,OsdCpuVertexBuffer>
 {
 public:
+    typedef OsdSpMVKernelDispatcher<CpuCooMatrix,CpuCsrMatrix,OsdCpuVertexBuffer> super;
     OsdMklKernelDispatcher(int levels, bool logical=false);
+    virtual void FinalizeMatrix();
     static void Register();
 };
 
