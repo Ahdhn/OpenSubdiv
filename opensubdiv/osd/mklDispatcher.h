@@ -40,7 +40,6 @@ public:
     virtual void spmv(float* d_out, float* d_in);
     virtual void logical_spmv(float* d_out, float* d_in);
     virtual CpuCsrMatrix* gemm(CpuCsrMatrix* rhs);
-    virtual void expand();
     virtual void dump(std::string ofilename);
 };
 
@@ -49,7 +48,9 @@ class OsdMklKernelDispatcher :
     public OsdSpMVKernelDispatcher<CpuCooMatrix,CpuCsrMatrix,OsdCpuVertexBuffer>
 {
 public:
+    typedef OsdSpMVKernelDispatcher<CpuCooMatrix,CpuCsrMatrix,OsdCpuVertexBuffer> super;
     OsdMklKernelDispatcher(int levels, bool logical=false);
+    virtual void FinalizeMatrix();
     static void Register();
 };
 

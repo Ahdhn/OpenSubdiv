@@ -16,24 +16,15 @@ extern "C" {
 #include <cuda_gl_interop.h>
 
 extern "C" {
-void
-OsdCusparseExpand(int src_m, int factor, int* dst_rows, int* dst_cols, float* dst_vals, int* src_rows, int* src_cols, float* src_vals);
 
 void
 OsdTranspose(float *odata, float *idata, int m, int n);
 
-cusparseStatus_t
-my_cusparseScsrmv(cusparseHandle_t handle, cusparseOperation_t transA,
-    int m, int n, int nnz, float* alpha,
-    cusparseMatDescr_t descrA,
-    const float *csrValA,
-    const int *csrRowPtrA, const int *csrColIndA,
-    const float *x, float* beta,
-    float *y );
+void
+LogicalSpMV_hyb(int m, int n, int k, int *ell_cols, float *ell_vals, int coo_nnz, int *coo_rows, int *coo_cols, float *coo_vals, float *coo_scratch, float *v_in, float *v_out);
 
 void
-LogicalSpMV_ell(int m, int n, int k, int *ell_cols, float *ell_vals, int coo_nnz, int *coo_rows, int *coo_cols, float *coo_vals, float *coo_scratch, float *v_in, float *v_out);
-void LogicalSpMV_csr(int m, int n, int k, int *rows, int *cols, float *vals, float *v_in, float *v_out);
+LogicalSpMV_csr(int m, int n, int k, int *rows, int *cols, float *vals, float *v_in, float *v_out);
 
 }
 
@@ -68,7 +59,7 @@ CudaCooMatrix::gemm(CudaCsrMatrix* rhs) {
 }
 
 CudaCsrMatrix::CudaCsrMatrix(int m, int n, int nnz, int nve, mode_t mode) :
-    CsrMatrix(m, n, nnz, nve, mode), rows(NULL), cols(NULL), vals(NULL), hyb(NULL)
+    CsrMatrix(m, n, nnz, nve, mode), rows(NULL), cols(NULL), vals(NULL)
 {
     /* make cusparse matrix descriptor */
     cusparseCreateMatDescr(&desc);
@@ -80,7 +71,7 @@ CudaCsrMatrix::CudaCsrMatrix(int m, int n, int nnz, int nve, mode_t mode) :
 }
 
 CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve, mode_t mode) :
-    CsrMatrix(StagedOp, nve, mode), rows(NULL), cols(NULL), vals(NULL), hyb(NULL)
+    CsrMatrix(StagedOp, nve, mode), rows(NULL), cols(NULL), vals(NULL)
 {
     /* make cusparse matrix descriptor */
     cusparseCreateMatDescr(&desc);
@@ -132,7 +123,7 @@ CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve, mode_t mode
 
 void
 CudaCsrMatrix::logical_spmv(float *d_out, float* d_in) {
-    LogicalSpMV_ell(m, n, ell_k, ell_cols, ell_vals, coo_nnz, coo_rows+1, coo_cols+1, coo_vals+1, coo_scratch, d_in, d_out);
+    LogicalSpMV_hyb(m, n, ell_k, ell_cols, ell_vals, coo_nnz, coo_rows+1, coo_cols+1, coo_vals+1, coo_scratch, d_in, d_out);
 }
 
 void
@@ -141,8 +132,6 @@ CudaCsrMatrix::spmv(float *d_out, float* d_in) {
     cusparseOperation_t op = CUSPARSE_OPERATION_NON_TRANSPOSE;
     float alpha = 1.0,
           beta = 0.0;
-
-    //status = cusparseShybmv(handle, op, &alpha, desc, hyb, d_in, &beta, d_out);
 
     int csp_m = m,
         csp_n = nve,
@@ -204,48 +193,8 @@ CudaCsrMatrix::~CudaCsrMatrix() {
     /* clean up device memory */
     cusparseDestroyMatDescr(desc);
 
-    if (hyb != NULL)
-        cusparseDestroyHybMat(hyb);
-
     cudaFree(d_in_scratch);
     cudaFree(d_out_scratch);
-}
-
-void
-CudaCsrMatrix::expand() {
-    printf("skipping expand in cusparse dispatcher\n");
-
-#if 0
-    if (mode == CsrMatrix::VERTEX) {
-        int *new_rows, *new_cols;
-        float *new_vals;
-        cudaMalloc(&new_rows, (nve*m+1) * sizeof(int));
-        cudaMalloc(&new_cols, nve*nnz * sizeof(int));
-        cudaMalloc(&new_vals, nve*nnz * sizeof(float));
-
-        OsdCusparseExpand(m, nve, new_rows, new_cols, new_vals, rows, cols, vals);
-
-        cudaFree(rows);
-        cudaFree(cols);
-        cudaFree(vals);
-
-        m *= nve;
-        n *= nve;
-        nnz *= nve;
-        rows = new_rows;
-        cols = new_cols;
-        vals = new_vals;
-        mode = CsrMatrix::ELEMENT;
-    }
-
-    assert(hyb == NULL);
-    cusparseCreateHybMat(&hyb);
-    cusparseScsr2hyb(handle, m, n, desc, vals, rows, cols, hyb, 0, CUSPARSE_HYB_PARTITION_MAX);
-
-    cudaFree(rows);
-    cudaFree(cols);
-    cudaFree(vals);
-#endif
 }
 
 void

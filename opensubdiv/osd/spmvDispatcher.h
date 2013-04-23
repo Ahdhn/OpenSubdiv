@@ -125,9 +125,6 @@ public:
         if (osdSpMVKernel_DumpSpy_FileName != NULL)
             SubdivOp->dump(osdSpMVKernel_DumpSpy_FileName);
 
-        if (!logical)
-            SubdivOp->expand();
-
         this->PrintReport();
     }
 
@@ -218,7 +215,6 @@ public:
 
     virtual void spmv(float* d_out, float* d_in) = 0;
     virtual void logical_spmv(float* d_out, float* d_in) = 0;
-    virtual void expand() = 0;
     virtual void dump(std::string ofilename) = 0;
 
     virtual inline int NumBytes() {

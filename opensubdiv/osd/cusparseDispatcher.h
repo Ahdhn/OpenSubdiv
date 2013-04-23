@@ -29,7 +29,6 @@ public:
     void spmv(float* d_out, float* d_in);
     void logical_spmv(float* d_out, float* d_in);
     virtual CudaCsrMatrix* gemm(CudaCsrMatrix* rhs);
-    void expand();
     void ellize();
     void dump(std::string ofilename);
 
@@ -37,8 +36,6 @@ public:
     int* rows;
     int* cols;
     float* vals;
-
-    cusparseHybMat_t hyb;
 
     // ellpack data
     float* ell_vals;

@@ -87,9 +87,9 @@ CpuCsrMatrix::logical_spmv(float* d_out, float* d_in) {
             out45v = _mm_setzero_ps();
         int out_idx = 6*i;
 
-        for (int k = rows[i]-1; k < rows[i+1]-1; k++) {
+        for (int k = rows[i]; k < rows[i+1]; k++) {
 
-            int in_idx = 6*(cols[k]-1);
+            int in_idx = 6*cols[k];
 
             __m128 ignore,
                    in03v = _mm_loadu_ps( &d_in[in_idx] ),
@@ -160,12 +160,13 @@ CpuCsrMatrix::gemm(CpuCsrMatrix* rhs) {
 }
 
 void
-CpuCsrMatrix::expand() {
-    // skip expand in MKL kernel, change to 0-indexing instead
-    for (int i = 0; i < m+1; i++)
-        rows[i] -= 1;
-    for (int i = 0; i < nnz; i++)
-        cols[i] -= 1;
+OsdMklKernelDispatcher::FinalizeMatrix() {
+    this->super::FinalizeMatrix();
+
+    for (int i = 0; i < SubdivOp->m+1; i++)
+        SubdivOp->rows[i] -= 1;
+    for (int i = 0; i < SubdivOp->nnz; i++)
+        SubdivOp->cols[i] -= 1;
 }
 
 void
@@ -195,7 +196,7 @@ CpuCsrMatrix::~CpuCsrMatrix() {
 
 
 OsdMklKernelDispatcher::OsdMklKernelDispatcher(int levels, bool logical) :
-    OsdSpMVKernelDispatcher<CpuCooMatrix,CpuCsrMatrix,OsdCpuVertexBuffer>(levels,logical)
+    super(levels,logical)
 { }
 
 static OsdMklKernelDispatcher::OsdKernelDispatcher *
