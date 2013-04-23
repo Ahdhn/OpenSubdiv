@@ -133,7 +133,27 @@ CudaCsrMatrix::spmv(float *d_out, float* d_in) {
     cusparseOperation_t op = CUSPARSE_OPERATION_NON_TRANSPOSE;
     float alpha = 1.0,
           beta = 0.0;
-    status = cusparseShybmv(handle, op, &alpha, desc, hyb, d_in, &beta, d_out);
+
+    //status = cusparseShybmv(handle, op, &alpha, desc, hyb, d_in, &beta, d_out);
+
+    printf("\n\t%d-%d = %d-%d * %d-%d (with %d nnz, %d nve)\n", m, nve, m, n, n, nve, nnz, nve);
+    assert( cusparseGetMatIndexBase(desc) == CUSPARSE_INDEX_BASE_ONE );
+    assert( cusparseGetMatType(desc) == CUSPARSE_MATRIX_TYPE_GENERAL );
+
+    int csp_m = m,
+        csp_n = nve,
+        csp_k = n,
+        csp_nnz = nnz,
+        csp_ldb = csp_k,
+        csp_ldc = csp_m;
+
+    assert( csp_ldb == std::max(1, csp_k) );
+    assert( csp_ldc == std::max(1, csp_m) );
+
+    status = cusparseScsrmm(handle, op, csp_m, csp_n, csp_k, csp_nnz,
+            &alpha, desc, vals, rows, cols, d_in, csp_ldb,
+            &beta, d_out, csp_ldc);
+
     cusparseCheckStatus(status);
 }
 
@@ -186,6 +206,9 @@ CudaCsrMatrix::~CudaCsrMatrix() {
 
 void
 CudaCsrMatrix::expand() {
+    printf("skipping expand in cusparse dispatcher\n");
+
+#if 0
     if (mode == CsrMatrix::VERTEX) {
         int *new_rows, *new_cols;
         float *new_vals;
@@ -215,6 +238,7 @@ CudaCsrMatrix::expand() {
     cudaFree(rows);
     cudaFree(cols);
     cudaFree(vals);
+#endif
 }
 
 void
