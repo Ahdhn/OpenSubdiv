@@ -172,7 +172,7 @@ initializeShapes( ) {
     g_defaultShapes.push_back(SimpleShape(catmark_cube_creases1, "catmark_cube_creases1", kCatmark));
 
 #include <shapes/catmark_cube.h>
-    g_defaultShapes.push_back(SimpleShape(catmark_cube, "catmark_cube", kCatmark));
+    g_defaultShapes.push_back(SimpleShape(catmark_cube, "Cube", kCatmark));
 
 #include <shapes/catmark_dart_edgecorner.h>
     g_defaultShapes.push_back(SimpleShape(catmark_dart_edgecorner, "catmark_dart_edgecorner", kCatmark));
@@ -230,7 +230,7 @@ initializeShapes( ) {
     g_defaultShapes.push_back(SimpleShape(loop_cube, "loop_cube", kLoop));
 
 #include <shapes/loop_icosahedron.h>
-    g_defaultShapes.push_back(SimpleShape(loop_icosahedron, "loop_icosahedron", kLoop));
+    g_defaultShapes.push_back(SimpleShape(loop_icosahedron, "Icosahedron", kLoop));
 
 #include <shapes/loop_saddle_edgecorner.h>
     g_defaultShapes.push_back(SimpleShape(loop_saddle_edgecorner, "loop_saddle_edgecorner", kLoop));

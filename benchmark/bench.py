@@ -40,7 +40,7 @@ modelNum = {
     "MonsterFrog": 4,
     "Venus":       7,
     "Cube":        16,
-    "Icosahedron": 34,
+    "Icosahedron": 35,
 }
 
 modelMaxLevel = {
@@ -111,7 +111,7 @@ class Run(object):
 def escape_latex(string):
     return string.replace('_', '\\\\_')
 
-def do_run(model='cube', frames=1000, level=1, kernel='CPU', spyfile=None, regression=False, exact=True):
+def do_run(model, frames=1000, level=1, kernel='CPU', spyfile=None, regression=False, exact=True):
     assert 0 < level <= 7, "Must select positive subdiv level from 1 to 7."
     cmd_line = [
         VIEWER_PATH,

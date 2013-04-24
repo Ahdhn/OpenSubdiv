@@ -4,10 +4,10 @@ SPARSITY_DATS := $(addprefix sparsity_, $(addsuffix .dat, $(MODELS)))
 STABILITY_DATS := $(addprefix stability_, $(addsuffix .dat, $(MODELS)))
 PERF_TEXS := $(addprefix perf_, $(addsuffix .tex, $(MODELS)))
 TTFF_TEXS := $(addprefix ttff_, $(addsuffix .tex, $(MODELS)))
-MATRIXTIME_TEXS := $(addprefix matrixtime_, $(addsuffix .tex, $(MODELS)))
+MATRIXTIME_TEXS := matrixtime_MKL.tex matrixtime_CuSPARSE.tex
 BUILD_PATH := ./graphs
-INSTALL_PATH := /home/driscoll/hpg2013/graphs
-#INSTALL_PATH := /Users/mbdriscoll/cs284/hpg2013/graphs
+#INSTALL_PATH := /home/driscoll/hpg2013/graphs
+INSTALL_PATH := /Users/mbdriscoll/hpg2013/graphs
 
 TEXFILES = mem.tex sparsity.tex stability.tex $(PERF_TEXS) $(TTFF_TEXS) $(MATRIXTIME_TEXS)
 SPYFILES = $(addprefix spy_, $(addsuffix .pdf, $(MODELS)))
