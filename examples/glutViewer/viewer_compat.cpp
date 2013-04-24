@@ -667,8 +667,8 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme, int exa
     s.Stop();
 
 #if BENCHMARKING
-    printf(" ttff=%f",  float(s.GetElapsed()));
-    printf(" matrixtime=%f",  float(g_matrixTimer.GetElapsed()));
+    printf(" ttff=%f",  s.GetTotalElapsed() * 1000.0f);
+    printf(" matrixtime=%f", g_matrixTimer.GetTotalElapsed() * 1000.0f);
     printf(" nverts=%d", g_osdmesh->GetFarMesh()->GetSubdivision()->GetNumVertices(level));
     printf(" level=%d", level);
     printf(" kernel=%s", getKernelName(g_kernel));

@@ -4,11 +4,12 @@ SPARSITY_DATS := $(addprefix sparsity_, $(addsuffix .dat, $(MODELS)))
 STABILITY_DATS := $(addprefix stability_, $(addsuffix .dat, $(MODELS)))
 PERF_TEXS := $(addprefix perf_, $(addsuffix .tex, $(MODELS)))
 TTFF_TEXS := $(addprefix ttff_, $(addsuffix .tex, $(MODELS)))
+MATRIXTIME_TEXS := $(addprefix matrixtime_, $(addsuffix .tex, $(MODELS)))
 BUILD_PATH := ./graphs
 INSTALL_PATH := /home/driscoll/hpg2013/graphs
 #INSTALL_PATH := /Users/mbdriscoll/cs284/hpg2013/graphs
 
-TEXFILES = mem.tex sparsity.tex stability.tex $(PERF_TEXS) $(TTFF_TEXS)
+TEXFILES = mem.tex sparsity.tex stability.tex $(PERF_TEXS) $(TTFF_TEXS) $(MATRIXTIME_TEXS)
 SPYFILES = $(addprefix spy_, $(addsuffix .pdf, $(MODELS)))
 
 default:    all
@@ -22,6 +23,11 @@ perf_%.tex: perf_%.dat
 
 ttff_%.tex: ttff_%.dat
 	./ttff.gpi $(BUILD_PATH)/$@ $^ $*
+	cp $(BUILD_PATH)/$@ $(INSTALL_PATH)/$@
+	cp $(BUILD_PATH)/$(patsubst %.tex,%.eps, $@) $(INSTALL_PATH)/
+
+matrixtime_%.tex: matrixtime_%.dat
+	./matrixtime.gpi $(BUILD_PATH)/$@ $^ $*
 	cp $(BUILD_PATH)/$@ $(INSTALL_PATH)/$@
 	cp $(BUILD_PATH)/$(patsubst %.tex,%.eps, $@) $(INSTALL_PATH)/
 
@@ -54,6 +60,9 @@ perf_%.dat:
 
 ttff_%.dat:
 	./ttff.py $@
+
+matrixtime_%.dat:
+	./matrixtime.py $@
 
 mem_%.dat:
 	./mem.py $@
