@@ -8,7 +8,7 @@ modelTtffLevel = {
     "BigGuy":       4,
     "Bunny":        4,
     "MonsterFrog":  4,
-    "Venus":        3,
+    "Venus":        4,
     "Cube":         7,
     "Icosahedron":  7,
 }
