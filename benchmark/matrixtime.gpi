@@ -13,7 +13,7 @@ set ylabel "Milliseconds" offset 2
 set output "$1"
 #set size 1, 0.80
 
-set key bottom center maxrows 2
+set key bottom right
 set key autotitle columnhead
 set key samplen 2 width -2
 
