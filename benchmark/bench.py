@@ -26,7 +26,7 @@ activeKernels = [
     "CPU",
     "OpenMP",
     "Cuda",
-    "GLSL",
+    #"GLSL",
     "OpenCL",
     "MKL",
     "CuSPARSE",
