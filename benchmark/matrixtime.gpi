@@ -7,7 +7,7 @@ gnuplot << EOF
 
 load "common.gpi"
 
-set title "Cost of Matrix Computations for \\\`$3' Model"
+set title "Cost of Matrix Computations with $3"
 set xlabel "Number of Vertices in Refined Mesh"
 set ylabel "Milliseconds" offset 2
 set output "$1"
