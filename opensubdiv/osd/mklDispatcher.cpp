@@ -5,6 +5,7 @@
 #include <xmmintrin.h>
 
 char* osdSpMVKernel_DumpSpy_FileName = NULL;
+Stopwatch g_matrixTimer;
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
@@ -69,7 +70,12 @@ CpuCsrMatrix::CpuCsrMatrix(const CpuCooMatrix* StagedOp, int nve) :
     int* colind = (int*) &StagedOp->cols[0];
     int info;
 
-    mkl_scsrcoo(job, &m, vals, cols, rows, &numnz, acoo, rowind, colind, &info);
+    g_matrixTimer.Start();
+    {
+        mkl_scsrcoo(job, &m, vals, cols, rows, &numnz, acoo, rowind, colind, &info);
+    }
+    g_matrixTimer.Stop();
+
     assert(info == 0);
 
     nnz = rows[m]-1;
@@ -131,31 +137,58 @@ CpuCsrMatrix::spmv(float* d_out, float* d_in) {
 CpuCsrMatrix*
 CpuCsrMatrix::gemm(CpuCsrMatrix* rhs) {
 
+    Stopwatch s;
+
     CpuCsrMatrix* A = this;
     CpuCsrMatrix* B = rhs;
-
-    int c_nnz = std::min(A->m*B->n, (int) B->nnz*7); // XXX: shouldn't this be 4, not 7?
-    CpuCsrMatrix* C = new CpuCsrMatrix(A->m, B->n, c_nnz, B->nve);
-
-    int request = 0; // output arrays pre allocated
-    int sort = 8; // reorder nonzeroes in C
-    int info = 0; // output info flag
     assert(A->n == B->m);
 
-    /* perform SpM*SpM */
-    mkl_scsrmultcsr((char*)"N", &request, &sort,
-            &A->m, &A->n, &B->n,
-            A->vals, A->cols, A->rows,
-            B->vals, B->cols, B->rows,
-            C->vals, C->cols, C->rows,
-            &c_nnz, &info);
+    int request = 1; // count nonzeroes
+    int sort = 7; // don't reorder nonzeroes
+    int info = 0; // output info flag
+
+    int c_rows[A->m+1];
+    int c_nnz;
+
+    /* count nonzeroes in C */
+    g_matrixTimer.Start();
+    {
+        mkl_scsrmultcsr((char*)"N", &request, &sort,
+                &A->m, &A->n, &B->n,
+                A->vals, A->cols, A->rows,
+                B->vals, B->cols, B->rows,
+                NULL, NULL, &c_rows[0],
+                &c_nnz, &info);
+    }
+    g_matrixTimer.Stop();
 
     if (info != 0) {
         printf("Error: info returned %d\n", info);
         assert(info == 0);
     }
 
-    C->nnz = C->rows[C->m]-1;
+    c_nnz = c_rows[A->m]-1;
+    CpuCsrMatrix* C = new CpuCsrMatrix(A->m, B->n, c_nnz, B->nve);
+    memcpy(&C->rows[0], &c_rows[0], (A->m+1)*sizeof(int));
+
+    /* do multiplication  */
+    request = 2;
+    g_matrixTimer.Start();
+    {
+        mkl_scsrmultcsr((char*)"N", &request, &sort,
+                &A->m, &A->n, &B->n,
+                A->vals, A->cols, A->rows,
+                B->vals, B->cols, B->rows,
+                C->vals, C->cols, C->rows,
+                &c_nnz, &info);
+    }
+    g_matrixTimer.Stop();
+
+    if (info != 0) {
+        printf("Error: info returned %d\n", info);
+        assert(info == 0);
+    }
+
     return C;
 }
 

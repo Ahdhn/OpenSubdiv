@@ -1,0 +1,33 @@
+#!/bin/bash
+gnuplot << EOF
+
+# $1 output file
+# $2 data file
+# $3 model name
+
+load "common.gpi"
+
+set title "Cost of Matrix Computations for \\\`$3' Model"
+set xlabel "Number of Vertices in Refined Mesh"
+set ylabel "Milliseconds" offset 2
+set output "$1"
+#set size 1, 0.80
+
+set key bottom center maxrows 2
+set key autotitle columnhead
+set key samplen 2 width -2
+
+set autoscale fix
+set offset .3, .3, .3, .7
+
+set logscale x 10
+set logscale y 10
+set format x "\$10^{%L}\$";
+
+set grid back
+
+plot \
+    "$2" using 1:2 w linespoint ls 1, \
+    "$2" using 1:4 w linespoint ls 2
+
+EOF

@@ -100,7 +100,12 @@ CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve) :
     int info;
 
     /* use mkl because cusparse doesn't offer sorting */
-    mkl_scsrcoo(job, &m, h_vals, h_cols, h_rows, &nnz, acoo, rowind, colind, &info);
+    g_matrixTimer.Start();
+    {
+        mkl_scsrcoo(job, &m, h_vals, h_cols, h_rows, &nnz, acoo, rowind, colind, &info);
+    }
+    g_matrixTimer.Stop();
+
     assert(info == 0);
 
     /* allocate device memory */
@@ -140,14 +145,18 @@ CudaCsrMatrix::spmv(float *d_out, float* d_in) {
         csp_ldb = csp_k,
         csp_ldc = csp_m;
 
-    OsdTranspose(d_in_scratch, d_in, csp_ldb, nve);
+    g_matrixTimer.Start();
+    {
+        OsdTranspose(d_in_scratch, d_in, csp_ldb, nve);
 
-    status = cusparseScsrmm(handle, op, csp_m, csp_n, csp_k, csp_nnz,
-            &alpha, desc, vals, rows, cols, d_in_scratch, csp_ldb,
-            &beta, d_out_scratch, csp_ldc);
-    cusparseCheckStatus(status);
+        status = cusparseScsrmm(handle, op, csp_m, csp_n, csp_k, csp_nnz,
+                &alpha, desc, vals, rows, cols, d_in_scratch, csp_ldb,
+                &beta, d_out_scratch, csp_ldc);
+        cusparseCheckStatus(status);
 
-    OsdTranspose(d_out, d_out_scratch, nve, csp_ldc);
+        OsdTranspose(d_out, d_out_scratch, nve, csp_ldc);
+    }
+    g_matrixTimer.Stop();
 }
 
 CudaCsrMatrix*
@@ -170,20 +179,28 @@ CudaCsrMatrix::gemm(CudaCsrMatrix* B) {
 
     cusparseStatus_t status;
     cudaMalloc(&C->rows, (mm+1) * sizeof(int));
-    status = cusparseXcsrgemmNnz(handle, transA, transB,
-            mm, nn, kk,
-            A->desc, A->nnz, A->rows, A->cols,
-            B->desc, B->nnz, B->rows, B->cols,
-            C->desc, C->rows, &C->nnz);
+    g_matrixTimer.Start();
+    {
+        status = cusparseXcsrgemmNnz(handle, transA, transB,
+                mm, nn, kk,
+                A->desc, A->nnz, A->rows, A->cols,
+                B->desc, B->nnz, B->rows, B->cols,
+                C->desc, C->rows, &C->nnz);
+    {
+    g_matrixTimer.Stop();
     cusparseCheckStatus(status);
 
     cudaMalloc(&C->cols, C->nnz * sizeof(int));
     cudaMalloc(&C->vals, C->nnz * sizeof(float));
-    status = cusparseScsrgemm(handle, transA, transB,
-            mm, nn, kk,
-            A->desc, A->nnz, A->vals, A->rows, A->cols,
-            B->desc, B->nnz, B->vals, B->rows, B->cols,
-            C->desc, C->vals, C->rows, C->cols);
+    g_matrixTimer.Start();
+    {
+        status = cusparseScsrgemm(handle, transA, transB,
+                mm, nn, kk,
+                A->desc, A->nnz, A->vals, A->rows, A->cols,
+                B->desc, B->nnz, B->vals, B->rows, B->cols,
+                C->desc, C->vals, C->rows, C->cols);
+    {
+    g_matrixTimer.Stop();
     cusparseCheckStatus(status);
 
     return C;

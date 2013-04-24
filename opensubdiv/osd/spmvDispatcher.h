@@ -4,12 +4,14 @@
 #include "../version.h"
 #include "../osd/cpuDispatcher.h"
 #include "../osd/spmvKernel.h"
+#include "../../examples/common/stopwatch.h"
 
 #include <stdio.h>
 #include <sstream>
 #include <string>
 
 extern char* osdSpMVKernel_DumpSpy_FileName;
+extern Stopwatch g_matrixTimer;
 
 #ifdef BENCHMARKING
   #define DEBUG_PRINTF(fmt, ...) {};
