@@ -212,7 +212,7 @@ public:
     virtual void logical_spmv(float* d_out, float* d_in) = 0;
     virtual void dump(std::string ofilename) = 0;
 
-    virtual inline int NumBytes() {
+    virtual int NumBytes() {
         return nnz*sizeof(float) + nnz*sizeof(int) + (m+1)*sizeof(int);
     }
 

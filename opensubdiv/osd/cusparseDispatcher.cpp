@@ -59,7 +59,7 @@ CudaCooMatrix::gemm(CudaCsrMatrix* rhs) {
 }
 
 CudaCsrMatrix::CudaCsrMatrix(int m, int n, int nnz, int nve) :
-    CsrMatrix(m, n, nnz, nve), rows(NULL), cols(NULL), vals(NULL)
+    CsrMatrix(m, n, nnz, nve), rows(NULL), cols(NULL), vals(NULL), ell_k(0)
 {
     /* make cusparse matrix descriptor */
     cusparseCreateMatDescr(&desc);
@@ -124,6 +124,14 @@ CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve) :
     free(h_rows);
     free(h_cols);
     free(h_vals);
+}
+
+int
+CudaCsrMatrix::NumBytes() {
+    if (ell_k != 0)
+        return m*ell_k*(sizeof(float)+sizeof(int)) + coo_nnz*(2*sizeof(int) + sizeof(float));
+    else
+        return this->CsrMatrix::NumBytes();
 }
 
 void
@@ -310,10 +318,10 @@ OsdCusparseKernelDispatcher::~OsdCusparseKernelDispatcher() {
 
 void
 OsdCusparseKernelDispatcher::FinalizeMatrix() {
-    this->super::FinalizeMatrix();
-
     if (logical)
         SubdivOp->ellize();
+
+    this->super::FinalizeMatrix();
 }
 
 static OsdCusparseKernelDispatcher::OsdKernelDispatcher *

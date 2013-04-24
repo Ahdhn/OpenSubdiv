@@ -29,6 +29,7 @@ public:
     void spmv(float* d_out, float* d_in);
     void logical_spmv(float* d_out, float* d_in);
     virtual CudaCsrMatrix* gemm(CudaCsrMatrix* rhs);
+    virtual int NumBytes();
     void ellize();
     void dump(std::string ofilename);
 
