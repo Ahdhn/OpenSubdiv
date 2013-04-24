@@ -5,6 +5,7 @@
 #include <xmmintrin.h>
 
 char* osdSpMVKernel_DumpSpy_FileName = NULL;
+Stopwatch g_matrixTimer;
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
@@ -69,7 +70,12 @@ CpuCsrMatrix::CpuCsrMatrix(const CpuCooMatrix* StagedOp, int nve) :
     int* colind = (int*) &StagedOp->cols[0];
     int info;
 
-    mkl_scsrcoo(job, &m, vals, cols, rows, &numnz, acoo, rowind, colind, &info);
+    g_matrixTimer.Start();
+    {
+        mkl_scsrcoo(job, &m, vals, cols, rows, &numnz, acoo, rowind, colind, &info);
+    }
+    g_matrixTimer.Stop();
+
     assert(info == 0);
 
     nnz = rows[m]-1;
@@ -131,6 +137,8 @@ CpuCsrMatrix::spmv(float* d_out, float* d_in) {
 CpuCsrMatrix*
 CpuCsrMatrix::gemm(CpuCsrMatrix* rhs) {
 
+    Stopwatch s;
+
     CpuCsrMatrix* A = this;
     CpuCsrMatrix* B = rhs;
     assert(A->n == B->m);
@@ -143,12 +151,16 @@ CpuCsrMatrix::gemm(CpuCsrMatrix* rhs) {
     int c_nnz;
 
     /* count nonzeroes in C */
-    mkl_scsrmultcsr((char*)"N", &request, &sort,
-            &A->m, &A->n, &B->n,
-            A->vals, A->cols, A->rows,
-            B->vals, B->cols, B->rows,
-            NULL, NULL, &c_rows[0],
-            &c_nnz, &info);
+    g_matrixTimer.Start();
+    {
+        mkl_scsrmultcsr((char*)"N", &request, &sort,
+                &A->m, &A->n, &B->n,
+                A->vals, A->cols, A->rows,
+                B->vals, B->cols, B->rows,
+                NULL, NULL, &c_rows[0],
+                &c_nnz, &info);
+    }
+    g_matrixTimer.Stop();
 
     if (info != 0) {
         printf("Error: info returned %d\n", info);
@@ -161,12 +173,16 @@ CpuCsrMatrix::gemm(CpuCsrMatrix* rhs) {
 
     /* do multiplication  */
     request = 2;
-    mkl_scsrmultcsr((char*)"N", &request, &sort,
-            &A->m, &A->n, &B->n,
-            A->vals, A->cols, A->rows,
-            B->vals, B->cols, B->rows,
-            C->vals, C->cols, C->rows,
-            &c_nnz, &info);
+    g_matrixTimer.Start();
+    {
+        mkl_scsrmultcsr((char*)"N", &request, &sort,
+                &A->m, &A->n, &B->n,
+                A->vals, A->cols, A->rows,
+                B->vals, B->cols, B->rows,
+                C->vals, C->cols, C->rows,
+                &c_nnz, &info);
+    }
+    g_matrixTimer.Stop();
 
     if (info != 0) {
         printf("Error: info returned %d\n", info);

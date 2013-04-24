@@ -582,6 +582,7 @@ drawCoarseMesh(int mode) {
 void
 createOsdMesh( const char * shape, int level, int kernel, Scheme scheme, int exact ) {
     // start timer
+    g_matrixTimer = Stopwatch();
     Stopwatch s;
     s.Start();
 
@@ -666,7 +667,8 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme, int exa
     s.Stop();
 
 #if BENCHMARKING
-    printf(" ttff=%f",  float(s.GetElapsed() * 1000.0f));
+    printf(" ttff=%f",  float(s.GetElapsed()));
+    printf(" matrixtime=%f",  float(g_matrixTimer.GetElapsed()));
     printf(" nverts=%d", g_osdmesh->GetFarMesh()->GetSubdivision()->GetNumVertices(level));
     printf(" level=%d", level);
     printf(" kernel=%s", getKernelName(g_kernel));
