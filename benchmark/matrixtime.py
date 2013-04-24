@@ -4,21 +4,12 @@ import sys, os, shelve
 
 from bench import *
 
-modelLevel = {
-    "BigGuy":       4,
-    "Bunny":        4,
-    "MonsterFrog":  5,
-    "Venus":        3,
-    "Cube":         7,
-    "Icosahedron":  7,
-}
-
 NSAMPLES = 10
 
 def build_db(kernel):
     db = set()
     for model in modelNum.keys():
-        for l in range( modelLevel[model] ):
+        for l in range( modelMaxLevel[model] ):
             try:
                 for s in range(NSAMPLES):
                     run = do_run(frames=2, model=model, kernel=kernel, level=l+1)

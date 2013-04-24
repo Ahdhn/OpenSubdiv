@@ -44,8 +44,8 @@ modelNum = {
 }
 
 modelMaxLevel = {
-    "BigGuy":       4,
-    "Bunny":        4,
+    "BigGuy":       5,
+    "Bunny":        5,
     "MonsterFrog":  5,
     "Venus":        4,
     "Cube":         7,

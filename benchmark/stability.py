@@ -4,20 +4,11 @@ import sys, os, shelve
 
 from bench import *
 
-modelLevel = {
-    "BigGuy":       4,
-    "Bunny":        4,
-    "MonsterFrog":  4,
-    "Venus":        4,
-    "Cube":         7,
-    "Icosahedron":  7,
-}
-
 def build_db(model):
     db = set()
-    for l in range( modelLevel[model] ):
+    for l in range( modelMaxLevel[model] ):
         try:
-            run = do_run(frames=2, model=model, kernel="MKL", level=l+1, regression=True)
+            run = do_run(frames=2, model=model, kernel="MKL", level=l+1, regression=True, exact=False)
             db.add(run)
         except ExecutionError as e:
             print "\tFailed with: %s" % e.message

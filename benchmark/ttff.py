@@ -4,21 +4,12 @@ import sys, os, shelve
 
 from bench import *
 
-modelTtffLevel = {
-    "BigGuy":       4,
-    "Bunny":        4,
-    "MonsterFrog":  4,
-    "Venus":        4,
-    "Cube":         7,
-    "Icosahedron":  7,
-}
-
 NSAMPLES = 10
 
 def build_db(model):
     db = set()
     for k in activeKernels:
-        for l in range( modelTtffLevel[model] ):
+        for l in range( modelMaxLevel[model] ):
             try:
                 for s in range(NSAMPLES):
                     run = do_run(frames=2, model=model, kernel=k, level=l+1)
