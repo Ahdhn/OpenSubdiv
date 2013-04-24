@@ -186,7 +186,7 @@ CudaCsrMatrix::gemm(CudaCsrMatrix* B) {
                 A->desc, A->nnz, A->rows, A->cols,
                 B->desc, B->nnz, B->rows, B->cols,
                 C->desc, C->rows, &C->nnz);
-    {
+    }
     g_matrixTimer.Stop();
     cusparseCheckStatus(status);
 
@@ -199,7 +199,7 @@ CudaCsrMatrix::gemm(CudaCsrMatrix* B) {
                 A->desc, A->nnz, A->vals, A->rows, A->cols,
                 B->desc, B->nnz, B->vals, B->rows, B->cols,
                 C->desc, C->vals, C->rows, C->cols);
-    {
+    }
     g_matrixTimer.Stop();
     cusparseCheckStatus(status);
 

@@ -17,7 +17,7 @@ NSAMPLES = 10
 
 def build_db(model):
     db = set()
-    for k in [kernel for kernel in ["MKL", "cuSPARSE"] if kernel in activeKernels]:
+    for k in [kernel for kernel in ["MKL", "CuSPARSE"] if kernel in activeKernels]:
         for l in range( modelLevel[model] ):
             try:
                 for s in range(NSAMPLES):
@@ -46,7 +46,6 @@ def gen_dat_file(ofile, db):
 
 def main(argv):
     model = argv[1][len("matrixtime_"):-len(".dat")]
-    print model
     with open("matrixtime_%s.dat" % model, 'w') as ofile:
         gen_dat_file(ofile, build_db(model))
 
