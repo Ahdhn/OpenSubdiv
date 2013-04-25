@@ -29,6 +29,9 @@ public:
     }
 
     virtual void ApplyVertexEditAdd(float *vertex, int primVarOffset, int primVarWidth, int editIndex, const float *editValues) const {
+        // NICK
+        // compute offset of vertex within level
+        // register editValue with _dispatcher, with something like _dispatcher->StageEditAdd(vert_number, elem_number, editValue)
         printf("Warning: spmv kernels don't support vertex add yet.\n");
         return;
         int d = editIndex * numVertexElements + primVarOffset;
@@ -38,6 +41,8 @@ public:
     }
 
     virtual void ApplyVertexEditSet(float *vertex, int primVarOffset, int primVarWidth, int editIndex, const float *editValues) const {
+        // NICK
+        // do something like EditAdd above, but get Add working first
         printf("Warning: spmv kernels don't support vertex set.\n");
         return;
         int d = editIndex * numVertexElements + primVarOffset;

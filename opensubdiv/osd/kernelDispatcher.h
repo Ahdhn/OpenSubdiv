@@ -141,6 +141,9 @@ public:
 
     virtual void StageMatrix(int i, int j) { };
     virtual void StageElem(int i, int j, float value) { };
+    // NICK add methods for staging vector and inserting additive edits
+    // I think PushMatrix will hold the logic for translating the vector to the next subd level
+    // Leave these methods virtual and empty, we'll override them in SpMVDispatcher
     virtual void PushMatrix() { };
     virtual void ApplyM(int offset) { };
     virtual int SupportsExactEvaluation() { return 0; }

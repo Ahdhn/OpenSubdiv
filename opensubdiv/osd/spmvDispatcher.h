@@ -80,6 +80,10 @@ public:
      */
     virtual void StageMatrix(int i, int j) {
         StagedOp = new CooMatrix_t(i,j);
+
+        // NICK you could allocate storage here for the staged_subdiv_operator, or do it on-demand when the first StageEditAdd is called.
+        // int nve = _currentVertexBuffer->GetNumElements();
+        // staged_subdiv_operator = std::vector<float>(nve*StagedOp->m, 0.0f);
     }
 
     /**
@@ -91,6 +95,13 @@ public:
         StagedOp->append_element(i, j, value);
     }
 
+    // NICK add methods for staging vector and inserting additive edits
+    // StageEditAdd(int vert_num, int elem_num, float weight) ->
+    //    staged_vec[vert_num*numVertElements + elem_num] = weight;
+    //
+    // In case there are multiple edits to the same vertex, we might consider doing:
+    //    staged_vec[vert_num*numVertElements + elem_num] += weight;
+
     /**
      * Multiplies the current subdivision matrix by the staged
      * matrix, and unstages it. If there is no current subdivision
@@ -99,6 +110,38 @@ public:
      * M = S * M
      */
     virtual void PushMatrix() {
+        // NICK at end of one level, express edits at next level via mat-vec product
+        // based on opensubdiv/far/dispatcher.h:169, edits are applied at the end of a subd level.
+        //
+        // global_edit_vector: all edits before the current level, but not edits on this level.
+        // staged_edit_vector: all edits on the current level
+        // SubdivOp is the current multi-level subdivision matrix, not including this level
+        // StagedOp is the current single-level subdiv matrix
+        //   this routine already combines the matrices into a multi-level matrix via GEMM
+        // StagedOp is m-by-n in size (conceptually), but represented in COO format
+        //  access with StagedOp->{m,n,rows,cols,vals,nnz}
+        //  m: number of rows (aka output vertices)  =>  staged_edit_vector is numVertexElements*m long
+        //  n: number of columns (aka input vertices) => global_edit_vector is numVertexElements*n long
+        //
+        // // pseudocode:
+        // if SubdivOp == NULL: // first push
+        //   global_edit_vector = staged_edit_vector
+        // else:
+        //   // express prev level edits at this level:
+        //   // StagedOp is in COO representation using 1-based indexing. we need it to be in CSR representation
+        //   CsrStagedOp = new CsrMatrix_t(StagedOp, numVertexElements); // uses mkl_scsrcoo under hood
+        //   CsrStagedOp->spmv(global_edit_vector, copy(global_edit_vector)); // uses mkl_scsrmm under hood. Computes: g_e_vec = CsrStagedOp * g_e_vec
+        //   global_edit_vector += staged_edit_vector // vector-vector add. Could be rolled into previous call with mkl_scsrmm beta param == 1.
+        //
+        // // CSR and COO formats are described in http://en.wikipedia.org/wiki/Sparse_matrix
+        // // ideally we'd like this code to be library-independent, so MKL code would go in MklDispatcher
+        // //   That'll make it easier to do a CUDA version too.
+        // //   I don't think you'll have to call MKL to get this working! You can just reuse my abstractions is CpuCsrMatrix.
+        //
+        // clean up (delete CsrStagedOp, etc.)
+        //
+        // At the end of this routine, global_edit_vector will contain edits from the current and previous levels, expressed at the current level.
+
         /* if no SubdivOp exists, create one from A */
         if (SubdivOp == NULL) {
             DEBUG_PRINTF("PushMatrix set %d-%d\n", StagedOp->m, StagedOp->n);
@@ -144,6 +187,11 @@ public:
             SubdivOp->logical_spmv(V_out, V_in);
         else
             SubdivOp->spmv(V_out, V_in);
+
+        // NICK this is the routine that is called every frame
+        // V_out += global_edit_vector // vector-vector add (write own or use cblas_saxpy in MKL)
+        //
+        // it would be cool to memcpy the global_edit_vector into V_out, and use beta=1 in mkl_csrmm to take care of the addition. I'd have to update logical_spmv to support that, but spmv() will work.
 
         _currentVertexBuffer->Unmap();
     }
