@@ -105,6 +105,8 @@ find_package(GLUT)
 find_package(PTex)
 find_package(MKL)
 
+SET(CMAKE_C_COMPILER "gcc-mp-4.7")
+SET(CMAKE_CXX_COMPILER "g++-mp-4.7")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBENCHMARKING -O3")
 #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
