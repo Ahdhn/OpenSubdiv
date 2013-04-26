@@ -10,8 +10,8 @@ BASE = "/home/driscoll/OpenSubdiv"
 def build_db():
     runno = 0
     db = set()
-    for dist in range(0, 1026, 4):
-        for dest in ["_MM_HINT_T0", "_MM_HINT_T1", "_MM_HINT_T2", "_MM_HINT_NTA"]:
+    for dest in ["_MM_HINT_T0", "_MM_HINT_T1", "_MM_HINT_T2", "_MM_HINT_NTA"]:
+        for dist in range(0, 256):
             try:
                 header = open("prefetch.h", 'w')
                 print >>header, "#define SPMV_PREFETCH_DIST %d" % dist
@@ -20,12 +20,12 @@ def build_db():
 
                 os.utime(BASE+"/opensubdiv/osd/mklDispatcher.cpp", None)
                 os.chdir(BASE + "/build")
-                assert not subprocess.call(['make', '-j', '8'])
+                assert not subprocess.call(['make'])
 
-                print "#% 4d/1024 " % runno,
+                print "#% 4d/256 " % runno,
                 runno += 1
 
-                print "Testing %d %d" % (dest, dist)
+                print "Testing %s %d" % (dest, dist)
                 run = do_run(frames=100, model="BigGuy", kernel="CustomCPU", level=4)
                 db.add((run, dist, dest))
                 best = sorted(db, key=lambda run: run[0].mean())

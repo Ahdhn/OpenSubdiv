@@ -1,7 +1,7 @@
 #include "../version.h"
 #include "../osd/mklDispatcher.h"
 
-#include "../../benchmark/prefetch.h"
+//#include "../../build/prefetch.h"
 
 #include <omp.h>
 #include <xmmintrin.h>
@@ -108,23 +108,15 @@ CpuCsrMatrix::logical_spmv(float* __restrict__  d_out, float* __restrict__ d_in)
         int row = start_row;
         int start_k = rrows[start_row],
             end_k   = rrows[end_row];
+        int next_row_k = rrows[row+1];
 
         register __m128
             out03v = _mm_setzero_ps(),
             out45v = _mm_setzero_ps();
-        int out_idx, in_idx;
-
-
-        int next_row_k = rrows[row+1];
 
         for (int k = start_k; k < end_k; k++) {
 
-#if SPMV_PREFETCH_DIST > 0
-            _mm_prefetch( cols + SPMV_PREFETCH_DIST, SPMV_PREFETCH_DEST );
-            _mm_prefetch( vals + SPMV_PREFETCH_DIST, SPMV_PREFETCH_DEST );
-#endif
-
-            in_idx = 6*rcols[k];
+            int in_idx = 6*rcols[k];
 
             register __m128 ignore,
                    in03v = _mm_loadu_ps( &d_in[in_idx] ),
@@ -135,13 +127,13 @@ CpuCsrMatrix::logical_spmv(float* __restrict__  d_out, float* __restrict__ d_in)
             out45v = _mm_add_ps(out45v, _mm_mul_ps(weightv, in45v));
 
             if (k+1 == next_row_k) {
-                out_idx  = 6*row;
+                int out_idx  = 6*row;
                 _mm_storeu_ps( &d_out[ out_idx ], out03v );
                 _mm_storel_pi( (__m64*) &d_out[ out_idx+4 ], out45v );
                 out03v = _mm_setzero_ps();
                 out45v = _mm_setzero_ps();
-                row += 1;
                 next_row_k = rrows[row+1];
+                row += 1;
             }
         }
     }
