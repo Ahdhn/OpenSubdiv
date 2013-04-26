@@ -81,12 +81,8 @@ CpuCsrMatrix::CpuCsrMatrix(const CpuCooMatrix* StagedOp, int nve) :
     nnz = rows[m]-1;
 }
 
-#ifndef SPMV_PREFETCH_DIST
-  #define SPMV_PREFETCH_DIST 128
-#endif
-
 void
-CpuCsrMatrix::logical_spmv(float* d_out, float* d_in) {
+CpuCsrMatrix::logical_spmv(float* __restrict__  d_out, float* __restrict__ d_in) {
     omp_set_num_threads( omp_get_num_procs() );
 
     int *__restrict__ rrows = &rows[0];
@@ -104,26 +100,29 @@ CpuCsrMatrix::logical_spmv(float* d_out, float* d_in) {
 
         int row = start_row;
         int start_k = rrows[start_row],
-            end_k = rrows[end_row];
+            end_k   = rrows[end_row];
 
         register __m128
             out03v = _mm_setzero_ps(),
             out45v = _mm_setzero_ps();
         int out_idx, in_idx;
 
-        __m128 ignore, in03v, in45v, weightv;
 
         int next_row_k = rrows[row+1];
 
         for (int k = start_k; k < end_k; k++) {
-            //_mm_prefetch( cols + SPMV_PREFETCH_DIST, _MM_HINT_T1 );
-            //_mm_prefetch( vals + SPMV_PREFETCH_DIST, _MM_HINT_T1 );
+
+#if SPMV_PREFETCH_DIST
+            _mm_prefetch( cols + SPMV_PREFETCH_DIST, SPMV_PRETFECH_DEST );
+            _mm_prefetch( vals + SPMV_PREFETCH_DIST, SPMV_PREFETCH_DEST );
+#endif
 
             in_idx = 6*rcols[k];
 
-            in03v = _mm_loadu_ps( &d_in[in_idx] );
-            in45v = _mm_loadl_pi( ignore, (const __m64*) &d_in[in_idx+4] );
-            weightv = _mm_load1_ps( &rvals[k] );
+            register __m128 ignore,
+                   in03v = _mm_loadu_ps( &d_in[in_idx] ),
+                   in45v = _mm_loadl_pi( ignore, (const __m64*) &d_in[in_idx+4] ),
+                   weightv = _mm_load1_ps( &rvals[k] );
 
             out03v = _mm_add_ps(out03v, _mm_mul_ps(weightv, in03v));
             out45v = _mm_add_ps(out45v, _mm_mul_ps(weightv, in45v));
