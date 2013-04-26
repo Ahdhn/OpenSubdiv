@@ -1,6 +1,8 @@
 #include "../version.h"
 #include "../osd/mklDispatcher.h"
 
+#include "../../benchmark/prefetch.h"
+
 #include <omp.h>
 #include <xmmintrin.h>
 
