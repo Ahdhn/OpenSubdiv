@@ -81,6 +81,10 @@ CpuCsrMatrix::CpuCsrMatrix(const CpuCooMatrix* StagedOp, int nve) :
     nnz = rows[m]-1;
 }
 
+#ifndef SPMV_PREFETCH_DIST
+  #define SPMV_PREFETCH_DIST 128
+#endif
+
 void
 CpuCsrMatrix::logical_spmv(float* d_out, float* d_in) {
     omp_set_num_threads( omp_get_num_procs() );
@@ -112,28 +116,30 @@ CpuCsrMatrix::logical_spmv(float* d_out, float* d_in) {
         int next_row_k = rrows[row+1];
 
         for (int k = start_k; k < end_k; k++) {
+            //_mm_prefetch( cols + SPMV_PREFETCH_DIST, _MM_HINT_T1 );
+            //_mm_prefetch( vals + SPMV_PREFETCH_DIST, _MM_HINT_T1 );
 
-                in_idx = 6*rcols[k];
+            in_idx = 6*rcols[k];
 
-                in03v = _mm_loadu_ps( &d_in[in_idx] );
-                in45v = _mm_loadl_pi( ignore, (const __m64*) &d_in[in_idx+4] );
-                weightv = _mm_load1_ps( &rvals[k] );
+            in03v = _mm_loadu_ps( &d_in[in_idx] );
+            in45v = _mm_loadl_pi( ignore, (const __m64*) &d_in[in_idx+4] );
+            weightv = _mm_load1_ps( &rvals[k] );
 
-                out03v = _mm_add_ps(out03v, _mm_mul_ps(weightv, in03v));
-                out45v = _mm_add_ps(out45v, _mm_mul_ps(weightv, in45v));
+            out03v = _mm_add_ps(out03v, _mm_mul_ps(weightv, in03v));
+            out45v = _mm_add_ps(out45v, _mm_mul_ps(weightv, in45v));
 
-                if (k+1 == next_row_k) {
-                    out_idx  = 6*row;
-                    _mm_storeu_ps( &d_out[ out_idx ], out03v );
-                    _mm_storel_pi( (__m64*) &d_out[ out_idx+4 ], out45v );
-                    out03v = _mm_setzero_ps();
-                    out45v = _mm_setzero_ps();
-                    row += 1;
-                    next_row_k = rrows[row+1];
-                }
+            if (k+1 == next_row_k) {
+                out_idx  = 6*row;
+                _mm_storeu_ps( &d_out[ out_idx ], out03v );
+                _mm_storel_pi( (__m64*) &d_out[ out_idx+4 ], out45v );
+                out03v = _mm_setzero_ps();
+                out45v = _mm_setzero_ps();
+                row += 1;
+                next_row_k = rrows[row+1];
             }
         }
     }
+}
 
 void
 CpuCsrMatrix::spmv(float* d_out, float* d_in) {
