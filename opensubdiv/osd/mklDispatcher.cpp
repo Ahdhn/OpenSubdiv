@@ -81,6 +81,11 @@ CpuCsrMatrix::CpuCsrMatrix(const CpuCooMatrix* StagedOp, int nve) :
     nnz = rows[m]-1;
 }
 
+#ifndef SPMV_PREFETCH_DIST
+  #define SPMV_PREFETCH_DIST 0
+  #define SPMV_PREFETCH_DEST _MM_HINT_T2
+#endif
+
 void
 CpuCsrMatrix::logical_spmv(float* __restrict__  d_out, float* __restrict__ d_in) {
     omp_set_num_threads( omp_get_num_procs() );
@@ -112,8 +117,8 @@ CpuCsrMatrix::logical_spmv(float* __restrict__  d_out, float* __restrict__ d_in)
 
         for (int k = start_k; k < end_k; k++) {
 
-#if SPMV_PREFETCH_DIST
-            _mm_prefetch( cols + SPMV_PREFETCH_DIST, SPMV_PRETFECH_DEST );
+#if SPMV_PREFETCH_DIST > 0
+            _mm_prefetch( cols + SPMV_PREFETCH_DIST, SPMV_PREFETCH_DEST );
             _mm_prefetch( vals + SPMV_PREFETCH_DIST, SPMV_PREFETCH_DEST );
 #endif
 
