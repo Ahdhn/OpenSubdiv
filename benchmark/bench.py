@@ -48,8 +48,8 @@ modelMaxLevel = {
     "Bunny":        5,
     "MonsterFrog":  5,
     "Venus":        4,
-    "Cube":         9,
-    "Icosahedron":  9,
+    "Cube":         8,
+    "Icosahedron":  8,
 }
 
 class ExecutionError(Exception):
