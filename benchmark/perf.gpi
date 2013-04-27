@@ -8,8 +8,8 @@ gnuplot << EOF
 load "common.gpi"
 
 set title "Sustained Performance on \\\`$3' Model"
-set xlabel "Number of Vertices in Refined Mesh"
-set ylabel "Vertices Subdivided per Millisecond" offset 1
+set xlabel "Number of Surface Points"
+set ylabel "Surface Points Computed per Millisecond" offset 1
 set output "$1"
 #set size 1, 0.80
 
