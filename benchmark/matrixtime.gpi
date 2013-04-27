@@ -8,8 +8,8 @@ gnuplot << EOF
 load "common.gpi"
 
 set title "Cost of Matrix Computations with $3"
-set xlabel "Number of Vertices in Refined Mesh"
-set ylabel "Milliseconds" offset 2
+set xlabel "Surface Points"
+set ylabel "Time in Milliseconds" offset 2
 set output "$1"
 #set size 1, 0.80
 
@@ -30,8 +30,6 @@ plot \
     "$2" using 1:2 w linespoint ls 1, \
     "$2" using 1:4 w linespoint ls 2, \
     "$2" using 1:6 w linespoint ls 3, \
-    "$2" using 1:8 w linespoint ls 4, \
-    "$2" using 1:10 w linespoint ls 5, \
-    "$2" using 1:12 w linespoint ls 6
+    "$2" using 1:8 w linespoint ls 4
 
 EOF

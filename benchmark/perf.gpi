@@ -8,7 +8,7 @@ gnuplot << EOF
 load "common.gpi"
 
 set title "Sustained Performance on \\\`$3' Model"
-set xlabel "Number of Surface Points"
+set xlabel "Surface Points"
 set ylabel "Surface Points Computed per Millisecond" offset 1
 set output "$1"
 #set size 1, 0.80

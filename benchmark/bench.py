@@ -37,8 +37,8 @@ activeKernels = [
 modelNum = {
     "BigGuy":      0,
     "Bunny":       2,
-    "MonsterFrog": 4,
-    "Venus":       7,
+    #"MonsterFrog": 4,
+    #"Venus":       7,
     "Cube":        16,
     "Icosahedron": 35,
 }
@@ -112,7 +112,7 @@ def escape_latex(string):
     return string.replace('_', '\\\\_')
 
 def do_run(model, frames=1000, level=1, kernel='CPU', spyfile=None, regression=False, exact=True):
-    assert 0 < level <= 7, "Must select positive subdiv level from 1 to 7."
+    assert 0 < level <= 9, "Must select positive subdiv level from 1 to 7."
     cmd_line = [
         VIEWER_PATH,
         "--count", str(frames),

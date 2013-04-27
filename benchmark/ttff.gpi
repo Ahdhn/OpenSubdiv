@@ -7,8 +7,8 @@ gnuplot << EOF
 
 load "common.gpi"
 
-set title "Initialization Cost for \\\`$3' Model"
-set xlabel "Number of Vertices in Refined Mesh"
+set title "Total Initialization Cost for \\\`$3' Model"
+set xlabel "Surface Points"
 set ylabel "Milliseconds to First Frame" offset 2
 set output "$1"
 #set size 1, 0.80
