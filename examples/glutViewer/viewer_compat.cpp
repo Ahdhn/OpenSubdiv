@@ -894,7 +894,9 @@ keyboard(unsigned char key, int x, int y) {
         case '4':
         case '5':
         case '6':
-        case '7': levelMenu(key-'0'); break;
+        case '7':
+        case '8':
+        case '9': levelMenu(key-'0'); break;
         case 'l': exactMenu((g_exact+1)%2); break;
         case 'n': modelMenu(++g_currentShape); break;
         case 'p': modelMenu(--g_currentShape); break;
@@ -973,7 +975,7 @@ int main(int argc, char ** argv) {
     }
 
     int lmenu = glutCreateMenu(levelMenu);
-    for(int i = 1; i < 8; ++i){
+    for(int i = 1; i < 10; ++i){
         char level[16];
         sprintf(level, "Level %d\n", i);
         glutAddMenuEntry(level, i);
