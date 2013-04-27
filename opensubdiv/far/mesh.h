@@ -229,6 +229,11 @@ FarMesh<U>::Subdivide(int level, int exact) {
 
     if (not _dispatcher->MatrixReady()) {
 
+#if BENCHMARKING
+        // report mem usage by subd tables
+        printf(" tablemem=%d", _subdivisionTables->GetMemoryUsed());
+#endif
+
         for (int i=1; i<level; ++i) {
             _subdivisionTables->Apply(i);
 
