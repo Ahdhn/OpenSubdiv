@@ -1,0 +1,40 @@
+#!/bin/bash
+gnuplot << EOF
+
+# $1 output file
+# $2 data file
+# $3 model name
+
+load "common.gpi"
+
+set title "STREAM Performance on \\\`$3' Model"
+set xlabel "Surface Points"
+set ylabel "Effective Memory Bandwidth" offset 1
+set output "$1"
+#set size 1, 0.80
+
+set key bottom center maxrows 2
+set key autotitle columnhead
+set key samplen 2 width -2
+
+set autoscale fix
+set offset .3, .3, .3, .7
+
+set logscale x 10
+set logscale y 2
+
+set format x "\$10^{%L}\$";
+
+set grid back
+
+plot \
+    "$2" using 1:2 w linespoint ls 1, \
+    "$2" using 1:3 w linespoint ls 2, \
+    "$2" using 1:4 w linespoint ls 3, \
+    "$2" using 1:5 w linespoint ls 4, \
+    "$2" using 1:6 w linespoint ls 5, \
+    "$2" using 1:7 w linespoint ls 6, \
+    "$2" using 1:8 w linespoint ls 7, \
+    "$2" using 1:9 w linespoint ls 8
+
+EOF
