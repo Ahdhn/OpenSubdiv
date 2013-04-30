@@ -676,9 +676,6 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme, int exa
     printf(" model=%s", g_defaultShapes[ g_currentShape ].name.c_str());
     printf(" exact=%d",  g_exact);
 #endif
-
-    g_totalTime = Stopwatch();
-    g_totalTime.Start();
 }
 
 //------------------------------------------------------------------------------
@@ -915,13 +912,18 @@ idle() {
     if (not g_freeze)
         g_frame++;
 
+    if (g_frame == 3) {
+        g_totalTime = Stopwatch();
+        g_totalTime.Start();
+    }
+
     updateGeom();
     glutPostRedisplay();
 
     if (g_repeatCount != 0 and g_frame >= g_repeatCount) {
         g_totalTime.Stop();
 #if BENCHMARKING
-        printf(" fps=%f", g_repeatCount / g_totalTime.GetElapsed());
+        printf(" fps=%f", (g_repeatCount-3) / g_totalTime.GetElapsed());
 #endif
         quit();
     }
