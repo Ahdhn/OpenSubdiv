@@ -547,6 +547,11 @@ FarMeshFactory<T,U>::Create( FarDispatcher<U> * dispatch ) {
         assert(result->_vertexEditTables);
     }
 
+#if BENCHMARKING
+        // report mem usage by subd tables
+        printf(" tablemem=%d", result->_subdivisionTables->GetMemoryUsed());
+#endif
+
     return result;
 }
 
