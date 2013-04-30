@@ -9,7 +9,7 @@ load "common.gpi"
 
 set title "STREAM Performance on \\\`$3' Model"
 set xlabel "Surface Points"
-set ylabel "Effective Memory Bandwidth" offset 1
+set ylabel "Effective Memory Bandwidth (GB/s)" offset 1
 set output "$1"
 #set size 1, 0.80
 
@@ -22,6 +22,12 @@ set offset .3, .3, .3, .7
 
 set logscale x 10
 set logscale y 2
+set logscale y2 2
+
+set y2tics add ("CPU Peak" 25.6)
+set y2tics add ("GPU Peak" 177.4)
+set y2tics add ("CPU STREAM" 12.75)
+set y2tics add ("GPU STREAM" 149.5)
 
 set format x "\$10^{%L}\$";
 
