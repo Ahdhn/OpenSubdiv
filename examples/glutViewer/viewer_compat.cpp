@@ -117,6 +117,7 @@ struct SimpleShape {
 
 std::vector<SimpleShape> g_defaultShapes;
 
+Stopwatch g_totalTime;
 int g_currentShape = 0;
 
 
@@ -675,6 +676,9 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme, int exa
     printf(" model=%s", g_defaultShapes[ g_currentShape ].name.c_str());
     printf(" exact=%d",  g_exact);
 #endif
+
+    g_totalTime = Stopwatch();
+    g_totalTime.Start();
 }
 
 //------------------------------------------------------------------------------
@@ -914,8 +918,13 @@ idle() {
     updateGeom();
     glutPostRedisplay();
 
-    if (g_repeatCount != 0 and g_frame >= g_repeatCount)
+    if (g_repeatCount != 0 and g_frame >= g_repeatCount) {
+        g_totalTime.Stop();
+#if BENCHMARKING
+        printf(" fps=%f", g_repeatCount / g_totalTime.GetElapsed());
+#endif
         quit();
+    }
 }
 
 //------------------------------------------------------------------------------
