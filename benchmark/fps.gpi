@@ -27,6 +27,8 @@ set logscale y 10
 set format x "\$10^{%L}\$";
 #set format y "\$10^{%L}\$";
 set ytics add ("30" 30)
+set ytics add ("24" 24)
+set ytics add ("60" 60)
 
 set grid back
 
