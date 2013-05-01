@@ -13,23 +13,25 @@ set ylabel "Effective Memory Bandwidth (GB/s)" offset 1
 set output "$1"
 #set size 1, 0.80
 
-set key bottom center maxrows 2
+set key outside bottom center maxrows 2
 set key autotitle columnhead
 set key samplen 2 width -2
 
-set autoscale fix
-set offset .3, .3, .3, .7
+set autoscale xfix
+set autoscale y
+set offset .3, .3, .3, .3
 
 set logscale x 10
 set logscale y 2
 set logscale y2 2
 
-set y2tics add ("CPU Peak" 25.6)
-set y2tics add ("GPU Peak" 177.4)
-set y2tics add ("CPU STREAM" 12.75)
-set y2tics add ("GPU STREAM" 149.5)
+#set y2tics add ("CPU Peak" 25.6)
+#set y2tics add ("GPU Peak" 177.4)
+#set y2tics add ("CPU STREAM" 12.75)
+#set y2tics add ("GPU STREAM" 149.5)
 
 set format x "\$10^{%L}\$";
+set format y "\$%g\$";
 
 set grid back
 
