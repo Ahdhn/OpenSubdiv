@@ -7,7 +7,7 @@ gnuplot << EOF
 
 load "common.gpi"
 
-set title "STREAM Performance on \\\`$3' Model"
+set title "Effective Memory BW on \\\`$3' Model"
 set xlabel "Surface Points"
 set ylabel "Effective Memory Bandwidth (GB/s)" offset 1
 set output "$1"
