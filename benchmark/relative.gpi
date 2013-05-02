@@ -1,0 +1,27 @@
+#!/bin/bash
+gnuplot << EOF
+
+# $1 output file
+# $2 data file
+# $3 model name
+
+load "common.gpi"
+
+set title "Relative Performance on \\\`$3' Model"
+set ylabel "Normalized Performance" offset 1
+set output "$1"
+
+set yrange [0:2.5]
+set key autotitle columnhead
+
+plot \
+    "$2" using 1:2 w linespoint ls 1, \
+    "$2" using 1:3 w linespoint ls 2, \
+    "$2" using 1:4 w linespoint ls 3, \
+    "$2" using 1:5 w linespoint ls 4, \
+    "$2" using 1:6 w linespoint ls 5, \
+    "$2" using 1:7 w linespoint ls 6, \
+    "$2" using 1:8 w linespoint ls 7, \
+    "$2" using 1:9 w linespoint ls 8
+
+EOF
