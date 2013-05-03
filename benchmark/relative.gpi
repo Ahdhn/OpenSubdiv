@@ -25,10 +25,11 @@ set output "$1"
 set multiplot layout 2,2
 
 set key Left reverse enhanced autotitle columnhead
-set key horizontal
-set key maxcols 4
-set key width -2 samplen 1
-set offset 0, 0, 0.7, 0
+set key vertical
+#set key horizontal
+set key at graph 1.23, graph 0.98
+set key maxcols 4 maxrows 2
+set key samplen 1.2 width -1.54
 
 set style data histograms
 set style histogram clustered gap 1
@@ -38,15 +39,17 @@ set grid noxtics ytics
 
 set yrange [0:]
 set autoscale ymax
-set ytics 0.5
+set ytics 1.0
+set mytics 2
 
 set xtics nomirror rotate by -45
 set ytics mirror norotate
 
-set ylabel "Normalized Performance" offset 1.5
+set ylabel "Normalized Performance"
 set format y "%g\$\\\\times\$"
 
 set title "Relative Performance on \\\`Big Guy' Model"
+set offset 0, 0, 0.3, 0
 plot \
     newhistogram "CPU Kernels", \
         "relative_BigGuy.dat" using 2:xtic(1) t col ls 1, \
@@ -60,6 +63,7 @@ plot \
         "" using 9         t col ls 8
 
 set title "Relative Performance on \\\`Bunny' Model"
+set offset 0, 0, 0.3, 0
 plot \
     newhistogram "CPU Kernels", \
         "relative_Bunny.dat" using 2:xtic(1) t col ls 1, \
@@ -73,6 +77,7 @@ plot \
         "" using 9         t col ls 8
 
 set title "Relative Performance on \\\`Cube' Model"
+set offset 0, 0, 1.0, 0
 plot \
     newhistogram "CPU Kernels", \
         "relative_Cube.dat" using 2:xtic(1) t col ls 1, \
@@ -86,6 +91,7 @@ plot \
         "" using 9         t col ls 8
 
 set title "Relative Performance on \\\`Icosahedron' Model"
+set offset 0, 0, 1.0, 0
 plot \
     newhistogram "CPU Kernels", \
         "relative_Icosahedron.dat" using 2:xtic(1) t col ls 1, \
