@@ -2,8 +2,6 @@
 gnuplot << EOF
 
 # $1 output file
-# $2 data file
-# $3 model name
 
 # set terminal
 set term epslatex solid color size 10,7
