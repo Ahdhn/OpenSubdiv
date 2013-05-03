@@ -22,7 +22,7 @@ set style line 8 lw 4 lt rgb "black"
 set key font ",2"
 set output "$1"
 
-set multiplot layout 2,2
+set multiplot layout 2,2 title "Performance Relative to Table-Driven Kernels on Selected Models"
 
 set key Left reverse enhanced autotitle columnhead
 set key vertical
@@ -45,10 +45,10 @@ set mytics 2
 set xtics nomirror rotate by -45
 set ytics mirror norotate
 
-set ylabel "Normalized Performance"
+set ylabel "Relative Performance"
 set format y "%g\$\\\\times\$"
 
-set title "Relative Performance on \\\`Big Guy' Model"
+set title "Big Guy"
 set offset 0, 0, 0.3, 0
 plot \
     newhistogram "CPU Kernels", \
@@ -62,7 +62,7 @@ plot \
         "" using 4         t col ls 5, \
         "" using 9         t col ls 8
 
-set title "Relative Performance on \\\`Bunny' Model"
+set title "Bunny"
 set offset 0, 0, 0.3, 0
 plot \
     newhistogram "CPU Kernels", \
@@ -76,7 +76,7 @@ plot \
         "" using 4         t col ls 5, \
         "" using 9         t col ls 8
 
-set title "Relative Performance on \\\`Cube' Model"
+set title "Cube"
 set offset 0, 0, 1.0, 0
 plot \
     newhistogram "CPU Kernels", \
@@ -90,7 +90,7 @@ plot \
         "" using 4         t col ls 5, \
         "" using 9         t col ls 8
 
-set title "Relative Performance on \\\`Icosahedron' Model"
+set title "Icosahedron"
 set offset 0, 0, 1.0, 0
 plot \
     newhistogram "CPU Kernels", \
