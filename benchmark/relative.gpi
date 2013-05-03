@@ -8,9 +8,10 @@ gnuplot << EOF
 load "common.gpi"
 set output "$1"
 
-set key top center outside maxrows 2
+set key bottom center outside maxrows 2
 set key autotitle columnhead
-set key samplen 2 width -2
+#set key samplen 2 width -2
+set key width -2
 
 set style data histograms
 set style histogram clustered gap 1
@@ -18,12 +19,16 @@ set style fill solid 1.00 noborder
 
 set grid noxtics ytics
 
-set yrange [0:2.5]
+set yrange [0:]
+set autoscale ymax
+set ytics 0.5
+
 set xtics nomirror rotate by -45
 set ytics mirror norotate
 
 set title "Relative Performance on \\\`$3' Model"
 set ylabel "Normalized Performance" offset 1.5
+set format y "%g\$\\\\times\$"
 
 plot \
     newhistogram "CPU Kernels", \
@@ -33,8 +38,8 @@ plot \
         "$2" using 8         t col ls 4, \
     newhistogram "GPU Kernels", \
         "$2" using 5:xtic(1) t col ls 6, \
-        "$2" using 4         t col ls 5, \
         "$2" using 7         t col ls 7, \
+        "$2" using 4         t col ls 5, \
         "$2" using 9         t col ls 8
 
 EOF
