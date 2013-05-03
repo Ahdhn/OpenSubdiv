@@ -7,13 +7,13 @@ gnuplot << EOF
 set term epslatex solid color size 10,7
 
 # set line styles
-set style line 1 lw 4 lt rgb "dark-red"
-set style line 2 lw 4 lt rgb "dark-yellow"
-set style line 3 lw 4 lt rgb "dark-green"
-set style line 4 lw 4 lt rgb "dark-blue"
-set style line 5 lw 4 lt rgb "dark-orange"
-set style line 6 lw 4 lt rgb "dark-violet"
-set style line 7 lw 4 lt rgb "dark-goldenrod"
+set style line 1 lw 4 lt rgb "red"
+set style line 2 lw 4 lt rgb "gold"
+set style line 3 lw 4 lt rgb "forest-green"
+set style line 4 lw 4 lt rgb "blue"
+set style line 5 lw 4 lt rgb "forest-green"
+set style line 6 lw 4 lt rgb "violet-red"
+set style line 7 lw 4 lt rgb "orange"
 set style line 8 lw 4 lt rgb "black"
 
 # key font size
@@ -31,7 +31,7 @@ set key samplen 1.2 width -1.54
 
 set style data histograms
 set style histogram clustered gap 1
-set style fill solid 1.00 noborder
+set style fill solid 1.00 #noborder
 
 set grid noxtics ytics
 
