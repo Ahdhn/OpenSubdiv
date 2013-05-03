@@ -28,12 +28,12 @@ set ylabel "Normalized Performance" offset 1.5
 plot \
     newhistogram "CPU Kernels", \
         "$2" using 2:xtic(1) t col ls 1, \
-        "$2" using 3         t col ls 2, \
         "$2" using 6         t col ls 3, \
+        "$2" using 3         t col ls 2, \
         "$2" using 8         t col ls 4, \
     newhistogram "GPU Kernels", \
-        "$2" using 4:xtic(1) t col ls 5, \
-        "$2" using 5         t col ls 6, \
+        "$2" using 5:xtic(1) t col ls 6, \
+        "$2" using 4         t col ls 5, \
         "$2" using 7         t col ls 7, \
         "$2" using 9         t col ls 8
 

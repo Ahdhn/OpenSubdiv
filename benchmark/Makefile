@@ -9,8 +9,8 @@ TTFF_TEXS := $(addprefix ttff_, $(addsuffix .tex, $(MODELS)))
 FPS_TEXS := $(addprefix fps_, $(addsuffix .tex, $(MODELS)))
 MATRIXTIME_TEXS := matrixtime_MKL.tex matrixtime_CuSPARSE.tex
 BUILD_PATH := ./graphs
-INSTALL_PATH := /home/driscoll/sga2013/graphs
-#INSTALL_PATH := /Users/mbdriscoll/sga2013/graphs
+#INSTALL_PATH := /home/driscoll/sga2013/graphs
+INSTALL_PATH := /Users/mbdriscoll/sga2013/graphs
 
 TEXFILES = mem.tex sparsity.tex stability.tex $(PERF_TEXS) $(RELATIVE_TEXS) $(STREAM_TEXS) $(TTFF_TEXS) $(FPS_TEXS) $(MATRIXTIME_TEXS)
 SPYFILES = $(addprefix spy_, $(addsuffix .pdf, $(MODELS)))
