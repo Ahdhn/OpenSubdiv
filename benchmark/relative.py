@@ -9,7 +9,7 @@ def build_db(model):
     for k in activeKernels:
         for l in range( modelMaxLevel[model] ):
             try:
-                run = do_run(frames=10, model=model, kernel=k, level=l+1)
+                run = do_run(frames=1000, model=model, kernel=k, level=l+1)
                 db.add(run)
             except ExecutionError as e:
                 print "\tFailed with: %s" % e.message
@@ -21,20 +21,17 @@ def gen_dat_file(ofile, db):
     kernel_list = sorted(kernel_set, key=lambda k: kernelNum[k])
     level_list = sorted(level_set)
     print >>ofile, "Level", " ".join(kernel_list)
-    for size in level_list:
+    for level in level_list:
         print >>ofile, '"Level %d"' % level,
-        best_cpu = filter(lambda r: r.level == level and r.kernel == "OpenMP")[0].mean()
-        best_gpu = filter(lambda r: r.level == level and r.kernel == "Cuda")[0].mean()
+        best_cpu = filter(lambda r: r.level == level and r.kernel == "OpenMP", db)[0].mean()
+        best_gpu = filter(lambda r: r.level == level and r.kernel == "Cuda", db)[0].mean()
         for kernel in kernel_list:
-            run_list = filter(lambda r: r.level == level and r.kernel == kernel, db)
-            if r.kernel in ["CPU", "OpenMP", "MKL", "CustomCPU"]:
+            run = filter(lambda r: r.level == level and r.kernel == kernel, db)[0]
+            if run.kernel in ["CPU", "OpenMP", "MKL", "CustomCPU"]:
                 best = best_cpu
             else:
                 best = best_gpu
-            if len(run_list) == 1:
-                print >>ofile, " %f" % best / run_list[0].mean(),
-            elif len(run_list) == 0:
-                print >>ofile, " ?",
+            print >>ofile, " %f" % (run.mean() / best),
         print >>ofile
 
 
