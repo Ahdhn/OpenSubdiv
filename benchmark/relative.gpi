@@ -30,8 +30,9 @@ set key maxcols 4 maxrows 2
 set key samplen 1.2 width -1.54
 
 set style data histograms
-set style histogram clustered gap 1
-set style fill solid 1.00 #noborder
+set style histogram clustered gap 2
+set style fill solid noborder
+set boxwidth 0.99
 
 set grid noxtics ytics
 
