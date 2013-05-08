@@ -98,7 +98,7 @@ set offset .4, .6, .3, .3
 max_verts = 655362.0
 cpu_table = 42680.446498
 cpu_matrix = 151676.460241
-gpu_table = 293168.115842
+gpu_table = 385735.0
 gpu_matrix = 981696.021199
 set arrow 1 from max_verts,cpu_table to max_verts,cpu_matrix nohead ls 0 lw 1;
 set label 1 sprintf('%1.2f$\times$', cpu_matrix/cpu_table) at  max_verts*1.2,gmean(cpu_table,cpu_matrix) front tc ls 1
