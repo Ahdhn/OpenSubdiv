@@ -255,6 +255,7 @@ int   g_freeze = 0,
       g_wire = 0,
       g_drawCoarseMesh = 1,
       g_drawNormals = 0,
+      g_drawOrder = 0,
       g_drawHUD = 1,
       g_mbutton[3] = {0, 0, 0};
 
@@ -507,6 +508,31 @@ const char *getKernelName(int kernel) {
 
 //------------------------------------------------------------------------------
 void
+drawOrder() {
+    float * data=0;
+    int datasize = g_osdmesh->GetTotalVertices() * g_vertexBuffer->GetNumElements();
+
+    data = new float[datasize];
+
+    glBindBuffer(GL_ARRAY_BUFFER, g_vertexBuffer->GetGpuBuffer());
+    glGetBufferSubData(GL_ARRAY_BUFFER,0,datasize*sizeof(float),data);
+
+    glDisable(GL_LIGHTING);
+    glColor3f(1.0f, 0.0f, 0.5f);
+
+    int start = g_osdmesh->GetFarMesh()->GetSubdivision()->GetFirstVertexOffset(g_level) *
+                g_vertexBuffer->GetNumElements();
+
+    glBegin(GL_LINE_STRIP);
+    for (int i=start; i<datasize; i+=6)
+        glVertex3f( data[i], data[i+1], data[i+2] );
+    glEnd();
+
+    delete [] data;
+}
+
+//------------------------------------------------------------------------------
+void
 drawNormals() {
 
     float * data=0;
@@ -715,39 +741,43 @@ display() {
     glTranslatef(-g_center[0], -g_center[1], -g_center[2]);
     glRotatef(-90, 1, 0, 0); // z-up model
 
-    GLuint bVertex = g_vertexBuffer->GetGpuBuffer();
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glBindBuffer(GL_ARRAY_BUFFER, bVertex);
+    if (g_drawOrder) {
+        drawOrder();
+    } else {
+        GLuint bVertex = g_vertexBuffer->GetGpuBuffer();
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glEnableClientState(GL_NORMAL_ARRAY);
+        glBindBuffer(GL_ARRAY_BUFFER, bVertex);
 
-    glVertexPointer(3, GL_FLOAT, sizeof (GLfloat) * 6, 0);
-    glNormalPointer(GL_FLOAT, sizeof (GLfloat) * 6, (float*)12);
+        glVertexPointer(3, GL_FLOAT, sizeof (GLfloat) * 6, 0);
+        glNormalPointer(GL_FLOAT, sizeof (GLfloat) * 6, (float*)12);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_indexBuffer);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_indexBuffer);
 
-    GLenum primType = g_scheme == kLoop ? GL_TRIANGLES : GL_QUADS;
+        GLenum primType = g_scheme == kLoop ? GL_TRIANGLES : GL_QUADS;
 
-    glEnable(GL_LIGHTING);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    if (g_wire > 0) {
-        glDrawElements(primType, g_numIndices, GL_UNSIGNED_INT, NULL);
-    }
-    glDisable(GL_LIGHTING);
-
-    if (g_wire == 0 || g_wire == 2) {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        if (g_wire == 2) {
-            glColor4f(0, 0, 0.5, 1);
-        } else {
-            glColor4f(1, 1, 1, 1);
+        glEnable(GL_LIGHTING);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        if (g_wire > 0) {
+            glDrawElements(primType, g_numIndices, GL_UNSIGNED_INT, NULL);
         }
-        glDrawElements(primType, g_numIndices, GL_UNSIGNED_INT, NULL);
-    }
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
+        glDisable(GL_LIGHTING);
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        if (g_wire == 0 || g_wire == 2) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            if (g_wire == 2) {
+                glColor4f(0, 0, 0.5, 1);
+            } else {
+                glColor4f(1, 1, 1, 1);
+            }
+            glDrawElements(primType, g_numIndices, GL_UNSIGNED_INT, NULL);
+        }
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glDisableClientState(GL_NORMAL_ARRAY);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    }
 
     if (g_drawNormals)
         drawNormals();
@@ -778,6 +808,7 @@ display() {
         drawString(10, g_height-130, "1-7: subdivision level");
         drawString(10, g_height-150, "space: freeze/unfreeze time");
         drawString(10, g_height-170, "l: toggle exact/approx evaluation");
+        drawString(10, g_height-190, "c: draw vertex order");
     }
 
     glFinish();
@@ -889,6 +920,7 @@ keyboard(unsigned char key, int x, int y) {
         case 'f': fitFrame(); break;
         case 'm': g_moveScale = 1.0f - g_moveScale; break;
         case 'h': g_drawCoarseMesh = (g_drawCoarseMesh+1)%3; break;
+        case 'c': g_drawOrder = (g_drawOrder+1)%2; break;
         case '1':
         case '2':
         case '3':
