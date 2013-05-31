@@ -127,6 +127,8 @@ struct shape {
 
     int getNfaces() const { return (int)nvertsPerFace.size(); }
 
+    void reorder();
+
     std::vector<float>  verts;
     std::vector<float>  uvs;
     std::vector<int>    nvertsPerFace;
@@ -140,6 +142,29 @@ struct shape {
 shape::~shape() {
     for (int i=0; i<(int)tags.size(); ++i)
         delete tags[i];
+}
+
+//------------------------------------------------------------------------------
+#include "OpenCCL.h"
+void
+shape::reorder() {
+
+      OpenCCL::CLayoutGraph Graph ( verts.size() );
+
+      const int * fv=&(faceverts[0]);
+      for(int f=0, ptxidx=0;f<getNfaces(); f++ ) {
+
+          int nv = nvertsPerFace[f];
+          for(int j=0;j<nv;j++) {
+              //OpenSubdiv::HbrVertex<T> * origin      = mesh->GetVertex( fv[j] );
+              //OpenSubdiv::HbrVertex<T> * destination = mesh->GetVertex( fv[ (j+1)%nv] );
+              //OpenSubdiv::HbrHalfedge<T> * opposite  = destination->GetEdge(origin);
+          }
+
+          //OpenSubdiv::HbrFace<T> * face = mesh->NewFace(nv, (int *)fv, 0);
+
+          fv+=nv;
+      }
 }
 
 //------------------------------------------------------------------------------
@@ -672,6 +697,8 @@ simpleHbr(char const * shapestr, Scheme scheme, std::vector<float> * verts=0) {
 
   shape * sh = shape::parseShape( shapestr );
 
+  sh->reorder();
+
   OpenSubdiv::HbrMesh<T> * mesh = createMesh<T>(scheme);
 
   createVertices<T>(sh, mesh, verts);
@@ -686,6 +713,8 @@ simpleHbr(char const * shapestr, Scheme scheme, std::vector<float> * verts=0) {
 //------------------------------------------------------------------------------
 template <class T> OpenSubdiv::HbrMesh<T> *
 simpleHbr(char const * shapestr, Scheme scheme, std::vector<float> & verts) {
+
+  printf("shbr 2\n");
 
   shape * sh = shape::parseShape( shapestr );
 

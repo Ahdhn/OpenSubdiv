@@ -104,8 +104,9 @@ find_package(CUDA 5.0)
 find_package(GLUT)
 find_package(PTex)
 find_package(MKL)
+find_package(OpenCCL)
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBENCHMARKING -O3")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
 find_package(GLEW)
@@ -156,6 +157,12 @@ endif()
 if(MKL_FOUND)
     add_definitions(
         -DOPENSUBDIV_HAS_MKL
+    )
+endif()
+
+if(OPENCCL_FOUND)
+    add_definitions(
+        -DOPENSUBDIV_HAS_OPENCCL
     )
 endif()
 
