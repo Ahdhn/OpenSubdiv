@@ -149,22 +149,40 @@ shape::~shape() {
 void
 shape::reorder() {
 
-      OpenCCL::CLayoutGraph Graph ( verts.size() );
+      int nVerts = getNverts();
+      const int * fv = &faceverts[0];
 
-      const int * fv=&(faceverts[0]);
-      for(int f=0, ptxidx=0;f<getNfaces(); f++ ) {
-
+      // Build graph
+      OpenCCL::CLayoutGraph Graph( nVerts );
+      for(int f=0;f<getNfaces(); f++ ) {
           int nv = nvertsPerFace[f];
           for(int j=0;j<nv;j++) {
-              //OpenSubdiv::HbrVertex<T> * origin      = mesh->GetVertex( fv[j] );
-              //OpenSubdiv::HbrVertex<T> * destination = mesh->GetVertex( fv[ (j+1)%nv] );
-              //OpenSubdiv::HbrHalfedge<T> * opposite  = destination->GetEdge(origin);
+	      int x = fv[ j ],
+	          y = fv[ (j+1)%nv ];
+
+	      Graph.AddEdge(x,y);
           }
-
-          //OpenSubdiv::HbrFace<T> * face = mesh->NewFace(nv, (int *)fv, 0);
-
           fv+=nv;
       }
+
+      // Compute permutation
+      int oldToNew[ nVerts ];
+      Graph.ComputeOrdering( &oldToNew[0] );
+
+      // Apply permutation
+      std::vector<float> oldVerts(verts);
+      for (int oldi = 0; oldi < nVerts; oldi++) {
+          int newi = oldToNew[oldi]; 
+      	  verts[ newi*3+0 ] = oldVerts[ oldi*3+0 ];
+      	  verts[ newi*3+1 ] = oldVerts[ oldi*3+1 ];
+      	  verts[ newi*3+2 ] = oldVerts[ oldi*3+2 ];
+      }
+        
+      for (int i = 0; i < faceverts.size(); i++)
+	  faceverts[i] = oldToNew[ faceverts[i] ];
+
+      // TODO permute uvs, faceuvs, tags ?
+      printf("Re-ordered mesh CVs.\n");
 }
 
 //------------------------------------------------------------------------------
@@ -714,9 +732,9 @@ simpleHbr(char const * shapestr, Scheme scheme, std::vector<float> * verts=0) {
 template <class T> OpenSubdiv::HbrMesh<T> *
 simpleHbr(char const * shapestr, Scheme scheme, std::vector<float> & verts) {
 
-  printf("shbr 2\n");
-
   shape * sh = shape::parseShape( shapestr );
+
+  sh->reorder();
 
   OpenSubdiv::HbrMesh<T> * mesh = createMesh<T>(scheme);
 
