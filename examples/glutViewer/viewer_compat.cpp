@@ -269,6 +269,8 @@ float g_rotate[2] = {0, 0},
 int   g_width,
       g_height;
 
+int   g_reorder = false;
+
 // performance
 float g_cpuTime = 0;
 float g_gpuTime = 0;
@@ -279,6 +281,7 @@ float g_alpha= 0.01;
 std::vector<float> g_orgPositions,
                    g_positions,
                    g_normals;
+
 
 Scheme             g_scheme;
 
@@ -588,7 +591,7 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme, int exa
     s.Start();
 
     // generate Hbr representation from "obj" description
-    OpenSubdiv::OsdHbrMesh * hmesh = simpleHbr<OpenSubdiv::OsdVertex>(shape, scheme, g_orgPositions);
+    OpenSubdiv::OsdHbrMesh * hmesh = simpleHbr<OpenSubdiv::OsdVertex>(shape, scheme, g_orgPositions, g_reorder);
 
     g_normals.resize(g_orgPositions.size(),0.0f);
     g_positions.resize(g_orgPositions.size(),0.0f);
@@ -766,8 +769,9 @@ display() {
         drawString(10, 130, "SUBDIVISION = %s", g_scheme==kBilinear ? "BILINEAR" : (g_scheme == kLoop ? "LOOP" : "CATMARK"));
         drawString(10, 150, "AVG VERT/MS = %4.f", g_vertPerMillisec);
         drawString(10, 170, "MODEL = %s", g_defaultShapes[ g_currentShape ].name.c_str());
+        drawString(10, 190, "REORDER = %d", g_reorder);
 #ifdef OPENSUBDIV_HAS_MKL
-        drawString(10, 190, "DUMP SPY = %d", osdSpMVKernel_DumpSpy_FileName != NULL);
+        drawString(10, 210, "DUMP SPY = %d", osdSpMVKernel_DumpSpy_FileName != NULL);
 #endif
 
         drawString(10, g_height-30, "w:   toggle wireframe");
@@ -778,6 +782,7 @@ display() {
         drawString(10, g_height-130, "1-7: subdivision level");
         drawString(10, g_height-150, "space: freeze/unfreeze time");
         drawString(10, g_height-170, "l: toggle exact/approx evaluation");
+        drawString(10, g_height-190, "r: toggle mesh reordering");
     }
 
     glFinish();
@@ -901,6 +906,7 @@ keyboard(unsigned char key, int x, int y) {
         case 'l': exactMenu((g_exact+1)%2); break;
         case 'n': modelMenu(++g_currentShape); break;
         case 'p': modelMenu(--g_currentShape); break;
+	case 'r': g_reorder = (g_reorder+1)%2; levelMenu(g_level); break;
         case 0x1b: g_drawHUD = (g_drawHUD+1)%2; break;
     }
 }
@@ -1058,6 +1064,8 @@ int main(int argc, char ** argv) {
             g_currentShape = atoi(argv[++i]);
         else if (!strcmp(argv[i], "-k") || !strcmp(argv[i], "--kernel"))
             g_kernel = atoi(argv[++i]);
+        else if (!strcmp(argv[i], "-r") || !strcmp(argv[i], "--reorder"))
+            g_reorder = 1;
 #ifdef OPENSUBDIV_HAS_MKL
         else if (!strcmp(argv[i], "-s") || !strcmp(argv[i], "--spy"))
             osdSpMVKernel_DumpSpy_FileName = argv[++i];

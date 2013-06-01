@@ -711,11 +711,12 @@ createTopology( shape const * sh, OpenSubdiv::HbrMesh<T> * mesh, Scheme scheme) 
 
 //------------------------------------------------------------------------------
 template <class T> OpenSubdiv::HbrMesh<T> *
-simpleHbr(char const * shapestr, Scheme scheme, std::vector<float> * verts=0) {
+simpleHbr(char const * shapestr, Scheme scheme, std::vector<float> * verts=0, bool reorder=false) {
 
   shape * sh = shape::parseShape( shapestr );
 
-  sh->reorder();
+  if (reorder)
+      sh->reorder();
 
   OpenSubdiv::HbrMesh<T> * mesh = createMesh<T>(scheme);
 
@@ -730,11 +731,12 @@ simpleHbr(char const * shapestr, Scheme scheme, std::vector<float> * verts=0) {
 
 //------------------------------------------------------------------------------
 template <class T> OpenSubdiv::HbrMesh<T> *
-simpleHbr(char const * shapestr, Scheme scheme, std::vector<float> & verts) {
+simpleHbr(char const * shapestr, Scheme scheme, std::vector<float> & verts, bool reorder=false) {
 
   shape * sh = shape::parseShape( shapestr );
 
-  sh->reorder();
+  if (reorder)
+      sh->reorder();
 
   OpenSubdiv::HbrMesh<T> * mesh = createMesh<T>(scheme);
 
