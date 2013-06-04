@@ -704,6 +704,7 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme, int exa
     printf(" kernel=%s", getKernelName(g_kernel));
     printf(" model=%s", g_defaultShapes[ g_currentShape ].name.c_str());
     printf(" exact=%d",  g_exact);
+    printf(" reorder=%d",  g_reorder);
 #endif
 }
 

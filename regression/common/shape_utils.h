@@ -182,7 +182,10 @@ shape::reorder() {
 	  faceverts[i] = oldToNew[ faceverts[i] ];
 
       // TODO permute uvs, faceuvs, tags ?
-      printf("Re-ordered mesh CVs.\n");
+
+#if BENCHMARKING
+      printf(" reorder_check=1");
+#endif
 }
 
 //------------------------------------------------------------------------------

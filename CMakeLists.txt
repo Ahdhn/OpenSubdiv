@@ -106,6 +106,7 @@ find_package(PTex)
 find_package(MKL)
 find_package(OpenCCL)
 
+#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DBENCHMARKING")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
