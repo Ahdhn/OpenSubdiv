@@ -293,6 +293,8 @@ LogicalSpMV_ellcsr(int m, int n, int k, int *ell_cols, float *ell_vals, const in
     int nBlocks = (m + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     logical_spmv_ell_kernel<<<nBlocks,THREADS_PER_BLOCK>>>
         (m, n, k, ell_cols, ell_vals, v_in, v_out);
+
+    
 }
 
 } /* extern C */
