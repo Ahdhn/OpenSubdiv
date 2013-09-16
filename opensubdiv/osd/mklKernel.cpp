@@ -5,7 +5,7 @@
 #include <xmmintrin.h>
 
 void
-logical_spmv_kernel(int m, int n, int nnz,
+LogicalSpMV_csr_cpu(int m, int n, int nnz,
     float *vals, int *colInds, int *rowPtrs,
     float *__restrict__ d_in, float *__restrict__ d_out)
 {

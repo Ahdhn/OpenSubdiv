@@ -2,6 +2,7 @@
 #include "../osd/mutex.h"
 #include "../osd/cusparseDispatcher.h"
 #include "../osd/spmvKernel.h"
+#include "../osd/mklKernel.h"
 
 #include <stdio.h>
 
@@ -29,6 +30,9 @@ LogicalSpMV_coo_gpu(int m, int n, int coo_nnz, int *coo_rows, int *coo_cols, flo
 
 void
 LogicalSpMV_csr(int m, int n, int k, int *rows, int *cols, float *vals, float *v_in, float *v_out);
+
+// v0 += v1
+void vvadd(int nelems, float *v0, float *v1);
 
 }
 
@@ -141,16 +145,41 @@ CudaCsrMatrix::NumBytes() {
 void
 CudaCsrMatrix::logical_spmv(float *d_out, float* d_in) {
     if (hybrid) {
+
+        // h_out in h_csr_scratch
+        // XXX find h_in on cpu
+        float *h_in = (float*) mkl_malloc(n*sizeof(float), 16);
+        cudaMemcpy(&h_in[0], &d_in[0], n*sizeof(float), cudaMemcpyDeviceToHost);
+
+        // launch gpu portion
         LogicalSpMV_ell_gpu(m, n,
             ell_k, ell_cols, ell_vals,
             d_in, d_out);
+
+        // launch cpu portion
+        LogicalSpMV_csr_cpu(m, n, csr_nnz,
+            csr_vals, csr_colInds, csr_rowPtrs,
+            h_in, h_csr_scratch);
+
+        // copy cpu results to gpu
+        cudaMemcpy(d_csr_scratch, h_csr_scratch, m*sizeof(float), cudaMemcpyHostToDevice); // must do this one
+
+        // wait for gpu results
+        cudaDeviceSynchronize();
+
+        // combine results
+        vvadd(m, d_out, d_csr_scratch);
+
     } else {
+
+        // two gpu kernels
         LogicalSpMV_ell_gpu(m, n,
             ell_k, ell_cols, ell_vals,
             d_in, d_out);
         LogicalSpMV_coo_gpu(m, n,
             coo_nnz, coo_rows, coo_cols, coo_vals, coo_scratch,
             d_in, d_out);
+
     }
 }
 
@@ -311,16 +340,16 @@ CudaCsrMatrix::ellize(bool hybridize) {
 
     if (this->hybrid = hybridize) {
 
-        int hyb_nnz = h_coo_vals.size();
+        csr_nnz = h_coo_vals.size();
         csr_rowPtrs = (int*) mkl_malloc((m+1)*sizeof(float), 16);
-        csr_colInds = (int*) mkl_malloc(hyb_nnz*sizeof(float), 16);
-        csr_vals = (float*) mkl_malloc(hyb_nnz*sizeof(float), 16);
+        csr_colInds = (int*) mkl_malloc(csr_nnz*sizeof(float), 16);
+        csr_vals = (float*) mkl_malloc(csr_nnz*sizeof(float), 16);
 
         int mkl_job[6] = {
             2, // coo -> csr with sorting
             0, // zero-based indexing for csr
             0, // zero-based indexing for coo
-            hyb_nnz, // nnz
+            csr_nnz, // nnz
             3 // all output arrays filled
         };
         int mkl_n = m;
@@ -335,6 +364,10 @@ CudaCsrMatrix::ellize(bool hybridize) {
 
         mkl_scsrcoo(mkl_job, &mkl_n, mkl_acsr, mkl_ja, mkl_ia, &mkl_nnz, mkl_acoo, mkl_rowind, mkl_colind, &mkl_info);
         assert(mkl_info == 0);
+
+        // allocate scratch space
+        cudaMalloc(&d_csr_scratch, m*sizeof(float));
+        h_csr_scratch = (float*) mkl_malloc(m*sizeof(float), 16);
 
     } else {
         int coo_lda = coo_nnz + ((512/sizeof(float)) - (coo_nnz % (512/sizeof(float))));

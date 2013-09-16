@@ -7,6 +7,7 @@
 #define COO_THREADS_PER_BLOCK_0 1024
 #define COO_THREADS_PER_BLOCK_1 1024
 #define COO_THREADS_PER_BLOCK_2 1024
+#define VVADD_THREADS_PER_BLOCK 1024
 #define THREADS_PER_ROW   32
 
 using namespace std;
@@ -245,6 +246,16 @@ logical_spmv_csr_kernel(int m, int n,
     }
 }
 
+// v0 += v1
+__global__ void
+vvadd_kernel(int nelems, float *v0, float *v1) {
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+    if (tid >= nelems)
+        return;
+
+    v0[tid] += v1[tid];
+}
+
 
 extern "C" {
 
@@ -286,6 +297,13 @@ LogicalSpMV_coo_gpu(int m, int n,
     nBlocks = (coo_nnz + COO_THREADS_PER_BLOCK_2 - 1) / COO_THREADS_PER_BLOCK_2;
     logical_spmv_coo_kernel2A<<<nBlocks,COO_THREADS_PER_BLOCK_2>>>
         (coo_nnz, coo_rows, coo_scratch, v_out);
+}
+
+// v0 += v1
+void
+vvadd(int nelems, float *v0, float *v1) {
+    int nBlocks = (nelems + VVADD_THREADS_PER_BLOCK - 1) / VVADD_THREADS_PER_BLOCK;
+    vvadd_kernel<<<nBlocks,VVADD_THREADS_PER_BLOCK>>>(nelems, v0, v1);
 }
 
 } /* extern C */

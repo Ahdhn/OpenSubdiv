@@ -91,7 +91,7 @@ CpuCsrMatrix::CpuCsrMatrix(const CpuCooMatrix* StagedOp, int nve) :
 
 void
 CpuCsrMatrix::logical_spmv(float* __restrict__  d_out, float* __restrict__ d_in) {
-    logical_spmv_kernel(m, n, nnz, vals, cols, rows, d_in, d_out);
+    LogicalSpMV_csr_cpu(m, n, nnz, vals, cols, rows, d_in, d_out);
 }
 
 void

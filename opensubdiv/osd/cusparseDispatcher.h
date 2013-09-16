@@ -53,6 +53,7 @@ public:
     int csr_nnz;
     float *csr_vals;
     int *csr_rowPtrs, *csr_colInds;
+    float *h_csr_scratch, *d_csr_scratch;
 
     // scratch space for tranposes of input and output vectors
     float *d_in_scratch, *d_out_scratch;
