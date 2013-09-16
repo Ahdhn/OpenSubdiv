@@ -257,13 +257,22 @@ OsdTranspose(float *odata, float *idata, int m, int n) {
 }
 
 void
-LogicalSpMV_ellcoo(int m, int n, int k, int *ell_cols, float *ell_vals, const int coo_nnz, int *coo_rows, int *coo_cols, float *coo_vals, float *coo_scratch, float *v_in, float *v_out) {
+LogicalSpMV_ell_gpu(int m, int n, int k,
+    int *ell_cols, float *ell_vals,
+    float *v_in, float *v_out) {
 
     int nBlocks = (m + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     logical_spmv_ell_kernel<<<nBlocks,THREADS_PER_BLOCK>>>
         (m, n, k, ell_cols, ell_vals, v_in, v_out);
+}
 
-    nBlocks = (coo_nnz + COO_THREADS_PER_BLOCK_0 - 1) / COO_THREADS_PER_BLOCK_0;
+void
+LogicalSpMV_coo_gpu(int m, int n,
+    const int coo_nnz, int *coo_rows, int *coo_cols, float *coo_vals,
+    float *coo_scratch,
+    float *v_in, float *v_out) {
+
+    int nBlocks = (coo_nnz + COO_THREADS_PER_BLOCK_0 - 1) / COO_THREADS_PER_BLOCK_0;
     logical_spmv_coo_kernel0A<<<nBlocks,COO_THREADS_PER_BLOCK_0>>>
         (coo_nnz, coo_rows, coo_cols, coo_vals, coo_scratch, v_in, v_out);
 
@@ -277,24 +286,6 @@ LogicalSpMV_ellcoo(int m, int n, int k, int *ell_cols, float *ell_vals, const in
     nBlocks = (coo_nnz + COO_THREADS_PER_BLOCK_2 - 1) / COO_THREADS_PER_BLOCK_2;
     logical_spmv_coo_kernel2A<<<nBlocks,COO_THREADS_PER_BLOCK_2>>>
         (coo_nnz, coo_rows, coo_scratch, v_out);
-}
-
-void
-LogicalSpMV_csr(int m, int n, int k, int *rows, int *cols, float *vals, float *v_in, float *v_out) {
-    assert( k <= THREADS_PER_ROW);
-
-    int nBlocks = min(m, 32768);
-    dim3 nThreads(THREADS_PER_ROW,6);
-    logical_spmv_csr_kernel<<<nBlocks,nThreads>>>(m, n, rows, cols, vals, v_in, v_out);
-}
-
-void
-LogicalSpMV_ellcsr(int m, int n, int k, int *ell_cols, float *ell_vals, const int csr_nnz, int *csr_rowPtrs, int *csr_colInds, float *csr_vals, float *v_in, float *v_out) {
-    int nBlocks = (m + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    logical_spmv_ell_kernel<<<nBlocks,THREADS_PER_BLOCK>>>
-        (m, n, k, ell_cols, ell_vals, v_in, v_out);
-
-    
 }
 
 } /* extern C */

@@ -22,10 +22,10 @@ void
 OsdTranspose(float *odata, float *idata, int m, int n);
 
 void
-LogicalSpMV_ellcoo(int m, int n, int k, int *ell_cols, float *ell_vals, int coo_nnz, int *coo_rows, int *coo_cols, float *coo_vals, float *coo_scratch, float *v_in, float *v_out);
+LogicalSpMV_ell_gpu(int m, int n, int k, int *ell_cols, float *ell_vals, float *v_in, float *v_out);
 
 void
-LogicalSpMV_ellcsr(int m, int n, int k, int *ell_cols, float *ell_vals, int csr_nnz, int *csr_rowPtss, int *csr_colInds, float *csr_vals, float *v_in, float *v_out);
+LogicalSpMV_coo_gpu(int m, int n, int coo_nnz, int *coo_rows, int *coo_cols, float *coo_vals, float *coo_scratch, float *v_in, float *v_out);
 
 void
 LogicalSpMV_csr(int m, int n, int k, int *rows, int *cols, float *vals, float *v_in, float *v_out);
@@ -140,10 +140,18 @@ CudaCsrMatrix::NumBytes() {
 
 void
 CudaCsrMatrix::logical_spmv(float *d_out, float* d_in) {
-    if (hybrid)
-        LogicalSpMV_ellcsr(m, n, ell_k, ell_cols, ell_vals, csr_nnz, csr_rowPtrs, csr_colInds, csr_vals, d_in, d_out);
-    else
-        LogicalSpMV_ellcoo(m, n, ell_k, ell_cols, ell_vals, coo_nnz, coo_rows, coo_cols, coo_vals, coo_scratch, d_in, d_out);
+    if (hybrid) {
+        LogicalSpMV_ell_gpu(m, n,
+            ell_k, ell_cols, ell_vals,
+            d_in, d_out);
+    } else {
+        LogicalSpMV_ell_gpu(m, n,
+            ell_k, ell_cols, ell_vals,
+            d_in, d_out);
+        LogicalSpMV_coo_gpu(m, n,
+            coo_nnz, coo_rows, coo_cols, coo_vals, coo_scratch,
+            d_in, d_out);
+    }
 }
 
 void
