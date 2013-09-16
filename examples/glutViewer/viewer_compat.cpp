@@ -502,6 +502,8 @@ const char *getKernelName(int kernel) {
         return "CustomCPU";
     else if (kernel == OpenSubdiv::OsdKernelDispatcher::kCGPU)
         return "CustomGPU";
+    else if (kernel == OpenSubdiv::OsdKernelDispatcher::kHYB)
+        return "CustomHyb";
     return "Unknown";
 }
 

@@ -30,7 +30,7 @@ public:
     void logical_spmv(float* d_out, float* d_in);
     virtual CudaCsrMatrix* gemm(CudaCsrMatrix* rhs);
     virtual int NumBytes();
-    void ellize();
+    void ellize(bool hybridize);
     void dump(std::string ofilename);
 
     cusparseMatDescr_t desc;
@@ -48,6 +48,12 @@ public:
     float *coo_vals, *coo_scratch;
     int *coo_rows, *coo_cols;
 
+    // CSR data
+    bool hybrid;
+    int csr_nnz;
+    float *csr_vals;
+    int *csr_rowPtrs, *csr_colInds;
+
     // scratch space for tranposes of input and output vectors
     float *d_in_scratch, *d_out_scratch;
 };
@@ -57,11 +63,13 @@ class OsdCusparseKernelDispatcher :
 {
 public:
     typedef OsdSpMVKernelDispatcher<CudaCooMatrix, CudaCsrMatrix, OsdCudaVertexBuffer> super;
-    OsdCusparseKernelDispatcher(int levels, bool logical);
+    OsdCusparseKernelDispatcher(int levels, bool logical, bool hybrid);
     ~OsdCusparseKernelDispatcher();
     virtual void FinalizeMatrix();
     static void Register();
     void Synchronize();
+
+    bool hybrid;
 };
 
 } // end namespace OPENSUBDIV_VERSION

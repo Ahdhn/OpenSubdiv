@@ -8,6 +8,7 @@
 #include <iostream>
 #include <vector>
 extern "C" {
+#include <mkl.h>
 #include <mkl_spblas.h>
 }
 
@@ -228,7 +229,8 @@ CudaCsrMatrix::dump(std::string ofilename) {
 }
 
 void
-CudaCsrMatrix::ellize() {
+CudaCsrMatrix::ellize(bool hybridize) {
+
     std::vector<float> h_vals(nnz);
     std::vector<int> h_rows(m+1);
     std::vector<int> h_cols(nnz);
@@ -293,18 +295,49 @@ CudaCsrMatrix::ellize() {
     cudaMemcpy(ell_vals, &h_ell_vals[0], h_ell_vals.size() * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(ell_cols, &h_ell_cols[0], h_ell_cols.size() * sizeof(int),   cudaMemcpyHostToDevice);
 
-    int coo_lda = coo_nnz + ((512/sizeof(float)) - (coo_nnz % (512/sizeof(float))));
-    cudaMalloc(&coo_rows, h_coo_rows.size() * sizeof(int));
-    cudaMalloc(&coo_cols, h_coo_cols.size() * sizeof(int));
-    cudaMalloc(&coo_vals, h_coo_vals.size() * sizeof(float));
-    cudaMalloc(&coo_scratch, coo_lda*6*sizeof(float));
-    cudaMemcpy(coo_rows, &h_coo_rows[0], h_coo_rows.size() * sizeof(int),   cudaMemcpyHostToDevice);
-    cudaMemcpy(coo_cols, &h_coo_cols[0], h_coo_cols.size() * sizeof(int),   cudaMemcpyHostToDevice);
-    cudaMemcpy(coo_vals, &h_coo_vals[0], h_coo_vals.size() * sizeof(float), cudaMemcpyHostToDevice);
+    if (this->hybrid = hybridize) {
+
+        int hyb_nnz = h_coo_vals.size();
+        csr_rowPtrs = (int*) mkl_malloc((m+1)*sizeof(float), 16);
+        csr_colInds = (int*) mkl_malloc(hyb_nnz*sizeof(float), 16);
+        csr_vals = (float*) mkl_malloc(hyb_nnz*sizeof(float), 16);
+
+        int mkl_job[6] = {
+            2, // coo -> csr with sorting
+            0, // zero-based indexing for csr
+            0, // zero-based indexing for coo
+            hyb_nnz, // nnz
+            3 // all output arrays filled
+        };
+        int mkl_n = m;
+        float *mkl_acsr = csr_vals;
+        int *mkl_ja = csr_colInds;
+        int *mkl_ia = csr_rowPtrs;
+        int mkl_nnz;
+        float *mkl_acoo = &h_coo_vals[0];
+        int *mkl_colind = &h_coo_cols[0];
+        int *mkl_rowind = &h_coo_rows[0];
+        int mkl_info;
+
+        mkl_scsrcoo(mkl_job, &mkl_n, mkl_acsr, mkl_ja, mkl_ia, &mkl_nnz, mkl_acoo, mkl_rowind, mkl_colind, &mkl_info);
+        assert(mkl_info == 0);
+
+        assert(!"hybrid spmv not implemented");
+
+    } else {
+        int coo_lda = coo_nnz + ((512/sizeof(float)) - (coo_nnz % (512/sizeof(float))));
+        cudaMalloc(&coo_rows, h_coo_rows.size() * sizeof(int));
+        cudaMalloc(&coo_cols, h_coo_cols.size() * sizeof(int));
+        cudaMalloc(&coo_vals, h_coo_vals.size() * sizeof(float));
+        cudaMalloc(&coo_scratch, coo_lda*6*sizeof(float));
+        cudaMemcpy(coo_rows, &h_coo_rows[0], h_coo_rows.size() * sizeof(int),   cudaMemcpyHostToDevice);
+        cudaMemcpy(coo_cols, &h_coo_cols[0], h_coo_cols.size() * sizeof(int),   cudaMemcpyHostToDevice);
+        cudaMemcpy(coo_vals, &h_coo_vals[0], h_coo_vals.size() * sizeof(float), cudaMemcpyHostToDevice);
+    }
 }
 
-OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher(int levels, bool logical) :
-    super(levels, logical) {
+OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher(int levels, bool logical, bool hybrid) :
+    super(levels, logical), hybrid(hybrid) {
     /* make cusparse handle if null */
     assert (handle == NULL);
     cusparseCreate(&handle);
@@ -319,25 +352,31 @@ OsdCusparseKernelDispatcher::~OsdCusparseKernelDispatcher() {
 void
 OsdCusparseKernelDispatcher::FinalizeMatrix() {
     if (logical)
-        SubdivOp->ellize();
+        SubdivOp->ellize(hybrid);
 
     this->super::FinalizeMatrix();
 }
 
 static OsdCusparseKernelDispatcher::OsdKernelDispatcher *
 Create(int levels) {
-    return new OsdCusparseKernelDispatcher(levels, false);
+    return new OsdCusparseKernelDispatcher(levels, false, false);
 }
 
 static OsdCusparseKernelDispatcher::OsdKernelDispatcher *
 CreateLogical(int levels) {
-    return new OsdCusparseKernelDispatcher(levels, true);
+    return new OsdCusparseKernelDispatcher(levels, true, false);
+}
+
+static OsdCusparseKernelDispatcher::OsdKernelDispatcher *
+CreateLogicalHybrid(int levels) {
+    return new OsdCusparseKernelDispatcher(levels, true, true);
 }
 
 void
 OsdCusparseKernelDispatcher::Register() {
     Factory::GetInstance().Register(Create, kCUSPARSE);
     Factory::GetInstance().Register(CreateLogical, kCGPU);
+    Factory::GetInstance().Register(CreateLogicalHybrid, kHYB);
 }
 
 void
