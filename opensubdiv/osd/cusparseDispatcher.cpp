@@ -136,7 +136,7 @@ CudaCsrMatrix::NumBytes() {
 
 void
 CudaCsrMatrix::logical_spmv(float *d_out, float* d_in) {
-    LogicalSpMV_hyb(m, n, ell_k, ell_cols, ell_vals, coo_nnz, coo_rows+1, coo_cols+1, coo_vals+1, coo_scratch, d_in, d_out);
+    LogicalSpMV_hyb(m, n, ell_k, ell_cols, ell_vals, coo_nnz, coo_rows, coo_cols, coo_vals, coo_scratch, d_in, d_out);
 }
 
 void
