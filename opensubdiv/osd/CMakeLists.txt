@@ -194,9 +194,11 @@ endif()
 if ( MKL_FOUND )
     list(APPEND SOURCE_FILES
         mklDispatcher.cpp
+        mklKernel.cpp
     )
     list(APPEND PUBLIC_HEADER_FILES
         mklDispatcher.h
+        mklKernel.h
     )
     list(APPEND PLATFORM_LIBRARIES
         ${MKL_LIBRARIES}
