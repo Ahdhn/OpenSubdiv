@@ -16,6 +16,7 @@ extern "C" {
 
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
+#include <nvToolsExt.h>
 
 extern "C" {
 
@@ -152,9 +153,11 @@ CudaCsrMatrix::logical_spmv(float *d_out, float* d_in, float *h_in) {
             d_in, d_out, computeStream);
 
         // launch cpu portion - synchronous
+        nvtxRangePushA("logical_spmv_csr_cpu");
         LogicalSpMV_csr_cpu(m, n, csr_nnz,
             csr_vals, csr_colInds, csr_rowPtrs,
             h_in, h_csr_scratch);
+        nvtxRangePop();
 
         // copy cpu results to gpu - asynchronous
         cudaMemcpyAsync(d_csr_scratch, h_csr_scratch, m*sizeof(float), cudaMemcpyHostToDevice, memStream);
