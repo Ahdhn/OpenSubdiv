@@ -2,23 +2,32 @@
 gnuplot << EOF
 
 # $1 output file
-# $2 data file
-# $3 model name
 
-load "common.gpi"
+# set terminal
+set term epslatex solid color size 10,7
 
-set title "Sustained Performance on \\\`$3' Model"
+# set line styles
+set style line 1 lw 4 lt rgb "orange"
+set style line 2 lw 4 lt rgb "dark-green"
+set style line 3 lw 4 lt rgb "dark-red"
+set style line 4 lw 4 lt rgb "dark-blue"
+
+# key font size
+set key font ",2"
+set output "$1"
+
+set multiplot layout 2,2 title "Sustained Performance on Selected Models"
 set xlabel "Surface Points"
 set ylabel "Surface Points Computed per Millisecond" offset 1
-set output "$1"
 #set size 1, 0.80
 
-set key bottom center maxrows 2
+set key reverse Left
 set key autotitle columnhead
-set key samplen 2 width -2
+#set key maxrows 1
+set key samplen 2
+set key width -6 height 1
 
 set autoscale fix
-set offset .3, .3, .3, .7
 
 set logscale x 10
 set logscale y 10
@@ -27,15 +36,78 @@ set format x "\$10^{%L}\$";
 set format y "\$10^{%L}\$";
 
 set grid back
+gmean(i,j) = sqrt(i*j)
 
-plot \
-    "$2" using 1:2 w linespoint ls 1, \
-    "$2" using 1:4 w linespoint ls 2, \
-    "$2" using 1:6 w linespoint ls 3, \
-    "$2" using 1:8 w linespoint ls 4, \
-    "$2" using 1:10 w linespoint ls 5, \
-    "$2" using 1:12 w linespoint ls 6, \
-    "$2" using 1:14 w linespoint ls 7, \
-    "$2" using 1:16 w linespoint ls 8
+set title "Big Guy"
+set key top left
+set offset .4, .4, .3, .3
+max_verts = 1484802.0
+cpu_table = 39581.0
+cpu_matrix = 78291.0
+gpu_table = 319560.0
+gpu_matrix = 582795.0
+set arrow 1 from max_verts,cpu_table to max_verts,cpu_matrix nohead ls 0 lw 1;
+set label 1 sprintf('%1.2f$\times$', cpu_matrix/cpu_table) at  max_verts*1.1,gmean(cpu_table,cpu_matrix) front tc ls 1
+set arrow 2 from max_verts,gpu_table to max_verts,gpu_matrix nohead ls 0 lw 1;
+set label 2 sprintf('%1.2f$\times$', gpu_matrix/gpu_table) at  max_verts*1.1,gmean(gpu_table,gpu_matrix) front tc ls 1
+plot "perf_BigGuy.dat" \
+       using 1:16 w linespoint ls 4, \
+    "" using 1:6 w linespoint ls 2, \
+    "" using 1:14 w linespoint ls 3, \
+    "" using 1:4 w linespoint ls 1
+
+set title "Bunny"
+set key top left
+set offset .4, .4, .3, .3
+max_verts = 1493741.0
+cpu_table = 42028.0
+cpu_matrix = 102384.0
+gpu_table = 385552.0
+gpu_matrix = 892973.0
+set arrow 1 from max_verts,cpu_table to max_verts,cpu_matrix nohead ls 0 lw 1;
+set label 1 sprintf('%1.2f$\times$', cpu_matrix/cpu_table) at  max_verts*1.1,gmean(cpu_table,cpu_matrix) front tc ls 1
+set arrow 2 from max_verts,gpu_table to max_verts,gpu_matrix nohead ls 0 lw 1;
+set label 2 sprintf('%1.2f$\times$', gpu_matrix/gpu_table) at  max_verts*1.1,gmean(gpu_table,gpu_matrix) front tc ls 1
+plot "perf_Bunny.dat" \
+       using 1:16 w linespoint ls 4, \
+    "" using 1:6 w linespoint ls 2, \
+    "" using 1:14 w linespoint ls 3, \
+    "" using 1:4 w linespoint ls 1
+
+set title "Cube"
+set key bottom right
+set offset .4, .6, .3, .3
+max_verts = 393218.0
+cpu_table = 43355.0
+cpu_matrix = 177680.0
+gpu_table = 279727.0
+gpu_matrix = 886779.0
+set arrow 1 from max_verts,cpu_table to max_verts,cpu_matrix nohead ls 0 lw 1;
+set label 1 sprintf('%1.2f$\times$', cpu_matrix/cpu_table) at  max_verts*1.2,gmean(cpu_table,cpu_matrix) front tc ls 1
+set arrow 2 from max_verts,gpu_table to max_verts,gpu_matrix nohead ls 0 lw 1;
+set label 2 sprintf('%1.2f$\times$', gpu_matrix/gpu_table) at  max_verts*1.2,gmean(gpu_table,gpu_matrix) front tc ls 1
+plot "perf_Cube.dat" \
+       using 1:16 w linespoint ls 4, \
+    "" using 1:6 w linespoint ls 2, \
+    "" using 1:14 w linespoint ls 3, \
+    "" using 1:4 w linespoint ls 1
+
+set title "Icosahedron"
+set key bottom right
+set offset .4, .6, .3, .3
+max_verts = 655362.0
+cpu_table = 42680.446498
+cpu_matrix = 151676.460241
+gpu_table = 385735.0
+gpu_matrix = 981696.021199
+set arrow 1 from max_verts,cpu_table to max_verts,cpu_matrix nohead ls 0 lw 1;
+set label 1 sprintf('%1.2f$\times$', cpu_matrix/cpu_table) at  max_verts*1.2,gmean(cpu_table,cpu_matrix) front tc ls 1
+set arrow 2 from max_verts,gpu_table to max_verts,gpu_matrix nohead ls 0 lw 1;
+set label 2 sprintf('%1.2f$\times$', gpu_matrix/gpu_table) at  max_verts*1.2,gmean(gpu_table,gpu_matrix) front tc ls 1
+plot "perf_Icosahedron.dat" \
+       using 1:16 w linespoint ls 4, \
+    "" using 1:6 w linespoint ls 2, \
+    "" using 1:14 w linespoint ls 3, \
+    "" using 1:4 w linespoint ls 1
 
 EOF

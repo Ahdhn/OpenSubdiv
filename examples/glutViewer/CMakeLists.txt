@@ -80,6 +80,11 @@ if ( MKL_FOUND )
     include_directories( ${MKL_INCLUDE_PATH} )
 endif()
 
+if ( OPENCCL_FOUND )
+    list(APPEND PLATFORM_LIBRARIES ${OPENCCL_LIBRARIES} )
+    include_directories( ${OPENCCL_INCLUDE_PATH} )
+endif()
+
 if ( CUDA_FOUND )
     list(APPEND PLATFORM_LIBRARIES
         -L${CUDA_TOOLKIT_ROOT_DIR}/lib64 -lcusparse

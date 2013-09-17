@@ -127,6 +127,8 @@ struct shape {
 
     int getNfaces() const { return (int)nvertsPerFace.size(); }
 
+    void reorder();
+
     std::vector<float>  verts;
     std::vector<float>  uvs;
     std::vector<int>    nvertsPerFace;
@@ -140,6 +142,50 @@ struct shape {
 shape::~shape() {
     for (int i=0; i<(int)tags.size(); ++i)
         delete tags[i];
+}
+
+//------------------------------------------------------------------------------
+#include "OpenCCL.h"
+void
+shape::reorder() {
+
+      int nVerts = getNverts();
+      const int * fv = &faceverts[0];
+
+      // Build graph
+      OpenCCL::CLayoutGraph Graph( nVerts );
+      for(int f=0;f<getNfaces(); f++ ) {
+          int nv = nvertsPerFace[f];
+          for(int j=0;j<nv;j++) {
+	      int x = fv[ j ],
+	          y = fv[ (j+1)%nv ];
+
+	      Graph.AddEdge(x,y);
+          }
+          fv+=nv;
+      }
+
+      // Compute permutation
+      int oldToNew[ nVerts ];
+      Graph.ComputeOrdering( &oldToNew[0] );
+
+      // Apply permutation
+      std::vector<float> oldVerts(verts);
+      for (int oldi = 0; oldi < nVerts; oldi++) {
+          int newi = oldToNew[oldi]; 
+      	  verts[ newi*3+0 ] = oldVerts[ oldi*3+0 ];
+      	  verts[ newi*3+1 ] = oldVerts[ oldi*3+1 ];
+      	  verts[ newi*3+2 ] = oldVerts[ oldi*3+2 ];
+      }
+        
+      for (int i = 0; i < faceverts.size(); i++)
+	  faceverts[i] = oldToNew[ faceverts[i] ];
+
+      // TODO permute uvs, faceuvs, tags ?
+
+#if BENCHMARKING
+      printf(" reorder_check=1");
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -668,9 +714,12 @@ createTopology( shape const * sh, OpenSubdiv::HbrMesh<T> * mesh, Scheme scheme) 
 
 //------------------------------------------------------------------------------
 template <class T> OpenSubdiv::HbrMesh<T> *
-simpleHbr(char const * shapestr, Scheme scheme, std::vector<float> * verts=0) {
+simpleHbr(char const * shapestr, Scheme scheme, std::vector<float> * verts=0, bool reorder=false) {
 
   shape * sh = shape::parseShape( shapestr );
+
+  if (reorder)
+      sh->reorder();
 
   OpenSubdiv::HbrMesh<T> * mesh = createMesh<T>(scheme);
 
@@ -685,9 +734,12 @@ simpleHbr(char const * shapestr, Scheme scheme, std::vector<float> * verts=0) {
 
 //------------------------------------------------------------------------------
 template <class T> OpenSubdiv::HbrMesh<T> *
-simpleHbr(char const * shapestr, Scheme scheme, std::vector<float> & verts) {
+simpleHbr(char const * shapestr, Scheme scheme, std::vector<float> & verts, bool reorder=false) {
 
   shape * sh = shape::parseShape( shapestr );
+
+  if (reorder)
+      sh->reorder();
 
   OpenSubdiv::HbrMesh<T> * mesh = createMesh<T>(scheme);
 

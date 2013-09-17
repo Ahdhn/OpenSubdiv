@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python
 
 import sys, re
 from subprocess import *
@@ -7,7 +7,7 @@ import numpy as np
 if sys.platform == 'darwin':
     VIEWER_PATH = "/Users/mbdriscoll/OpenSubdiv/build/bin/glutViewer"
 else:
-    VIEWER_PATH = "/home/driscoll/OpenSubdiv/build/bin/glutViewer"
+    VIEWER_PATH = "/home/mbdriscoll/OpenSubdiv/build/bin/glutViewer"
 
 kernelNum = {
 	"CPU":        0,
@@ -111,7 +111,7 @@ class Run(object):
 def escape_latex(string):
     return string.replace('_', '\\\\_')
 
-def do_run(model, frames=1000, level=1, kernel='CPU', spyfile=None, regression=False, exact=True):
+def do_run(model, frames=1000, level=1, kernel='CPU', spyfile=None, regression=False, exact=True, reorder=True):
     assert 0 < level <= 9, "Must select positive subdiv level from 1 to 7."
     cmd_line = [
         VIEWER_PATH,
@@ -126,6 +126,8 @@ def do_run(model, frames=1000, level=1, kernel='CPU', spyfile=None, regression=F
         cmd_line += ['--regression']
     if exact:
         cmd_line += ['--exact']
+    if reorder:
+        cmd_line += ['--reorder']
     print "Running: %s" % " ".join(cmd_line)
     osd = Popen(cmd_line, stdin=PIPE, stdout=PIPE, stderr=PIPE)
     stdout, stderr = osd.communicate()

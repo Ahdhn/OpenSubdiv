@@ -3,16 +3,19 @@ MEM_DATS := $(addprefix mem_, $(addsuffix .dat, $(MODELS)))
 SPARSITY_DATS := $(addprefix sparsity_, $(addsuffix .dat, $(MODELS)))
 STABILITY_DATS := $(addprefix stability_, $(addsuffix .dat, $(MODELS)))
 PERF_TEXS := $(addprefix perf_, $(addsuffix .tex, $(MODELS)))
-RELATIVE_TEXS := $(addprefix relative_, $(addsuffix .tex, $(MODELS)))
+RELATIVE_DATS := $(addprefix relative_, $(addsuffix .dat, $(MODELS)))
+REORDER_DATS := $(addprefix reorder_, $(addsuffix .dat, $(MODELS)))
+PERF_DATS := $(addprefix perf_, $(addsuffix .dat, $(MODELS)))
 STREAM_TEXS := $(addprefix stream_, $(addsuffix .tex, $(MODELS)))
 TTFF_TEXS := $(addprefix ttff_, $(addsuffix .tex, $(MODELS)))
 FPS_TEXS := $(addprefix fps_, $(addsuffix .tex, $(MODELS)))
 MATRIXTIME_TEXS := matrixtime_MKL.tex matrixtime_CuSPARSE.tex
+RELATIVE_TEX := relative.tex
 BUILD_PATH := ./graphs
-#INSTALL_PATH := /home/driscoll/sga2013/graphs
+INSTALL_PATH := ./graphs/
 INSTALL_PATH := /Users/mbdriscoll/sga2013/graphs
 
-TEXFILES = mem.tex sparsity.tex stability.tex $(PERF_TEXS) $(RELATIVE_TEXS) $(STREAM_TEXS) $(TTFF_TEXS) $(FPS_TEXS) $(MATRIXTIME_TEXS)
+TEXFILES = mem.tex sparsity.tex stability.tex perf.tex $(PERF_TEXS) $(RELATIVE_TEX) $(STREAM_TEXS) $(TTFF_TEXS) $(FPS_TEXS) $(MATRIXTIME_TEXS)
 SPYFILES = $(addprefix spy_, $(addsuffix .pdf, $(MODELS)))
 
 default:    all
@@ -24,8 +27,18 @@ perf_%.tex: perf_%.dat
 	cp $(BUILD_PATH)/$@ $(INSTALL_PATH)/$@
 	cp $(BUILD_PATH)/$(patsubst %.tex,%.eps, $@) $(INSTALL_PATH)/
 
-relative_%.tex: relative_%.dat
-	./relative.gpi $(BUILD_PATH)/$@ $^ $*
+perf.tex: perf.gpi $(PERF_DATS)
+	./perf.gpi $(BUILD_PATH)/$@
+	cp $(BUILD_PATH)/$@ $(INSTALL_PATH)/$@
+	cp $(BUILD_PATH)/$(patsubst %.tex,%.eps, $@) $(INSTALL_PATH)/
+
+relative.tex: $(RELATIVE_DATS)
+	./relative.gpi $(BUILD_PATH)/$@
+	cp $(BUILD_PATH)/$@ $(INSTALL_PATH)/$@
+	cp $(BUILD_PATH)/$(patsubst %.tex,%.eps, $@) $(INSTALL_PATH)/
+
+reorder.tex: $(REORDER_DATS)
+	./reorder.gpi $(BUILD_PATH)/$@
 	cp $(BUILD_PATH)/$@ $(INSTALL_PATH)/$@
 	cp $(BUILD_PATH)/$(patsubst %.tex,%.eps, $@) $(INSTALL_PATH)/
 
@@ -78,6 +91,9 @@ perf_%.dat:
 
 relative_%.dat:
 	./relative.py $@
+
+reorder_%.dat:
+	./reorder.py $@
 
 stream_%.dat:
 	./stream.py $@

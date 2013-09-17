@@ -2,44 +2,104 @@
 gnuplot << EOF
 
 # $1 output file
-# $2 data file
-# $3 model name
 
-load "common.gpi"
+# set terminal
+set term epslatex solid color size 10,7
+
+# set line styles
+set style line 1 lw 4 lt rgb "dark-violet"
+set style line 2 lw 4 lt rgb "blue"
+set style line 3 lw 4 lt rgb "orange"
+set style line 4 lw 4 lt rgb "red"
+set style line 5 lw 4 lt rgb "black"
+set style line 6 lw 4 lt rgb "#008000" # green
+set style line 7 lw 4 lt rgb "#5F9EA0" # cadet blue
+set style line 8 lw 4 lt rgb "#C71585"
+
+# key font size
+set key font ",2"
 set output "$1"
 
-set key bottom center outside maxrows 2
-set key autotitle columnhead
-#set key samplen 2 width -2
-set key width -2
+set multiplot layout 2,2 title "Performance Relative to Table-Driven Kernels on Selected Models"
+
+set key Left reverse enhanced autotitle columnhead
+set key vertical
+#set key horizontal
+set key at graph 1.23, graph 0.98
+set key maxcols 4 maxrows 2
+set key samplen 1.2 width -1.54
 
 set style data histograms
-set style histogram clustered gap 1
-set style fill solid 1.00 noborder
+set style histogram clustered gap 2
+set style fill solid noborder
+set boxwidth 0.99
 
 set grid noxtics ytics
 
 set yrange [0:]
 set autoscale ymax
-set ytics 0.5
+set ytics 1.0
+set mytics 2
 
 set xtics nomirror rotate by -45
 set ytics mirror norotate
 
-set title "Relative Performance on \\\`$3' Model"
-set ylabel "Normalized Performance" offset 1.5
+set ylabel "Relative Performance"
 set format y "%g\$\\\\times\$"
 
+set title "Big Guy"
+set offset 0, 0, 0.3, 0
 plot \
     newhistogram "CPU Kernels", \
-        "$2" using 2:xtic(1) t col ls 1, \
-        "$2" using 6         t col ls 3, \
-        "$2" using 3         t col ls 2, \
-        "$2" using 8         t col ls 4, \
+        "relative_BigGuy.dat" using 2:xtic(1) t col ls 1, \
+        "" using 6         t col ls 3, \
+        "" using 3         t col ls 2, \
+        "" using 8         t col ls 4, \
     newhistogram "GPU Kernels", \
-        "$2" using 5:xtic(1) t col ls 6, \
-        "$2" using 7         t col ls 7, \
-        "$2" using 4         t col ls 5, \
-        "$2" using 9         t col ls 8
+        "" using 5:xtic(1) t col ls 6, \
+        "" using 7         t col ls 7, \
+        "" using 4         t col ls 5, \
+        "" using 9         t col ls 8
 
+set title "Bunny"
+set offset 0, 0, 0.3, 0
+plot \
+    newhistogram "CPU Kernels", \
+        "relative_Bunny.dat" using 2:xtic(1) t col ls 1, \
+        "" using 6         t col ls 3, \
+        "" using 3         t col ls 2, \
+        "" using 8         t col ls 4, \
+    newhistogram "GPU Kernels", \
+        "" using 5:xtic(1) t col ls 6, \
+        "" using 7         t col ls 7, \
+        "" using 4         t col ls 5, \
+        "" using 9         t col ls 8
+
+set title "Cube"
+set offset 0, 0, 1.0, 0
+plot \
+    newhistogram "CPU Kernels", \
+        "relative_Cube.dat" using 2:xtic(1) t col ls 1, \
+        "" using 6         t col ls 3, \
+        "" using 3         t col ls 2, \
+        "" using 8         t col ls 4, \
+    newhistogram "GPU Kernels", \
+        "" using 5:xtic(1) t col ls 6, \
+        "" using 7         t col ls 7, \
+        "" using 4         t col ls 5, \
+        "" using 9         t col ls 8
+
+set title "Icosahedron"
+set offset 0, 0, 1.0, 0
+plot \
+    newhistogram "CPU Kernels", \
+        "relative_Icosahedron.dat" using 2:xtic(1) t col ls 1, \
+        "" using 6         t col ls 3, \
+        "" using 3         t col ls 2, \
+        "" using 8         t col ls 4, \
+    newhistogram "GPU Kernels", \
+        "" using 5:xtic(1) t col ls 6, \
+        "" using 7         t col ls 7, \
+        "" using 4         t col ls 5, \
+        "" using 9         t col ls 8
 EOF

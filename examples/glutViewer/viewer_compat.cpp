@@ -255,6 +255,7 @@ int   g_freeze = 0,
       g_wire = 0,
       g_drawCoarseMesh = 1,
       g_drawNormals = 0,
+      g_drawOrder = 0,
       g_drawHUD = 1,
       g_mbutton[3] = {0, 0, 0};
 
@@ -269,6 +270,8 @@ float g_rotate[2] = {0, 0},
 int   g_width,
       g_height;
 
+int   g_reorder = false;
+
 // performance
 float g_cpuTime = 0;
 float g_gpuTime = 0;
@@ -279,6 +282,7 @@ float g_alpha= 0.01;
 std::vector<float> g_orgPositions,
                    g_positions,
                    g_normals;
+
 
 Scheme             g_scheme;
 
@@ -509,6 +513,31 @@ const char *getKernelName(int kernel) {
 
 //------------------------------------------------------------------------------
 void
+drawOrder() {
+    float * data=0;
+    int datasize = g_osdmesh->GetTotalVertices() * g_vertexBuffer->GetNumElements();
+
+    data = new float[datasize];
+
+    glBindBuffer(GL_ARRAY_BUFFER, g_vertexBuffer->GetGpuBuffer());
+    glGetBufferSubData(GL_ARRAY_BUFFER,0,datasize*sizeof(float),data);
+
+    glDisable(GL_LIGHTING);
+    glColor3f(1.0f, 0.0f, 0.5f);
+
+    int start = g_osdmesh->GetFarMesh()->GetSubdivision()->GetFirstVertexOffset(g_level) *
+                g_vertexBuffer->GetNumElements();
+
+    glBegin(GL_LINE_STRIP);
+    for (int i=start; i<datasize; i+=6)
+        glVertex3f( data[i], data[i+1], data[i+2] );
+    glEnd();
+
+    delete [] data;
+}
+
+//------------------------------------------------------------------------------
+void
 drawNormals() {
 
     float * data=0;
@@ -585,12 +614,12 @@ drawCoarseMesh(int mode) {
 void
 createOsdMesh( const char * shape, int level, int kernel, Scheme scheme, int exact ) {
     // start timer
-    g_matrixTimer = Stopwatch();
+    //g_matrixTimer = Stopwatch();
     Stopwatch s;
     s.Start();
 
     // generate Hbr representation from "obj" description
-    OpenSubdiv::OsdHbrMesh * hmesh = simpleHbr<OpenSubdiv::OsdVertex>(shape, scheme, g_orgPositions);
+    OpenSubdiv::OsdHbrMesh * hmesh = simpleHbr<OpenSubdiv::OsdVertex>(shape, scheme, g_orgPositions, g_reorder);
 
     g_normals.resize(g_orgPositions.size(),0.0f);
     g_positions.resize(g_orgPositions.size(),0.0f);
@@ -671,12 +700,13 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme, int exa
 
 #if BENCHMARKING
     printf(" ttff=%f",  s.GetTotalElapsed() * 1000.0f);
-    printf(" matrixtime=%f", g_matrixTimer.GetTotalElapsed() * 1000.0f);
+    //printf(" matrixtime=%f", g_matrixTimer.GetTotalElapsed() * 1000.0f);
     printf(" nverts=%d", g_osdmesh->GetFarMesh()->GetSubdivision()->GetNumVertices(level));
     printf(" level=%d", level);
     printf(" kernel=%s", getKernelName(g_kernel));
     printf(" model=%s", g_defaultShapes[ g_currentShape ].name.c_str());
     printf(" exact=%d",  g_exact);
+    printf(" reorder=%d",  g_reorder);
 #endif
 }
 
@@ -717,39 +747,43 @@ display() {
     glTranslatef(-g_center[0], -g_center[1], -g_center[2]);
     glRotatef(-90, 1, 0, 0); // z-up model
 
-    GLuint bVertex = g_vertexBuffer->GetGpuBuffer();
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glBindBuffer(GL_ARRAY_BUFFER, bVertex);
+    if (g_drawOrder) {
+        drawOrder();
+    } else {
+        GLuint bVertex = g_vertexBuffer->GetGpuBuffer();
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glEnableClientState(GL_NORMAL_ARRAY);
+        glBindBuffer(GL_ARRAY_BUFFER, bVertex);
 
-    glVertexPointer(3, GL_FLOAT, sizeof (GLfloat) * 6, 0);
-    glNormalPointer(GL_FLOAT, sizeof (GLfloat) * 6, (float*)12);
+        glVertexPointer(3, GL_FLOAT, sizeof (GLfloat) * 6, 0);
+        glNormalPointer(GL_FLOAT, sizeof (GLfloat) * 6, (float*)12);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_indexBuffer);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_indexBuffer);
 
-    GLenum primType = g_scheme == kLoop ? GL_TRIANGLES : GL_QUADS;
+        GLenum primType = g_scheme == kLoop ? GL_TRIANGLES : GL_QUADS;
 
-    glEnable(GL_LIGHTING);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    if (g_wire > 0) {
-        glDrawElements(primType, g_numIndices, GL_UNSIGNED_INT, NULL);
-    }
-    glDisable(GL_LIGHTING);
-
-    if (g_wire == 0 || g_wire == 2) {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        if (g_wire == 2) {
-            glColor4f(0, 0, 0.5, 1);
-        } else {
-            glColor4f(1, 1, 1, 1);
+        glEnable(GL_LIGHTING);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        if (g_wire > 0) {
+            glDrawElements(primType, g_numIndices, GL_UNSIGNED_INT, NULL);
         }
-        glDrawElements(primType, g_numIndices, GL_UNSIGNED_INT, NULL);
-    }
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
+        glDisable(GL_LIGHTING);
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        if (g_wire == 0 || g_wire == 2) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            if (g_wire == 2) {
+                glColor4f(0, 0, 0.5, 1);
+            } else {
+                glColor4f(1, 1, 1, 1);
+            }
+            glDrawElements(primType, g_numIndices, GL_UNSIGNED_INT, NULL);
+        }
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glDisableClientState(GL_NORMAL_ARRAY);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    }
 
     if (g_drawNormals)
         drawNormals();
@@ -768,8 +802,9 @@ display() {
         drawString(10, 130, "SUBDIVISION = %s", g_scheme==kBilinear ? "BILINEAR" : (g_scheme == kLoop ? "LOOP" : "CATMARK"));
         drawString(10, 150, "AVG VERT/MS = %4.f", g_vertPerMillisec);
         drawString(10, 170, "MODEL = %s", g_defaultShapes[ g_currentShape ].name.c_str());
+        drawString(10, 190, "REORDER = %d", g_reorder);
 #ifdef OPENSUBDIV_HAS_MKL
-        drawString(10, 190, "DUMP SPY = %d", osdSpMVKernel_DumpSpy_FileName != NULL);
+        drawString(10, 210, "DUMP SPY = %d", osdSpMVKernel_DumpSpy_FileName != NULL);
 #endif
 
         drawString(10, g_height-30, "w:   toggle wireframe");
@@ -780,6 +815,8 @@ display() {
         drawString(10, g_height-130, "1-7: subdivision level");
         drawString(10, g_height-150, "space: freeze/unfreeze time");
         drawString(10, g_height-170, "l: toggle exact/approx evaluation");
+        drawString(10, g_height-190, "r: toggle mesh reordering");
+        drawString(10, g_height-210, "c: draw vertex order");
     }
 
     glFinish();
@@ -891,6 +928,7 @@ keyboard(unsigned char key, int x, int y) {
         case 'f': fitFrame(); break;
         case 'm': g_moveScale = 1.0f - g_moveScale; break;
         case 'h': g_drawCoarseMesh = (g_drawCoarseMesh+1)%3; break;
+        case 'c': g_drawOrder = (g_drawOrder+1)%2; break;
         case '1':
         case '2':
         case '3':
@@ -903,6 +941,7 @@ keyboard(unsigned char key, int x, int y) {
         case 'l': exactMenu((g_exact+1)%2); break;
         case 'n': modelMenu(++g_currentShape); break;
         case 'p': modelMenu(--g_currentShape); break;
+	case 'r': g_reorder = (g_reorder+1)%2; levelMenu(g_level); break;
         case 0x1b: g_drawHUD = (g_drawHUD+1)%2; break;
     }
 }
@@ -1060,6 +1099,8 @@ int main(int argc, char ** argv) {
             g_currentShape = atoi(argv[++i]);
         else if (!strcmp(argv[i], "-k") || !strcmp(argv[i], "--kernel"))
             g_kernel = atoi(argv[++i]);
+        else if (!strcmp(argv[i], "-r") || !strcmp(argv[i], "--reorder"))
+            g_reorder = 1;
 #ifdef OPENSUBDIV_HAS_MKL
         else if (!strcmp(argv[i], "-s") || !strcmp(argv[i], "--spy"))
             osdSpMVKernel_DumpSpy_FileName = argv[++i];
