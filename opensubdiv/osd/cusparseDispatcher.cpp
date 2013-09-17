@@ -96,7 +96,7 @@ CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve) :
 
     int job[] = {
         2, // job(1)=2 (coo->csr with sorting)
-        1, // job(2)=1 (zero-based indexing for csr matrix)
+        1, // job(2)=1 (one-based indexing for csr matrix)
         1, // job(3)=1 (one-based indexing for coo matrix)
         0, // empty
         nnz, // job(5)=nnz (sets nnz for csr matrix)
@@ -152,11 +152,14 @@ CudaCsrMatrix::logical_spmv(float *d_out, float* d_in, float *h_in) {
             ell_k, ell_cols, ell_vals,
             d_in, d_out, computeStream);
 
+        memset(h_csr_scratch, 0, m*sizeof(float));
         // launch cpu portion - synchronous
         nvtxRangePushA("logical_spmv_csr_cpu");
+#if 0
         LogicalSpMV_csr_cpu(m, n, csr_nnz,
             csr_vals, csr_colInds, csr_rowPtrs,
             h_in, h_csr_scratch);
+#endif
         nvtxRangePop();
 
         // copy cpu results to gpu - asynchronous
@@ -339,30 +342,26 @@ CudaCsrMatrix::ellize(bool hybridize) {
 
     if (this->hybrid = hybridize) {
 
-        csr_nnz = h_coo_vals.size();
+        csr_nnz = coo_nnz;
         csr_rowPtrs = (int*) mkl_malloc((m+1)*sizeof(float), 16);
         csr_colInds = (int*) mkl_malloc(csr_nnz*sizeof(float), 16);
         csr_vals = (float*) mkl_malloc(csr_nnz*sizeof(float), 16);
 
-        int mkl_job[6] = {
+        int job[] = {
             2, // coo -> csr with sorting
             0, // zero-based indexing for csr
             0, // zero-based indexing for coo
+            0, // empty
             csr_nnz, // nnz
-            3 // all output arrays filled
+            0 // all output arrays filled
         };
-        int mkl_n = m;
-        float *mkl_acsr = csr_vals;
-        int *mkl_ja = csr_colInds;
-        int *mkl_ia = csr_rowPtrs;
-        int mkl_nnz;
-        float *mkl_acoo = &h_coo_vals[0];
-        int *mkl_colind = &h_coo_cols[0];
-        int *mkl_rowind = &h_coo_rows[0];
-        int mkl_info;
+        float *acoo = &h_coo_vals[1];
+        int *colind = &h_coo_cols[1];
+        int *rowind = &h_coo_rows[1];
+        int info;
 
-        mkl_scsrcoo(mkl_job, &mkl_n, mkl_acsr, mkl_ja, mkl_ia, &mkl_nnz, mkl_acoo, mkl_rowind, mkl_colind, &mkl_info);
-        assert(mkl_info == 0);
+        mkl_scsrcoo(job, &m, csr_vals, csr_colInds, csr_rowPtrs, &csr_nnz, acoo, rowind, colind, &info);
+        assert(info == 0);
 
         // allocate scratch space
         cudaMalloc(&d_csr_scratch, m*sizeof(float));
@@ -370,13 +369,13 @@ CudaCsrMatrix::ellize(bool hybridize) {
 
     } else {
         int coo_lda = coo_nnz + ((512/sizeof(float)) - (coo_nnz % (512/sizeof(float))));
-        cudaMalloc(&coo_rows, h_coo_rows.size() * sizeof(int));
-        cudaMalloc(&coo_cols, h_coo_cols.size() * sizeof(int));
-        cudaMalloc(&coo_vals, h_coo_vals.size() * sizeof(float));
+        cudaMalloc(&coo_rows, coo_nnz * sizeof(int));
+        cudaMalloc(&coo_cols, coo_nnz * sizeof(int));
+        cudaMalloc(&coo_vals, coo_nnz * sizeof(float));
         cudaMalloc(&coo_scratch, coo_lda*6*sizeof(float));
-        cudaMemcpy(coo_rows, &h_coo_rows[0], h_coo_rows.size() * sizeof(int),   cudaMemcpyHostToDevice);
-        cudaMemcpy(coo_cols, &h_coo_cols[0], h_coo_cols.size() * sizeof(int),   cudaMemcpyHostToDevice);
-        cudaMemcpy(coo_vals, &h_coo_vals[0], h_coo_vals.size() * sizeof(float), cudaMemcpyHostToDevice);
+        cudaMemcpy(coo_rows, &h_coo_rows[1], coo_nnz * sizeof(int),   cudaMemcpyHostToDevice);
+        cudaMemcpy(coo_cols, &h_coo_cols[1], coo_nnz * sizeof(int),   cudaMemcpyHostToDevice);
+        cudaMemcpy(coo_vals, &h_coo_vals[1], coo_nnz * sizeof(float), cudaMemcpyHostToDevice);
     }
 
     // allocate streams
