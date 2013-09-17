@@ -78,6 +78,8 @@
 #define snprintf _snprintf
 #endif
 
+#pragma GCC diagnostic ignored "-Wformat-security"
+
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
