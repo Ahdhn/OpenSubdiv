@@ -94,6 +94,8 @@ public:
 
     virtual void Unmap() { }
 
+    float *h_data;
+
 protected:
     int _numElements;
 };

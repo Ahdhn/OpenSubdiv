@@ -20,19 +20,19 @@ extern "C" {
 extern "C" {
 
 void
-OsdTranspose(float *odata, float *idata, int m, int n);
+OsdTranspose(float *odata, float *idata, int m, int n, cudaStream_t& stream);
 
 void
-LogicalSpMV_ell_gpu(int m, int n, int k, int *ell_cols, float *ell_vals, float *v_in, float *v_out);
+LogicalSpMV_ell_gpu(int m, int n, int k, int *ell_cols, float *ell_vals, float *v_in, float *v_out, cudaStream_t& stream);
 
 void
-LogicalSpMV_coo_gpu(int m, int n, int coo_nnz, int *coo_rows, int *coo_cols, float *coo_vals, float *coo_scratch, float *v_in, float *v_out);
+LogicalSpMV_coo_gpu(int m, int n, int coo_nnz, int *coo_rows, int *coo_cols, float *coo_vals, float *coo_scratch, float *v_in, float *v_out, cudaStream_t& stream);
 
 void
-LogicalSpMV_csr(int m, int n, int k, int *rows, int *cols, float *vals, float *v_in, float *v_out);
+LogicalSpMV_csr(int m, int n, int k, int *rows, int *cols, float *vals, float *v_in, float *v_out, cudaStream_t& stream);
 
 // v0 += v1
-void vvadd(int nelems, float *v0, float *v1);
+void vvadd(int nelems, float *v0, float *v1, cudaStream_t& stream);
 
 }
 
@@ -143,42 +143,38 @@ CudaCsrMatrix::NumBytes() {
 }
 
 void
-CudaCsrMatrix::logical_spmv(float *d_out, float* d_in) {
+CudaCsrMatrix::logical_spmv(float *d_out, float* d_in, float *h_in) {
     if (hybrid) {
 
-        // h_out in h_csr_scratch
-        // XXX find h_in on cpu
-        float *h_in = (float*) mkl_malloc(n*sizeof(float), 16);
-        cudaMemcpy(&h_in[0], &d_in[0], n*sizeof(float), cudaMemcpyDeviceToHost);
-
-        // launch gpu portion
+        // launch gpu portion - asynchronous
         LogicalSpMV_ell_gpu(m, n,
             ell_k, ell_cols, ell_vals,
-            d_in, d_out);
+            d_in, d_out, computeStream);
 
-        // launch cpu portion
+        // launch cpu portion - synchronous
         LogicalSpMV_csr_cpu(m, n, csr_nnz,
             csr_vals, csr_colInds, csr_rowPtrs,
             h_in, h_csr_scratch);
 
-        // copy cpu results to gpu
-        cudaMemcpy(d_csr_scratch, h_csr_scratch, m*sizeof(float), cudaMemcpyHostToDevice); // must do this one
+        // copy cpu results to gpu - asynchronous
+        cudaMemcpyAsync(d_csr_scratch, h_csr_scratch, m*sizeof(float), cudaMemcpyHostToDevice, memStream);
 
         // wait for gpu results
-        cudaDeviceSynchronize();
+        cudaStreamSynchronize(memStream);
+        cudaStreamSynchronize(computeStream);
 
         // combine results
-        vvadd(m, d_out, d_csr_scratch);
+        vvadd(m, d_out, d_csr_scratch, computeStream);
 
     } else {
 
         // two gpu kernels
         LogicalSpMV_ell_gpu(m, n,
             ell_k, ell_cols, ell_vals,
-            d_in, d_out);
+            d_in, d_out, computeStream);
         LogicalSpMV_coo_gpu(m, n,
             coo_nnz, coo_rows, coo_cols, coo_vals, coo_scratch,
-            d_in, d_out);
+            d_in, d_out, computeStream);
 
     }
 }
@@ -199,14 +195,14 @@ CudaCsrMatrix::spmv(float *d_out, float* d_in) {
 
     g_matrixTimer.Start();
     {
-        OsdTranspose(d_in_scratch, d_in, csp_ldb, nve);
+        OsdTranspose(d_in_scratch, d_in, csp_ldb, nve, computeStream);
 
         status = cusparseScsrmm(handle, op, csp_m, csp_n, csp_k, csp_nnz,
                 &alpha, desc, vals, rows, cols, d_in_scratch, csp_ldb,
                 &beta, d_out_scratch, csp_ldc);
         cusparseCheckStatus(status);
 
-        OsdTranspose(d_out, d_out_scratch, nve, csp_ldc);
+        OsdTranspose(d_out, d_out_scratch, nve, csp_ldc, computeStream);
     }
     g_matrixTimer.Stop();
 }
@@ -367,7 +363,7 @@ CudaCsrMatrix::ellize(bool hybridize) {
 
         // allocate scratch space
         cudaMalloc(&d_csr_scratch, m*sizeof(float));
-        h_csr_scratch = (float*) mkl_malloc(m*sizeof(float), 16);
+        cudaMallocHost(&h_csr_scratch, m*sizeof(float));
 
     } else {
         int coo_lda = coo_nnz + ((512/sizeof(float)) - (coo_nnz % (512/sizeof(float))));
@@ -379,6 +375,10 @@ CudaCsrMatrix::ellize(bool hybridize) {
         cudaMemcpy(coo_cols, &h_coo_cols[0], h_coo_cols.size() * sizeof(int),   cudaMemcpyHostToDevice);
         cudaMemcpy(coo_vals, &h_coo_vals[0], h_coo_vals.size() * sizeof(float), cudaMemcpyHostToDevice);
     }
+
+    // allocate streams
+    cudaStreamCreate( &memStream );
+    cudaStreamCreate( &computeStream );
 }
 
 OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher(int levels, bool logical, bool hybrid) :
@@ -427,7 +427,7 @@ OsdCusparseKernelDispatcher::Register() {
 void
 OsdCusparseKernelDispatcher::Synchronize()
 {
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
 }
 
 } // end namespace OPENSUBDIV_VERSION

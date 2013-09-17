@@ -7,6 +7,7 @@
 #include "../osd/mklDispatcher.h"
 
 #include <cusparse_v2.h>
+#include <cuda_runtime.h>
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
@@ -27,7 +28,7 @@ public:
     CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve=1);
     virtual ~CudaCsrMatrix();
     void spmv(float* d_out, float* d_in);
-    void logical_spmv(float* d_out, float* d_in);
+    void logical_spmv(float* d_out, float* d_in, float* h_data);
     virtual CudaCsrMatrix* gemm(CudaCsrMatrix* rhs);
     virtual int NumBytes();
     void ellize(bool hybridize);
@@ -54,6 +55,7 @@ public:
     float *csr_vals;
     int *csr_rowPtrs, *csr_colInds;
     float *h_csr_scratch, *d_csr_scratch;
+    cudaStream_t memStream, computeStream;
 
     // scratch space for tranposes of input and output vectors
     float *d_in_scratch, *d_out_scratch;

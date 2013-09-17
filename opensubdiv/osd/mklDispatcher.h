@@ -38,7 +38,7 @@ public:
     virtual ~CpuCsrMatrix();
 
     virtual void spmv(float* d_out, float* d_in);
-    virtual void logical_spmv(float* d_out, float* d_in);
+    virtual void logical_spmv(float* d_out, float* d_in, float* h_data);
     virtual CpuCsrMatrix* gemm(CpuCsrMatrix* rhs);
     virtual void dump(std::string ofilename);
 };

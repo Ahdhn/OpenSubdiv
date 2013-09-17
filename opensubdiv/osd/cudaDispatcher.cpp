@@ -89,6 +89,8 @@ OsdCudaVertexBuffer::OsdCudaVertexBuffer(int numElements, int numVertices) :
 
     // register vbo as cuda resource
     cudaGraphicsGLRegisterBuffer(&_cudaResource, _vbo, cudaGraphicsMapFlagsNone);
+
+    h_data = (float*) malloc(numElements * numVertices * sizeof(float));
 }
 
 void
@@ -97,6 +99,8 @@ OsdCudaVertexBuffer::UpdateData(const float *src, int numVertices) {
     void *dst = Map();
     cudaMemcpy(dst, src, _numElements * numVertices * sizeof(float), cudaMemcpyHostToDevice);
     Unmap();
+
+    memcpy(h_data, src, _numElements * numVertices * sizeof(float));
 }
 
 void *
