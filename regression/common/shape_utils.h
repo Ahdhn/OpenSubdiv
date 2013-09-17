@@ -145,6 +145,8 @@ shape::~shape() {
 }
 
 //------------------------------------------------------------------------------
+#ifdef OPENSUBDIV_HAS_OPENCCL
+
 #include "OpenCCL.h"
 void
 shape::reorder() {
@@ -187,6 +189,15 @@ shape::reorder() {
       printf(" reorder_check=1");
 #endif
 }
+
+#else /* no OPENSUBDIV_HAS_OPENCCL */
+
+void
+shape::reorder() {
+    assert(!"Compiled without support for reordering.");
+}
+
+#endif /* OPENSUBDIV_HAS_OPENCCL */
 
 //------------------------------------------------------------------------------
 shape::tag * shape::tag::parseTag(char const * line) {
