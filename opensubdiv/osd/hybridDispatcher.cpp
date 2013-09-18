@@ -304,8 +304,8 @@ HybridCsrMatrix::ellize() {
     cudaMemcpy(ell_vals, &h_ell_vals[0], h_ell_vals.size() * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(ell_cols, &h_ell_cols[0], h_ell_cols.size() * sizeof(int),   cudaMemcpyHostToDevice);
 
-    cudaStreamCreate(&memStream);
-    cudaStreamCreate(&computeStream);
+    cudaStreamCreateWithFlags(&memStream, cudaStreamNonBlocking);
+    cudaStreamCreateWithFlags(&computeStream, cudaStreamNonBlocking);
 }
 
 OsdHybridKernelDispatcher::OsdHybridKernelDispatcher(int levels) :
