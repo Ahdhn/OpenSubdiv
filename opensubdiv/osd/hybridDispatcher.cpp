@@ -19,6 +19,8 @@ extern "C" {
 
 #include <omp.h>
 
+int g_HybridSplitParam = -1;
+
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
@@ -218,8 +220,11 @@ HybridCsrMatrix::ellize() {
         cdf[i] = histogram[i] + cdf[i+1];
 
     int k = 16;
-    while ( cdf[k] > std::max(4096, m/3) && k < 39)
-        k++;
+    if (g_HybridSplitParam != -1)
+        k = g_HybridSplitParam;
+    else
+        while ( cdf[k] > std::max(4096, m/3) && k < 39)
+            k++;
 
     int lda = m + ((512/sizeof(float)) - (m % (512/sizeof(float))));
     std::vector<float> h_ell_vals(lda*k, 0.0f);

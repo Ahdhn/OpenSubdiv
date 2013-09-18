@@ -124,6 +124,7 @@ std::vector<SimpleShape> g_defaultShapes;
 Stopwatch g_totalTime;
 int g_currentShape = 0;
 
+extern int g_HybridSplitParam;
 
 void
 initializeShapes( ) {
@@ -711,6 +712,7 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme, int exa
     printf(" model=%s", g_defaultShapes[ g_currentShape ].name.c_str());
     printf(" exact=%d",  g_exact);
     printf(" reorder=%d",  g_reorder);
+    printf(" divider=%d",  g_HybridSplitParam);
 #endif
 }
 
@@ -810,6 +812,7 @@ display() {
 #ifdef OPENSUBDIV_HAS_MKL
         drawString(10, 210, "DUMP SPY = %d", osdSpMVKernel_DumpSpy_FileName != NULL);
 #endif
+        drawString(10, 230, "DIVIDER = %d", g_HybridSplitParam);
 
         drawString(10, g_height-30, "w:   toggle wireframe");
         drawString(10, g_height-50, "e:   display normal vector");
@@ -1109,6 +1112,8 @@ int main(int argc, char ** argv) {
             g_kernel = atoi(argv[++i]);
         else if (!strcmp(argv[i], "-r") || !strcmp(argv[i], "--reorder"))
             g_reorder = 1;
+        else if (!strcmp(argv[i], "-d") || !strcmp(argv[i], "--divide"))
+            g_HybridSplitParam = atoi(argv[++i]);
 #ifdef OPENSUBDIV_HAS_MKL
         else if (!strcmp(argv[i], "-s") || !strcmp(argv[i], "--spy"))
             osdSpMVKernel_DumpSpy_FileName = argv[++i];
