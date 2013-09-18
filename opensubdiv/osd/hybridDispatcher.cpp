@@ -117,9 +117,10 @@ HybridCsrMatrix::logical_spmv(float *d_out, float* d_in, float *h_in) {
     LogicalSpMV_ell0_gpu(m, n, ell_k, ell_cols, ell_vals, d_in, d_out, computeStream);
 
     // compute CSR portion - synchronous
-    nvtxRangePushA("logical_spmv_csr_cpu");
+    nvtxRangePushA("logical_spmv_cpu");
     {
-        LogicalSpMV_csr0_cpu(m, &h_csr_rowPtrs[0], &h_csr_colInds[0], &h_csr_vals[0], &h_in[0], &h_out[0]);
+        //LogicalSpMV_csr0_cpu(m, &h_csr_rowPtrs[0], &h_csr_colInds[0], &h_csr_vals[0], &h_in[0], &h_out[0]);
+        LogicalSpMV_coo0_cpu(&h_coo_schedule[0], &h_coo_rowInds[0], &h_coo_colInds[0], &h_coo_vals[0], &h_in[0], &h_out[0]);
     }
     nvtxRangePop();
 
@@ -233,6 +234,10 @@ HybridCsrMatrix::ellize() {
     h_csr_colInds.clear(); h_csr_colInds.reserve(nnz/4);
     h_csr_vals.clear();    h_csr_vals.reserve(nnz/4);
 
+    h_coo_rowInds.clear(); h_coo_rowInds.reserve(nnz/4);
+    h_coo_colInds.clear(); h_coo_colInds.reserve(nnz/4);
+    h_coo_vals.clear();    h_coo_vals.reserve(nnz/4);
+
     cudaMallocHost(&h_out, m*nve*sizeof(float));
     memset(h_out, 0, m*nve*sizeof(float));
 
@@ -254,6 +259,10 @@ HybridCsrMatrix::ellize() {
             h_csr_colInds.push_back(col);
             h_csr_vals.push_back(val);
 
+            h_coo_rowInds.push_back(i);
+            h_coo_colInds.push_back(col);
+            h_coo_vals.push_back(val);
+
             assert( 0 <= row && row < nnz);
             assert( 0 <= col && col < n );
         }
@@ -265,6 +274,23 @@ HybridCsrMatrix::ellize() {
 #if BENCHMARKING
     printf(" irreg=%d m=%d k=%d", (int) h_csr_vals.size(), m, k);
 #endif
+
+    // build schedule for cpu coo evaluation
+    int nThreads = omp_get_max_threads();
+    int cooNnzPerThread = h_coo_vals.size() / nThreads;
+    h_coo_schedule.resize(nThreads+1);
+    h_coo_schedule[0] = 0;
+    int thisThreadNnz = 0;
+    for (int i = 1; i < nThreads; i++) {
+        int cooIndex = i*cooNnzPerThread;
+        // advance the index until we have our own row
+        // XXX doesn't handle every possible matrix
+        while (h_coo_rowInds[cooIndex-1] == h_coo_rowInds[cooIndex])
+            cooIndex++;
+        h_coo_schedule[i] = cooIndex;
+
+    }
+    h_coo_schedule[nThreads] = h_coo_vals.size();
 
     ell_k = k;
     cudaMalloc(&ell_vals, h_ell_vals.size() * sizeof(float));

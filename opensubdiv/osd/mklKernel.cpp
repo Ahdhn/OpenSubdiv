@@ -97,3 +97,49 @@ void LogicalSpMV_csr0_cpu(int m, int *rowPtrs, int *colInds, float *vals, float 
     int bytes = m*sizeof(int) + rowPtrs[m]*(sizeof(int)*sizeof(float)) + 6*m*sizeof(float);
     printf("\n LogicalSpMV_csr0_cpu ran at %f GB/s\n", bytes / 1024.0 / 1024.0 / 1024.0 / duration);
 }
+
+void LogicalSpMV_coo0_cpu(int *schedule, int *rowInds, int *colInds, float *vals, float *d_in, float *d_out) {
+
+    omp_set_num_threads( omp_get_num_procs() );
+
+    double start = omp_get_wtime();
+
+    #pragma omp parallel
+    {
+        int rank = omp_get_thread_num();
+        int start_nnz = schedule[rank];
+        int end_nnz = schedule[rank+1];
+
+        register __m128
+            out03v = _mm_setzero_ps(),
+            out45v = _mm_setzero_ps();
+
+        int row = rowInds[start_nnz];
+        for (int i = start_nnz; i < end_nnz; i++) {
+            int col = colInds[i];
+            int val = vals[i];
+
+            register __m128 ignore,
+                in03v = _mm_loadu_ps(                        &d_in[col*6+0] ),
+                in45v = _mm_loadl_pi( ignore, (const __m64*) &d_in[col*6+4] ),
+                weightv = _mm_load1_ps( &vals[i] );
+
+            out03v = _mm_add_ps(out03v, _mm_mul_ps(weightv, in03v));
+            out45v = _mm_add_ps(out45v, _mm_mul_ps(weightv, in45v));
+
+            int next_row = rowInds[i+1];
+            if (row != next_row || i+1 == end_nnz) {
+                _mm_storeu_ps(          &d_out[row*6+0], out03v );
+                _mm_storel_pi( (__m64*) &d_out[row*6+4], out45v );
+                out03v = _mm_setzero_ps();
+                out45v = _mm_setzero_ps();
+            }
+            row = next_row;
+        }
+    }
+
+    double duration = omp_get_wtime() - start;
+    int bytes = schedule[omp_get_max_threads()]*(2*sizeof(int) + sizeof(float) + 6*2*sizeof(float));
+    printf("\n LogicalSpMV_coo0_cpu ran at %f GB/s\n", bytes / 1024.0 / 1024.0 / 1024.0 / duration);
+}
+
