@@ -60,6 +60,8 @@ void LogicalSpMV_csr1_cpu(int m, int *rowPtrs, int *colInds, float *vals, float 
 
 void LogicalSpMV_csr0_cpu(int m, int *rowPtrs, int *colInds, float *vals, float *d_in, float *d_out) {
 
+    omp_set_num_threads( omp_get_num_procs() );
+
     double start = omp_get_wtime();
     #pragma omp parallel for
     for (int i = 0; i < m; i++) {
@@ -93,9 +95,11 @@ void LogicalSpMV_csr0_cpu(int m, int *rowPtrs, int *colInds, float *vals, float 
         }
     }
 
+#if 0
     double duration = omp_get_wtime() - start;
     int bytes = m*sizeof(int) + rowPtrs[m]*(sizeof(int)*sizeof(float)) + 6*m*sizeof(float);
     printf("\n LogicalSpMV_csr0_cpu ran at %f GB/s\n", bytes / 1024.0 / 1024.0 / 1024.0 / duration);
+#endif
 }
 
 void LogicalSpMV_coo0_cpu(int *schedule, int *rowInds, int *colInds, float *vals, float *d_in, float *d_out) {
@@ -138,8 +142,10 @@ void LogicalSpMV_coo0_cpu(int *schedule, int *rowInds, int *colInds, float *vals
         }
     }
 
+#if 0
     double duration = omp_get_wtime() - start;
     int bytes = schedule[omp_get_max_threads()]*(2*sizeof(int) + sizeof(float) + 6*2*sizeof(float));
     printf("\n LogicalSpMV_coo0_cpu ran at %f GB/s\n", bytes / 1024.0 / 1024.0 / 1024.0 / duration);
+#endif
 }
 
