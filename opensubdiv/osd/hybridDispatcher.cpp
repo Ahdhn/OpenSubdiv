@@ -17,6 +17,8 @@ extern "C" {
 #include <cuda_gl_interop.h>
 #include <nvToolsExt.h>
 
+#include <omp.h>
+
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
@@ -117,29 +119,7 @@ HybridCsrMatrix::logical_spmv(float *d_out, float* d_in, float *h_in) {
     // compute CSR portion - synchronous
     nvtxRangePushA("logical_spmv_csr_cpu");
     {
-#if 0
-        LogicalSpMV_csr1_cpu(m, &h_csr_rowPtrs[0], &h_csr_colInds[0], &h_csr_vals[0], &h_in[0], &h_out[0]);
-#else
-        char *mkl_transa = (char*) "N";
-        int mkl_m = m,
-            mkl_n = nve,
-            mkl_k = n;
-        float mkl_alpha = 1.0f;
-        char *mkl_matdesrca = (char*) "G__C__";
-        float *mkl_val = &h_csr_vals[0];
-        int *mkl_indx = &h_csr_colInds[0],
-            *mkl_pntrb = &h_csr_rowPtrs[0],
-            *mkl_pntre = &h_csr_rowPtrs[1];
-        float *mkl_b = h_in;
-        int mkl_ldb = nve;
-        float mkl_beta = 0.0f;
-        float *mkl_c = h_out;
-        int mkl_ldc = nve;
-
-        mkl_scsrmm(mkl_transa, &mkl_m, &mkl_n, &mkl_k, &mkl_alpha,
-                mkl_matdesrca, mkl_val, mkl_indx, mkl_pntrb, mkl_pntre,
-                mkl_b, &mkl_ldb, &mkl_beta, mkl_c, &mkl_ldc);
-#endif
+        LogicalSpMV_csr0_cpu(m, &h_csr_rowPtrs[0], &h_csr_colInds[0], &h_csr_vals[0], &h_in[0], &h_out[0]);
     }
     nvtxRangePop();
 
@@ -221,6 +201,9 @@ HybridCsrMatrix::dump(std::string ofilename) {
 
 void
 HybridCsrMatrix::ellize() {
+
+    omp_set_num_threads( omp_get_num_procs() );
+
     std::vector<float> h_full_vals(nnz);
     std::vector<int> h_full_rows(m+1);
     std::vector<int> h_full_cols(nnz);
@@ -280,7 +263,7 @@ HybridCsrMatrix::ellize() {
     assert(h_csr_rowPtrs.size() == m+1);
 
 #if BENCHMARKING
-    printf(" irreg=%d k=%d", (int) h_csr_vals.size(), k);
+    printf(" irreg=%d m=%d k=%d", (int) h_csr_vals.size(), m, k);
 #endif
 
     ell_k = k;
