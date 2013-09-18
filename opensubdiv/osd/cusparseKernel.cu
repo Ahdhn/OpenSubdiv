@@ -262,16 +262,16 @@ extern "C" {
 #include <cusparse_v2.h>
 
 void
-OsdTranspose(float *odata, float *idata, int m, int n) {
+OsdTranspose(float *odata, float *idata, int m, int n, cudaStream_t& stream) {
     int nBlocks = (m*n + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    transpose<<<nBlocks,THREADS_PER_BLOCK>>>(odata, idata, m, n);
+    transpose<<<nBlocks,THREADS_PER_BLOCK,0,stream>>>(odata, idata, m, n);
 }
 
 void
-LogicalSpMV_ell0_gpu(int m, int n, int k, int *ell_cols, float *ell_vals, float *v_in, float *v_out) {
+LogicalSpMV_ell0_gpu(int m, int n, int k, int *ell_cols, float *ell_vals, float *v_in, float *v_out, cudaStream_t& stream) {
 
     int nBlocks = (m + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    logical_spmv_ell_kernel<<<nBlocks,THREADS_PER_BLOCK>>>
+    logical_spmv_ell_kernel<<<nBlocks,THREADS_PER_BLOCK,0,stream>>>
         (m, n, k, ell_cols, ell_vals, v_in, v_out);
 }
 
@@ -304,9 +304,9 @@ LogicalSpMV_csr(int m, int n, int k, int *rows, int *cols, float *vals, float *v
 }
 
 void
-vvadd(float *d, float *e, int n) {
+vvadd(float *d, float *e, int n, cudaStream_t& stream) {
     int nBlocks = (n + VVADD_THREADS_PER_BLOCK - 1) / VVADD_THREADS_PER_BLOCK;
-    vvadd_kernel<<<nBlocks,VVADD_THREADS_PER_BLOCK>>>(d, e, n);
+    vvadd_kernel<<<nBlocks,VVADD_THREADS_PER_BLOCK,0,stream>>>(d, e, n);
 }
 
 } /* extern C */

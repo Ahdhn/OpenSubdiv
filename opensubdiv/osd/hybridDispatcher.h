@@ -8,6 +8,7 @@
 #include "../osd/hybridDispatcher.h"
 
 #include <cusparse_v2.h>
+#include <cuda_runtime.h>
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
@@ -52,7 +53,9 @@ public:
 
     // scratch space for tranposes of input and output vectors
     float *d_in_scratch, *d_out_scratch;
-    std::vector<float> h_out;
+    float *h_out;
+
+    cudaStream_t memStream, computeStream;
 };
 
 class OsdHybridKernelDispatcher :

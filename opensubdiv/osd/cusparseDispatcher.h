@@ -7,14 +7,15 @@
 #include "../osd/mklDispatcher.h"
 
 #include <cusparse_v2.h>
+#include <cuda_runtime.h>
 
 extern "C" {
 
 void
-OsdTranspose(float *odata, float *idata, int m, int n);
+OsdTranspose(float *odata, float *idata, int m, int n, cudaStream_t& stream);
 
 void
-LogicalSpMV_ell0_gpu(int m, int n, int k, int *ell_cols, float *ell_vals, float *v_in, float *v_out);
+LogicalSpMV_ell0_gpu(int m, int n, int k, int *ell_cols, float *ell_vals, float *v_in, float *v_out, cudaStream_t& stream);
 
 void
 LogicalSpMV_coo0_gpu(int m, int n, int coo_nnz, int *coo_rows, int *coo_cols, float *coo_vals, float *coo_scratch, float *v_in, float *v_out);
@@ -24,7 +25,7 @@ LogicalSpMV_csr(int m, int n, int k, int *rows, int *cols, float *vals, float *v
 
 // d += e
 void
-vvadd(float *d, float *e, int n);
+vvadd(float *d, float *e, int n, cudaStream_t& stream);
 
 }
 
@@ -72,6 +73,8 @@ public:
 
     // scratch space for tranposes of input and output vectors
     float *d_in_scratch, *d_out_scratch;
+
+    cudaStream_t memStream, computeStream;
 };
 
 class OsdCusparseKernelDispatcher :

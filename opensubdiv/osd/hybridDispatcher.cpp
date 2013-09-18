@@ -107,40 +107,27 @@ HybridCsrMatrix::NumBytes() {
 
 void
 HybridCsrMatrix::logical_spmv(float *d_out, float* d_in, float *h_in) {
-    LogicalSpMV_ell0_gpu(m, n, ell_k, ell_cols, ell_vals, d_in, d_out);
+
+    // compute ELL portion - asynchronous
+    LogicalSpMV_ell0_gpu(m, n, ell_k, ell_cols, ell_vals, d_in, d_out, computeStream);
+
+    // compute CSR portion - synchronous
     //LogicalSpMV_csr1_cpu(m, &h_rowPtrs[0], &h_colInds[0], &h_vals[0], &h_in[0], &h_out[0]);
 
-    cudaMemcpy(d_csr_out, &h_out[0], h_out.size()*sizeof(float), cudaMemcpyHostToDevice);
+    // copy CSR results to GPU - asynchronous
+    cudaMemcpyAsync(d_csr_out, h_out, m*nve*sizeof(float), cudaMemcpyHostToDevice, memStream);
 
-    vvadd(d_out, d_csr_out, m*nve);
+    // wait for CSR/ELL updates to be in place
+    cudaStreamSynchronize(memStream);
+    cudaStreamSynchronize(computeStream);
+
+    // combine CSR/ELL results
+    vvadd(d_out, d_csr_out, m*nve, computeStream);
 }
 
 void
 HybridCsrMatrix::spmv(float *d_out, float* d_in) {
-    cusparseStatus_t status;
-    cusparseOperation_t op = CUSPARSE_OPERATION_NON_TRANSPOSE;
-    float alpha = 1.0,
-          beta = 0.0;
-
-    int csp_m = m,
-        csp_n = nve,
-        csp_k = n,
-        csp_nnz = nnz,
-        csp_ldb = csp_k,
-        csp_ldc = csp_m;
-
-    g_matrixTimer.Start();
-    {
-        OsdTranspose(d_in_scratch, d_in, csp_ldb, nve);
-
-        status = cusparseScsrmm(handle, op, csp_m, csp_n, csp_k, csp_nnz,
-                &alpha, desc, vals, rows, cols, d_in_scratch, csp_ldb,
-                &beta, d_out_scratch, csp_ldc);
-        cusparseCheckStatus(status);
-
-        OsdTranspose(d_out, d_out_scratch, nve, csp_ldc);
-    }
-    g_matrixTimer.Stop();
+    assert(!"Not implemented.");
 }
 
 HybridCsrMatrix*
@@ -233,7 +220,8 @@ HybridCsrMatrix::ellize() {
     h_vals.clear();
     h_rowPtrs.clear();
     h_colInds.clear();
-    h_out.resize(m*nve*sizeof(float), 0.0);
+    cudaMallocHost(&h_out, m*nve*sizeof(float));
+    memset(h_out, 0, m*nve*sizeof(float));
 
     for (int i = 0; i < m; i++) {
         int j, z;
@@ -255,7 +243,7 @@ HybridCsrMatrix::ellize() {
     h_rowPtrs.push_back(h_vals.size());
 
 #if BENCHMARKING
-    printf(" irreg=%d k=%d", h_vals.size(), k);
+    printf(" irreg=%d k=%d", (int) h_vals.size(), k);
 #endif
 
     ell_k = k;
@@ -265,6 +253,9 @@ HybridCsrMatrix::ellize() {
     cudaMemcpy(ell_cols, &h_ell_cols[0], h_ell_cols.size() * sizeof(int),   cudaMemcpyHostToDevice);
 
     cudaMalloc(&d_csr_out, m * nve * sizeof(float));
+
+    cudaStreamCreate(&memStream);
+    cudaStreamCreate(&computeStream);
 }
 
 OsdHybridKernelDispatcher::OsdHybridKernelDispatcher(int levels) :
