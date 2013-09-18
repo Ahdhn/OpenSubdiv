@@ -16,10 +16,8 @@ __global__ void
 vvadd_kernel(float *d, float *e, int n)
 {
     int tid = threadIdx.x + blockIdx.x*blockDim.x;
-    if (tid >= n)
-        return;
-
-    d[tid] += e[tid];
+    if (tid < n)
+        d[tid] += e[tid];
 }
 
 __global__ void

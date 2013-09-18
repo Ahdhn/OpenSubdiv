@@ -46,9 +46,9 @@ public:
     int ell_k;
 
     // CSR data
-    std::vector<float> h_vals;
-    std::vector<int>   h_rowPtrs,
-                       h_colInds;
+    std::vector<float> h_csr_vals;
+    std::vector<int>   h_csr_rowPtrs,
+                       h_csr_colInds;
     float *d_csr_out;
 
     // scratch space for tranposes of input and output vectors

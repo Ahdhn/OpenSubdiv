@@ -15,6 +15,7 @@ extern "C" {
 
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
+#include <nvToolsExt.h>
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
@@ -100,7 +101,9 @@ HybridCsrMatrix::HybridCsrMatrix(const HybridCooMatrix* StagedOp, int nve) :
 int
 HybridCsrMatrix::NumBytes() {
     if (ell_k != 0)
-        return m*ell_k*(sizeof(float)+sizeof(int)) + h_vals.size()*(2*sizeof(int) + sizeof(float));
+        return m*ell_k*(sizeof(float)+sizeof(int)) +
+               h_csr_rowPtrs.size()*sizeof(int) +
+               h_csr_vals.size()*(sizeof(int) + sizeof(float));
     else
         return this->CsrMatrix::NumBytes();
 }
@@ -112,7 +115,33 @@ HybridCsrMatrix::logical_spmv(float *d_out, float* d_in, float *h_in) {
     LogicalSpMV_ell0_gpu(m, n, ell_k, ell_cols, ell_vals, d_in, d_out, computeStream);
 
     // compute CSR portion - synchronous
-    //LogicalSpMV_csr1_cpu(m, &h_rowPtrs[0], &h_colInds[0], &h_vals[0], &h_in[0], &h_out[0]);
+    nvtxRangePushA("logical_spmv_csr_cpu");
+    {
+#if 0
+        LogicalSpMV_csr1_cpu(m, &h_csr_rowPtrs[0], &h_csr_colInds[0], &h_csr_vals[0], &h_in[0], &h_out[0]);
+#else
+        char *mkl_transa = (char*) "N";
+        int mkl_m = m,
+            mkl_n = nve,
+            mkl_k = n;
+        float mkl_alpha = 1.0f;
+        char *mkl_matdesrca = (char*) "G__C__";
+        float *mkl_val = &h_csr_vals[0];
+        int *mkl_indx = &h_csr_colInds[0],
+            *mkl_pntrb = &h_csr_rowPtrs[0],
+            *mkl_pntre = &h_csr_rowPtrs[1];
+        float *mkl_b = h_in;
+        int mkl_ldb = nve;
+        float mkl_beta = 0.0f;
+        float *mkl_c = h_out;
+        int mkl_ldc = nve;
+
+        mkl_scsrmm(mkl_transa, &mkl_m, &mkl_n, &mkl_k, &mkl_alpha,
+                mkl_matdesrca, mkl_val, mkl_indx, mkl_pntrb, mkl_pntre,
+                mkl_b, &mkl_ldb, &mkl_beta, mkl_c, &mkl_ldc);
+#endif
+    }
+    nvtxRangePop();
 
     // copy CSR results to GPU - asynchronous
     cudaMemcpyAsync(d_csr_out, h_out, m*nve*sizeof(float), cudaMemcpyHostToDevice, memStream);
@@ -192,18 +221,18 @@ HybridCsrMatrix::dump(std::string ofilename) {
 
 void
 HybridCsrMatrix::ellize() {
-    std::vector<float> h_vals(nnz);
-    std::vector<int> h_rows(m+1);
-    std::vector<int> h_cols(nnz);
+    std::vector<float> h_full_vals(nnz);
+    std::vector<int> h_full_rows(m+1);
+    std::vector<int> h_full_cols(nnz);
 
-    cudaMemcpy(&h_rows[0], rows, (m+1) * sizeof(int), cudaMemcpyDeviceToHost);
-    cudaMemcpy(&h_cols[0], cols, (nnz) * sizeof(int), cudaMemcpyDeviceToHost);
-    cudaMemcpy(&h_vals[0], vals, (nnz) * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(&h_full_rows[0], rows, (m+1) * sizeof(int), cudaMemcpyDeviceToHost);
+    cudaMemcpy(&h_full_cols[0], cols, (nnz) * sizeof(int), cudaMemcpyDeviceToHost);
+    cudaMemcpy(&h_full_vals[0], vals, (nnz) * sizeof(float), cudaMemcpyDeviceToHost);
 
     // determine width of ELL table using Bell and Garland's approach
     std::vector<int> histogram(40, 0);
     for (int i = 0; i < m; i++)
-        histogram[ h_rows[i+1] - h_rows[i] ] += 1;
+        histogram[ h_full_rows[i+1] - h_full_rows[i] ] += 1;
 
     std::vector<int> cdf(40, 0);
     for (int i = 38; i >= 0; i--)
@@ -217,9 +246,10 @@ HybridCsrMatrix::ellize() {
     std::vector<float> h_ell_vals(lda*k, 0.0f);
     std::vector<int>   h_ell_cols(lda*k, 0);
 
-    h_vals.clear();
-    h_rowPtrs.clear();
-    h_colInds.clear();
+    h_csr_rowPtrs.clear(); h_csr_rowPtrs.reserve(m+1);
+    h_csr_colInds.clear(); h_csr_colInds.reserve(nnz/4);
+    h_csr_vals.clear();    h_csr_vals.reserve(nnz/4);
+
     cudaMallocHost(&h_out, m*nve*sizeof(float));
     memset(h_out, 0, m*nve*sizeof(float));
 
@@ -227,23 +257,30 @@ HybridCsrMatrix::ellize() {
         int j, z;
         // regular part
         // convert to zero-based indices while we're at it...
-        for (j = h_rows[i]-1, z = 0; j < h_rows[i+1]-1 && z < k; j++, z++) {
-            h_ell_cols[ i + z*lda ] = h_cols[j]-1;
-            h_ell_vals[ i + z*lda ] = h_vals[j];
+        for (j = h_full_rows[i]-1, z = 0; j < h_full_rows[i+1]-1 && z < k; j++, z++) {
+            h_ell_cols[ i + z*lda ] = h_full_cols[j]-1;
+            h_ell_vals[ i + z*lda ] = h_full_vals[j];
         }
         // irregular part
-        h_rowPtrs.push_back(i+1);
-        for ( ; j < h_rows[i+1]-1; j++) {
-            h_colInds.push_back( h_cols[j] );
-            h_vals.push_back( h_vals[j]   );
-            assert( 0 < i && i <= m );
-            assert( 0 < h_cols[j] && h_cols[j] <= n );
+        int row = h_csr_vals.size();
+        h_csr_rowPtrs.push_back(row);
+        for ( ; j < h_full_rows[i+1]-1; j++) {
+            int col = h_full_cols[j]-1;
+            float val = h_full_vals[j];
+
+            h_csr_colInds.push_back(col);
+            h_csr_vals.push_back(val);
+
+            assert( 0 <= row && row < nnz);
+            assert( 0 <= col && col < n );
         }
     }
-    h_rowPtrs.push_back(h_vals.size());
+    h_csr_rowPtrs.push_back(h_csr_vals.size());
+
+    assert(h_csr_rowPtrs.size() == m+1);
 
 #if BENCHMARKING
-    printf(" irreg=%d k=%d", (int) h_vals.size(), k);
+    printf(" irreg=%d k=%d", (int) h_csr_vals.size(), k);
 #endif
 
     ell_k = k;
@@ -252,7 +289,7 @@ HybridCsrMatrix::ellize() {
     cudaMemcpy(ell_vals, &h_ell_vals[0], h_ell_vals.size() * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(ell_cols, &h_ell_cols[0], h_ell_cols.size() * sizeof(int),   cudaMemcpyHostToDevice);
 
-    cudaMalloc(&d_csr_out, m * nve * sizeof(float));
+    cudaMalloc(&d_csr_out, m*nve*sizeof(float));
 
     cudaStreamCreate(&memStream);
     cudaStreamCreate(&computeStream);

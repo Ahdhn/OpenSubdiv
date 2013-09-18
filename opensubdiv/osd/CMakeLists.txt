@@ -223,6 +223,7 @@ if( CUDA_FOUND )
     )
     list(APPEND PLATFORM_LIBRARIES
         ${CUDA_cusparse_LIBRARY}
+        /usr/local/cuda-5.0/lib64/libnvToolsExt.so
     )
     if (UNIX)
         list( APPEND CUDA_NVCC_FLAGS -Xcompiler -fPIC -arch sm_20 )
