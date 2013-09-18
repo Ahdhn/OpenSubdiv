@@ -15,19 +15,6 @@ extern "C" {
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
 
-extern "C" {
-
-void
-OsdTranspose(float *odata, float *idata, int m, int n);
-
-void
-LogicalSpMV_hyb(int m, int n, int k, int *ell_cols, float *ell_vals, int coo_nnz, int *coo_rows, int *coo_cols, float *coo_vals, float *coo_scratch, float *v_in, float *v_out);
-
-void
-LogicalSpMV_csr(int m, int n, int k, int *rows, int *cols, float *vals, float *v_in, float *v_out);
-
-}
-
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
@@ -119,7 +106,8 @@ HybridCsrMatrix::NumBytes() {
 
 void
 HybridCsrMatrix::logical_spmv(float *d_out, float* d_in) {
-    LogicalSpMV_hyb(m, n, ell_k, ell_cols, ell_vals, coo_nnz, coo_rows+1, coo_cols+1, coo_vals+1, coo_scratch, d_in, d_out);
+    LogicalSpMV_ell0_gpu(m, n, ell_k, ell_cols, ell_vals, d_in, d_out);
+    LogicalSpMV_coo0_gpu(m, n, coo_nnz, coo_rows+1, coo_cols+1, coo_vals+1, coo_scratch, d_in, d_out);
 }
 
 void

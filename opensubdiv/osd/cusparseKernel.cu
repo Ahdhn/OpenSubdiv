@@ -257,13 +257,17 @@ OsdTranspose(float *odata, float *idata, int m, int n) {
 }
 
 void
-LogicalSpMV_hyb(int m, int n, int k, int *ell_cols, float *ell_vals, const int coo_nnz, int *coo_rows, int *coo_cols, float *coo_vals, float *coo_scratch, float *v_in, float *v_out) {
+LogicalSpMV_ell0_gpu(int m, int n, int k, int *ell_cols, float *ell_vals, float *v_in, float *v_out) {
 
     int nBlocks = (m + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     logical_spmv_ell_kernel<<<nBlocks,THREADS_PER_BLOCK>>>
         (m, n, k, ell_cols, ell_vals, v_in, v_out);
+}
 
-    nBlocks = (coo_nnz + COO_THREADS_PER_BLOCK_0 - 1) / COO_THREADS_PER_BLOCK_0;
+void
+LogicalSpMV_coo0_gpu(int m, int n, const int coo_nnz, int *coo_rows, int *coo_cols, float *coo_vals, float *coo_scratch, float *v_in, float *v_out) {
+
+    int nBlocks = (coo_nnz + COO_THREADS_PER_BLOCK_0 - 1) / COO_THREADS_PER_BLOCK_0;
     logical_spmv_coo_kernel0A<<<nBlocks,COO_THREADS_PER_BLOCK_0>>>
         (coo_nnz, coo_rows, coo_cols, coo_vals, coo_scratch, v_in, v_out);
 
