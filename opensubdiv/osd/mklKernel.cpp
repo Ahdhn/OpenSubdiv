@@ -102,7 +102,7 @@ void LogicalSpMV_csr0_cpu(int m, int *rowPtrs, int *colInds, float *vals, float 
 #endif
 }
 
-void LogicalSpMV_coo0_cpu(int *schedule, int *rowInds, int *colInds, float *vals, float *d_in, float *d_out) {
+void LogicalSpMV_coo0_cpu(int *schedule, int *offsets, int *rowInds, int *colInds, float *vals, float *h_in, int *h_out_inds, float *h_out_vals) {
 
     omp_set_num_threads( omp_get_num_procs() );
 
@@ -118,14 +118,15 @@ void LogicalSpMV_coo0_cpu(int *schedule, int *rowInds, int *colInds, float *vals
             out03v = _mm_setzero_ps(),
             out45v = _mm_setzero_ps();
 
+        int nthOutputRow = offsets[rank];
         int row = rowInds[start_nnz];
         for (int i = start_nnz; i < end_nnz; i++) {
             int col = colInds[i];
             int val = vals[i];
 
             register __m128 ignore,
-                in03v = _mm_loadu_ps(                        &d_in[col*6+0] ),
-                in45v = _mm_loadl_pi( ignore, (const __m64*) &d_in[col*6+4] ),
+                in03v = _mm_loadu_ps(                        &h_in[col*6+0] ),
+                in45v = _mm_loadl_pi( ignore, (const __m64*) &h_in[col*6+4] ),
                 weightv = _mm_load1_ps( &vals[i] );
 
             out03v = _mm_add_ps(out03v, _mm_mul_ps(weightv, in03v));
@@ -133,10 +134,12 @@ void LogicalSpMV_coo0_cpu(int *schedule, int *rowInds, int *colInds, float *vals
 
             int next_row = rowInds[i+1];
             if (row != next_row || i+1 == end_nnz) {
-                _mm_storeu_ps(          &d_out[row*6+0], out03v );
-                _mm_storel_pi( (__m64*) &d_out[row*6+4], out45v );
+                _mm_storeu_ps(          &h_out_vals[nthOutputRow*6+0], out03v );
+                _mm_storel_pi( (__m64*) &h_out_vals[nthOutputRow*6+4], out45v );
+                h_out_inds[nthOutputRow] = row;
                 out03v = _mm_setzero_ps();
                 out45v = _mm_setzero_ps();
+                nthOutputRow += 1;
             }
             row = next_row;
         }

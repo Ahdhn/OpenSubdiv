@@ -13,11 +13,18 @@
 using namespace std;
 
 __global__ void
-vvadd_kernel(float *d, float *e, int n)
+spvvadd_kernel(float *V, int *SpV_inds, float *SpV_vals, int nnz)
 {
+    // thread per vertex component
     int tid = threadIdx.x + blockIdx.x*blockDim.x;
-    if (tid < n)
-        d[tid] += e[tid];
+    if (tid >= nnz)
+        return;
+
+    int idx = tid / 6;         // vertex id
+    int offset = tid % 6;      // component id
+    int row = SpV_inds[idx]*6; // row id
+
+    V[row+offset] += SpV_vals[tid];
 }
 
 __global__ void
@@ -301,10 +308,11 @@ LogicalSpMV_csr(int m, int n, int k, int *rows, int *cols, float *vals, float *v
     logical_spmv_csr_kernel<<<nBlocks,nThreads>>>(m, n, rows, cols, vals, v_in, v_out);
 }
 
+// V += SpV
 void
-vvadd(float *d, float *e, int n, cudaStream_t& stream) {
-    int nBlocks = (n + VVADD_THREADS_PER_BLOCK - 1) / VVADD_THREADS_PER_BLOCK;
-    vvadd_kernel<<<nBlocks,VVADD_THREADS_PER_BLOCK,0,stream>>>(d, e, n);
+spvvadd(float *V, int *SpV_inds, float *SpV_vals, int nnz, cudaStream_t& stream) {
+    int nBlocks = (nnz + VVADD_THREADS_PER_BLOCK - 1) / VVADD_THREADS_PER_BLOCK;
+    spvvadd_kernel<<<nBlocks,VVADD_THREADS_PER_BLOCK,0,stream>>>(V, SpV_inds, SpV_vals, nnz);
 }
 
 } /* extern C */

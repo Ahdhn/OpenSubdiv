@@ -45,21 +45,14 @@ public:
     int* ell_cols;
     int ell_k;
 
-    // CSR data
-    std::vector<float> h_csr_vals;
-    std::vector<int>   h_csr_rowPtrs,
-                       h_csr_colInds;
-    float *d_csr_out;
-
     // COO data
     std::vector<float> h_coo_vals;
     std::vector<int>   h_coo_rowInds,
                        h_coo_colInds,
-                       h_coo_schedule;
-
-    // scratch space for tranposes of input and output vectors
-    float *d_in_scratch, *d_out_scratch;
-    float *h_out;
+                       h_coo_schedule,
+                       h_coo_offsets;
+    int   *h_coo_out_inds, *d_coo_out_inds;
+    float *h_coo_out_vals, *d_coo_out_vals;
 
     cudaStream_t memStream, computeStream;
 };

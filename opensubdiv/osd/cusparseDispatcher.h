@@ -23,9 +23,9 @@ LogicalSpMV_coo0_gpu(int m, int n, int coo_nnz, int *coo_rows, int *coo_cols, fl
 void
 LogicalSpMV_csr(int m, int n, int k, int *rows, int *cols, float *vals, float *v_in, float *v_out);
 
-// d += e
+// V += SpV
 void
-vvadd(float *d, float *e, int n, cudaStream_t& stream);
+spvvadd(float *V, int *SpV_inds, float *SpV_vals, int nnz, cudaStream_t& stream);
 
 }
 

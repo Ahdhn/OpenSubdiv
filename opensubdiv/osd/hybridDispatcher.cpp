@@ -39,9 +39,6 @@ HybridCsrMatrix::HybridCsrMatrix(int m, int n, int nnz, int nve) :
     cusparseCreateMatDescr(&desc);
     cusparseSetMatType(desc,CUSPARSE_MATRIX_TYPE_GENERAL);
     cusparseSetMatIndexBase(desc,CUSPARSE_INDEX_BASE_ONE);
-
-    cudaMalloc( &d_in_scratch,  n*nve*sizeof(float) );
-    cudaMalloc( &d_out_scratch, m*nve*sizeof(float) );
 }
 
 HybridCsrMatrix::HybridCsrMatrix(const HybridCooMatrix* StagedOp, int nve) :
@@ -86,8 +83,6 @@ HybridCsrMatrix::HybridCsrMatrix(const HybridCooMatrix* StagedOp, int nve) :
     cudaMalloc(&rows, (m+1) * sizeof(int));
     cudaMalloc(&cols, nnz * sizeof(int));
     cudaMalloc(&vals, nnz * sizeof(float));
-    cudaMalloc( &d_in_scratch,  n*nve*sizeof(float) );
-    cudaMalloc( &d_out_scratch, m*nve*sizeof(float) );
 
     /* copy data to device */
     cudaMemcpy(rows, &h_rows[0], (m+1) * sizeof(int), cudaMemcpyHostToDevice);
@@ -104,8 +99,7 @@ int
 HybridCsrMatrix::NumBytes() {
     if (ell_k != 0)
         return m*ell_k*(sizeof(float)+sizeof(int)) +
-               h_csr_rowPtrs.size()*sizeof(int) +
-               h_csr_vals.size()*(sizeof(int) + sizeof(float));
+               h_coo_vals.size()*(2*sizeof(int) + sizeof(float));
     else
         return this->CsrMatrix::NumBytes();
 }
@@ -119,20 +113,24 @@ HybridCsrMatrix::logical_spmv(float *d_out, float* d_in, float *h_in) {
     // compute CSR portion - synchronous
     nvtxRangePushA("logical_spmv_cpu");
     {
-        //LogicalSpMV_csr0_cpu(m, &h_csr_rowPtrs[0], &h_csr_colInds[0], &h_csr_vals[0], &h_in[0], &h_out[0]);
-        LogicalSpMV_coo0_cpu(&h_coo_schedule[0], &h_coo_rowInds[0], &h_coo_colInds[0], &h_coo_vals[0], &h_in[0], &h_out[0]);
+        LogicalSpMV_coo0_cpu(
+                &h_coo_schedule[0], &h_coo_offsets[0],
+                &h_coo_rowInds[0], &h_coo_colInds[0], &h_coo_vals[0],
+                &h_in[0], &h_coo_out_inds[0], &h_coo_out_vals[0]);
     }
     nvtxRangePop();
 
     // copy CSR results to GPU - asynchronous
-    cudaMemcpyAsync(d_csr_out, h_out, m*nve*sizeof(float), cudaMemcpyHostToDevice, memStream);
+    int nOutVals = h_coo_offsets[omp_get_max_threads()];
+    cudaMemcpyAsync(d_coo_out_inds, h_coo_out_inds, nOutVals*sizeof(int),       cudaMemcpyHostToDevice, memStream);
+    cudaMemcpyAsync(d_coo_out_vals, h_coo_out_vals, nOutVals*nve*sizeof(float), cudaMemcpyHostToDevice, memStream);
 
     // wait for CSR/ELL updates to be in place
     cudaStreamSynchronize(memStream);
     cudaStreamSynchronize(computeStream);
 
     // combine CSR/ELL results
-    vvadd(d_out, d_csr_out, m*nve, computeStream);
+    spvvadd(d_out, d_coo_out_inds, d_coo_out_vals, nOutVals*nve, computeStream);
 }
 
 void
@@ -190,9 +188,6 @@ HybridCsrMatrix::gemm(HybridCsrMatrix* B) {
 HybridCsrMatrix::~HybridCsrMatrix() {
     /* clean up device memory */
     cusparseDestroyMatDescr(desc);
-
-    cudaFree(d_in_scratch);
-    cudaFree(d_out_scratch);
 }
 
 void
@@ -230,16 +225,11 @@ HybridCsrMatrix::ellize() {
     std::vector<float> h_ell_vals(lda*k, 0.0f);
     std::vector<int>   h_ell_cols(lda*k, 0);
 
-    h_csr_rowPtrs.clear(); h_csr_rowPtrs.reserve(m+1);
-    h_csr_colInds.clear(); h_csr_colInds.reserve(nnz/4);
-    h_csr_vals.clear();    h_csr_vals.reserve(nnz/4);
-
     h_coo_rowInds.clear(); h_coo_rowInds.reserve(nnz/4);
     h_coo_colInds.clear(); h_coo_colInds.reserve(nnz/4);
     h_coo_vals.clear();    h_coo_vals.reserve(nnz/4);
 
-    cudaMallocHost(&h_out, m*nve*sizeof(float));
-    memset(h_out, 0, m*nve*sizeof(float));
+    int nIrregRows = 0;
 
     for (int i = 0; i < m; i++) {
         int j, z;
@@ -249,30 +239,25 @@ HybridCsrMatrix::ellize() {
             h_ell_cols[ i + z*lda ] = h_full_cols[j]-1;
             h_ell_vals[ i + z*lda ] = h_full_vals[j];
         }
+
         // irregular part
-        int row = h_csr_vals.size();
-        h_csr_rowPtrs.push_back(row);
+        if (j < h_full_rows[i+1]-1) nIrregRows += 1;
+
         for ( ; j < h_full_rows[i+1]-1; j++) {
             int col = h_full_cols[j]-1;
             float val = h_full_vals[j];
-
-            h_csr_colInds.push_back(col);
-            h_csr_vals.push_back(val);
 
             h_coo_rowInds.push_back(i);
             h_coo_colInds.push_back(col);
             h_coo_vals.push_back(val);
 
-            assert( 0 <= row && row < nnz);
+            assert( 0 <= i   &&   i < m );
             assert( 0 <= col && col < n );
         }
     }
-    h_csr_rowPtrs.push_back(h_csr_vals.size());
-
-    assert(h_csr_rowPtrs.size() == m+1);
 
 #if BENCHMARKING
-    printf(" irreg=%d m=%d k=%d", (int) h_csr_vals.size(), m, k);
+    printf(" irreg=%d n_irreg_rows=%d m=%d k=%d", (int) h_coo_vals.size(), nIrregRows, m, k);
 #endif
 
     // build schedule for cpu coo evaluation
@@ -280,7 +265,6 @@ HybridCsrMatrix::ellize() {
     int cooNnzPerThread = h_coo_vals.size() / nThreads;
     h_coo_schedule.resize(nThreads+1);
     h_coo_schedule[0] = 0;
-    int thisThreadNnz = 0;
     for (int i = 1; i < nThreads; i++) {
         int cooIndex = i*cooNnzPerThread;
         // advance the index until we have our own row
@@ -292,13 +276,33 @@ HybridCsrMatrix::ellize() {
     }
     h_coo_schedule[nThreads] = h_coo_vals.size();
 
+    // compute offsets
+    h_coo_offsets.resize(nThreads+1);
+    h_coo_offsets[0] = 0;
+    for (int t = 0; t < nThreads; t++) {
+        int nRows = 0;
+        int prevRow = -1;
+        for (int idx = h_coo_schedule[t]; idx < h_coo_schedule[t+1]; idx++) {
+            int row = h_coo_rowInds[idx];
+            if (row != prevRow)
+                nRows += 1;
+            prevRow = row;
+        }
+        h_coo_offsets[t+1] = h_coo_offsets[t] + nRows;
+    }
+
+    // allocate space for sparse output vector on host
+    int nOutVals = h_coo_offsets[nThreads];
+    cudaMallocHost(&h_coo_out_inds, nOutVals*sizeof(int));
+    cudaMalloc    (&d_coo_out_inds, nOutVals*sizeof(int));
+    cudaMalloc    (&d_coo_out_vals, nOutVals*nve*sizeof(float));
+    cudaMallocHost(&h_coo_out_vals, nOutVals*nve*sizeof(float));
+
     ell_k = k;
     cudaMalloc(&ell_vals, h_ell_vals.size() * sizeof(float));
     cudaMalloc(&ell_cols, h_ell_cols.size() * sizeof(int));
     cudaMemcpy(ell_vals, &h_ell_vals[0], h_ell_vals.size() * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(ell_cols, &h_ell_cols[0], h_ell_cols.size() * sizeof(int),   cudaMemcpyHostToDevice);
-
-    cudaMalloc(&d_csr_out, m*nve*sizeof(float));
 
     cudaStreamCreate(&memStream);
     cudaStreamCreate(&computeStream);
