@@ -86,6 +86,7 @@ public:
                       kCUSPARSE = 6,
                       kCCPU= 7,
                       kCGPU= 8,
+                      kHYB= 9,
                       kMAX };
 
 
@@ -194,6 +195,7 @@ protected:
         //friend class OsdSpMVKernelDispatcher;
         friend class OsdMklKernelDispatcher;
         friend class OsdCusparseKernelDispatcher;
+        friend class OsdHybridKernelDispatcher;
         friend class OsdGlslKernelDispatcher;
         friend class OsdCudaKernelDispatcher;
         friend class OsdClKernelDispatcher;

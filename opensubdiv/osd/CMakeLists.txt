@@ -230,6 +230,17 @@ if( CUDA_FOUND )
 endif()
 
 #-------------------------------------------------------------------------------
+# CUDA+MKL code & dependencies
+if( MKL_FOUND AND CUDA_FOUND )
+    list(APPEND SOURCE_FILES
+        hybridDispatcher.cpp
+    )
+    list(APPEND PUBLIC_HEADER_FILES
+        hybridDispatcher.h
+    )
+endif()
+
+#-------------------------------------------------------------------------------
 # Kernel Stringification
 # We want to use preprocessor include directives to include GLSL and OpenCL
 # kernel source files in cpp files, but since the sources contain newline

@@ -1,5 +1,6 @@
 #include "../version.h"
 #include "../osd/mutex.h"
+#include "../osd/hybridDispatcher.h"
 #include "../osd/cusparseDispatcher.h"
 #include "../osd/spmvKernel.h"
 
@@ -10,7 +11,6 @@
 extern "C" {
 #include <mkl_spblas.h>
 }
-
 
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
@@ -31,34 +31,17 @@ LogicalSpMV_csr(int m, int n, int k, int *rows, int *cols, float *vals, float *v
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
-static cusparseHandle_t handle = NULL;
+static cusparseHandle_t handle;
 
-void
-cusparseCheckStatus(cusparseStatus_t status) {
-    if (status != CUSPARSE_STATUS_SUCCESS)
-        switch (status) {
-            case CUSPARSE_STATUS_NOT_INITIALIZED:  printf("bad status 1: CUSPARSE_STATUS_NOT_INITIALIZED\n"); break;
-            case CUSPARSE_STATUS_ALLOC_FAILED:     printf("bad status 1: CUSPARSE_STATUS_ALLOC_FAILED\n"); break;
-            case CUSPARSE_STATUS_INVALID_VALUE:    printf("bad status 1: CUSPARSE_STATUS_INVALID_VALUE\n"); break;
-            case CUSPARSE_STATUS_ARCH_MISMATCH:    printf("bad status 1: CUSPARSE_STATUS_ARCH_MISMATCH\n"); break;
-            case CUSPARSE_STATUS_MAPPING_ERROR:    printf("bad status 1: CUSPARSE_STATUS_MAPPING_ERROR\n"); break;
-            case CUSPARSE_STATUS_EXECUTION_FAILED: printf("bad status 1: CUSPARSE_STATUS_EXECUTION_FAILED\n"); break;
-            case CUSPARSE_STATUS_INTERNAL_ERROR:   printf("bad status 1: CUSPARSE_STATUS_INTERNAL_ERROR\n"); break;
-            case CUSPARSE_STATUS_MATRIX_TYPE_NOT_SUPPORTED: printf("bad status 1: CUSPARSE_STATUS_MATRIX_TYPE_NOT_SUPPORTED\n"); break;
-            default: printf("bad status 2: unknown (%d)\n", status); break;
-        }
-    assert(status == CUSPARSE_STATUS_SUCCESS);
-}
-
-CudaCsrMatrix*
-CudaCooMatrix::gemm(CudaCsrMatrix* rhs) {
-    CudaCsrMatrix* lhs = new CudaCsrMatrix(this, rhs->nve);
-    CudaCsrMatrix* answer = lhs->gemm(rhs);
+HybridCsrMatrix*
+HybridCooMatrix::gemm(HybridCsrMatrix* rhs) {
+    HybridCsrMatrix* lhs = new HybridCsrMatrix(this, rhs->nve);
+    HybridCsrMatrix* answer = lhs->gemm(rhs);
     delete lhs;
     return answer;
 }
 
-CudaCsrMatrix::CudaCsrMatrix(int m, int n, int nnz, int nve) :
+HybridCsrMatrix::HybridCsrMatrix(int m, int n, int nnz, int nve) :
     CsrMatrix(m, n, nnz, nve), rows(NULL), cols(NULL), vals(NULL), ell_k(0)
 {
     /* make cusparse matrix descriptor */
@@ -70,7 +53,7 @@ CudaCsrMatrix::CudaCsrMatrix(int m, int n, int nnz, int nve) :
     cudaMalloc( &d_out_scratch, m*nve*sizeof(float) );
 }
 
-CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve) :
+HybridCsrMatrix::HybridCsrMatrix(const HybridCooMatrix* StagedOp, int nve) :
     CsrMatrix(StagedOp, nve), rows(NULL), cols(NULL), vals(NULL)
 {
     /* make cusparse matrix descriptor */
@@ -127,7 +110,7 @@ CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve) :
 }
 
 int
-CudaCsrMatrix::NumBytes() {
+HybridCsrMatrix::NumBytes() {
     if (ell_k != 0)
         return m*ell_k*(sizeof(float)+sizeof(int)) + coo_nnz*(2*sizeof(int) + sizeof(float));
     else
@@ -135,12 +118,12 @@ CudaCsrMatrix::NumBytes() {
 }
 
 void
-CudaCsrMatrix::logical_spmv(float *d_out, float* d_in) {
+HybridCsrMatrix::logical_spmv(float *d_out, float* d_in) {
     LogicalSpMV_hyb(m, n, ell_k, ell_cols, ell_vals, coo_nnz, coo_rows+1, coo_cols+1, coo_vals+1, coo_scratch, d_in, d_out);
 }
 
 void
-CudaCsrMatrix::spmv(float *d_out, float* d_in) {
+HybridCsrMatrix::spmv(float *d_out, float* d_in) {
     cusparseStatus_t status;
     cusparseOperation_t op = CUSPARSE_OPERATION_NON_TRANSPOSE;
     float alpha = 1.0,
@@ -167,9 +150,9 @@ CudaCsrMatrix::spmv(float *d_out, float* d_in) {
     g_matrixTimer.Stop();
 }
 
-CudaCsrMatrix*
-CudaCsrMatrix::gemm(CudaCsrMatrix* B) {
-    CudaCsrMatrix* A = this;
+HybridCsrMatrix*
+HybridCsrMatrix::gemm(HybridCsrMatrix* B) {
+    HybridCsrMatrix* A = this;
     int mm = A->m,
         nn = A->n,
         kk = B->n;
@@ -178,7 +161,7 @@ CudaCsrMatrix::gemm(CudaCsrMatrix* B) {
     cusparseOperation_t transA = CUSPARSE_OPERATION_NON_TRANSPOSE,
                         transB = CUSPARSE_OPERATION_NON_TRANSPOSE;
 
-    CudaCsrMatrix* C = new CudaCsrMatrix(mm, kk, 0, nve);
+    HybridCsrMatrix* C = new HybridCsrMatrix(mm, kk, 0, nve);
 
     /* check that we're in host pointer mode to get C->nnz */
     cusparsePointerMode_t pmode;
@@ -214,7 +197,7 @@ CudaCsrMatrix::gemm(CudaCsrMatrix* B) {
     return C;
 }
 
-CudaCsrMatrix::~CudaCsrMatrix() {
+HybridCsrMatrix::~HybridCsrMatrix() {
     /* clean up device memory */
     cusparseDestroyMatDescr(desc);
 
@@ -223,12 +206,12 @@ CudaCsrMatrix::~CudaCsrMatrix() {
 }
 
 void
-CudaCsrMatrix::dump(std::string ofilename) {
+HybridCsrMatrix::dump(std::string ofilename) {
     assert(!"No support for dumping matrices to file on GPUs. Use MKL kernel.");
 }
 
 void
-CudaCsrMatrix::ellize() {
+HybridCsrMatrix::ellize() {
     std::vector<float> h_vals(nnz);
     std::vector<int> h_rows(m+1);
     std::vector<int> h_cols(nnz);
@@ -303,45 +286,39 @@ CudaCsrMatrix::ellize() {
     cudaMemcpy(coo_vals, &h_coo_vals[0], h_coo_vals.size() * sizeof(float), cudaMemcpyHostToDevice);
 }
 
-OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher(int levels, bool logical) :
-    super(levels, logical) {
+OsdHybridKernelDispatcher::OsdHybridKernelDispatcher(int levels) :
+    super(levels, true) {
     /* make cusparse handle if null */
     assert (handle == NULL);
     cusparseCreate(&handle);
 }
 
-OsdCusparseKernelDispatcher::~OsdCusparseKernelDispatcher() {
+OsdHybridKernelDispatcher::~OsdHybridKernelDispatcher() {
     /* clean up cusparse handle */
     cusparseDestroy(handle);
     handle = NULL;
 }
 
 void
-OsdCusparseKernelDispatcher::FinalizeMatrix() {
+OsdHybridKernelDispatcher::FinalizeMatrix() {
     if (logical)
         SubdivOp->ellize();
 
     this->super::FinalizeMatrix();
 }
 
-static OsdCusparseKernelDispatcher::OsdKernelDispatcher *
+static OsdHybridKernelDispatcher::OsdKernelDispatcher *
 Create(int levels) {
-    return new OsdCusparseKernelDispatcher(levels, false);
-}
-
-static OsdCusparseKernelDispatcher::OsdKernelDispatcher *
-CreateLogical(int levels) {
-    return new OsdCusparseKernelDispatcher(levels, true);
+    return new OsdHybridKernelDispatcher(levels);
 }
 
 void
-OsdCusparseKernelDispatcher::Register() {
-    Factory::GetInstance().Register(Create, kCUSPARSE);
-    Factory::GetInstance().Register(CreateLogical, kCGPU);
+OsdHybridKernelDispatcher::Register() {
+    Factory::GetInstance().Register(Create, kHYB);
 }
 
 void
-OsdCusparseKernelDispatcher::Synchronize()
+OsdHybridKernelDispatcher::Synchronize()
 {
     cudaThreadSynchronize();
 }

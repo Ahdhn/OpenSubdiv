@@ -95,6 +95,10 @@
     #include "../common/cudaInit.h"
 #endif
 
+#if (OPENSUBDIV_HAS_CUDA && OPENSUBDIV_HAS_MKL)
+    #include <osd/hybridDispatcher.h>
+#endif
+
 #include <common/shape_utils.h>
 
 #include "../common/stopwatch.h"
@@ -506,6 +510,8 @@ const char *getKernelName(int kernel) {
         return "CustomCPU";
     else if (kernel == OpenSubdiv::OsdKernelDispatcher::kCGPU)
         return "CustomGPU";
+    else if (kernel == OpenSubdiv::OsdKernelDispatcher::kHYB)
+        return "CustomHYB";
     return "Unknown";
 }
 
@@ -1053,6 +1059,10 @@ int main(int argc, char ** argv) {
     // Note: This function randomly crashes with linux 5.0-dev driver.
     // cudaGetDeviceProperties overrun stack..?
     cudaGLSetGLDevice( cutGetMaxGflopsDeviceId() );
+#endif
+
+#if (OPENSUBDIV_HAS_CUDA && OPENSUBDIV_HAS_MKL)
+    OpenSubdiv::OsdHybridKernelDispatcher::Register();
 #endif
 
     int kmenu = glutCreateMenu(kernelMenu);

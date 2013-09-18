@@ -1,36 +1,35 @@
-#ifndef OSD_CUSPARSE_DISPATCHER_H
-#define OSD_CUSPARSE_DISPATCHER_H
+#ifndef OSD_HYBRID_DISPATCHER_H
+#define OSD_HYBRID_DISPATCHER_H
 
 #include "../version.h"
 #include "../osd/spmvDispatcher.h"
 #include "../osd/cudaDispatcher.h"
 #include "../osd/mklDispatcher.h"
+#include "../osd/hybridDispatcher.h"
 
 #include <cusparse_v2.h>
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
 
-void cusparseCheckStatus(cusparseStatus_t status);
+class HybridCsrMatrix;
 
-class CudaCsrMatrix;
-
-class CudaCooMatrix : public CpuCooMatrix {
+class HybridCooMatrix : public CpuCooMatrix {
 public:
-    CudaCooMatrix(int m, int n) :
+    HybridCooMatrix(int m, int n) :
         CpuCooMatrix(m, n) { }
 
-    virtual CudaCsrMatrix* gemm(CudaCsrMatrix* rhs);
+    virtual HybridCsrMatrix* gemm(HybridCsrMatrix* rhs);
 };
 
-class CudaCsrMatrix : public CsrMatrix {
+class HybridCsrMatrix : public CsrMatrix {
 public:
-    CudaCsrMatrix(int m, int n, int nnz=0, int nve=1);
-    CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve=1);
-    virtual ~CudaCsrMatrix();
+    HybridCsrMatrix(int m, int n, int nnz=0, int nve=1);
+    HybridCsrMatrix(const HybridCooMatrix* StagedOp, int nve=1);
+    virtual ~HybridCsrMatrix();
     void spmv(float* d_out, float* d_in);
     void logical_spmv(float* d_out, float* d_in);
-    virtual CudaCsrMatrix* gemm(CudaCsrMatrix* rhs);
+    virtual HybridCsrMatrix* gemm(HybridCsrMatrix* rhs);
     virtual int NumBytes();
     void ellize();
     void dump(std::string ofilename);
@@ -54,13 +53,13 @@ public:
     float *d_in_scratch, *d_out_scratch;
 };
 
-class OsdCusparseKernelDispatcher :
-    public OsdSpMVKernelDispatcher<CudaCooMatrix,CudaCsrMatrix,OsdCudaVertexBuffer>
+class OsdHybridKernelDispatcher :
+    public OsdSpMVKernelDispatcher<HybridCooMatrix,HybridCsrMatrix,OsdCudaVertexBuffer>
 {
 public:
-    typedef OsdSpMVKernelDispatcher<CudaCooMatrix, CudaCsrMatrix, OsdCudaVertexBuffer> super;
-    OsdCusparseKernelDispatcher(int levels, bool logical);
-    ~OsdCusparseKernelDispatcher();
+    typedef OsdSpMVKernelDispatcher<HybridCooMatrix, HybridCsrMatrix, OsdCudaVertexBuffer> super;
+    OsdHybridKernelDispatcher(int levels);
+    ~OsdHybridKernelDispatcher();
     virtual void FinalizeMatrix();
     static void Register();
     void Synchronize();
@@ -71,4 +70,4 @@ using namespace OPENSUBDIV_VERSION;
 
 } // end namespace OpenSubdiv
 
-#endif /* OSD_CUSPARSE_DISPATCHER_H */
+#endif /* OSD_HYBRID_DISPATCHER_H */
