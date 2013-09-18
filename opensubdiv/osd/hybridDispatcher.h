@@ -28,7 +28,7 @@ public:
     HybridCsrMatrix(const HybridCooMatrix* StagedOp, int nve=1);
     virtual ~HybridCsrMatrix();
     void spmv(float* d_out, float* d_in);
-    void logical_spmv(float* d_out, float* d_in);
+    void logical_spmv(float* d_out, float* d_in, float *h_in);
     virtual HybridCsrMatrix* gemm(HybridCsrMatrix* rhs);
     virtual int NumBytes();
     void ellize();
@@ -48,6 +48,7 @@ public:
     std::vector<float> h_vals;
     std::vector<int>   h_rowPtrs,
                        h_colInds;
+    float *d_csr_out;
 
     // scratch space for tranposes of input and output vectors
     float *d_in_scratch, *d_out_scratch;

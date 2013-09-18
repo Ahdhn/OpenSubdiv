@@ -22,6 +22,10 @@ LogicalSpMV_coo0_gpu(int m, int n, int coo_nnz, int *coo_rows, int *coo_cols, fl
 void
 LogicalSpMV_csr(int m, int n, int k, int *rows, int *cols, float *vals, float *v_in, float *v_out);
 
+// d += e
+void
+vvadd(float *d, float *e, int n);
+
 }
 
 namespace OpenSubdiv {
@@ -45,7 +49,7 @@ public:
     CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve=1);
     virtual ~CudaCsrMatrix();
     void spmv(float* d_out, float* d_in);
-    void logical_spmv(float* d_out, float* d_in);
+    void logical_spmv(float* d_out, float* d_in, float *h_in);
     virtual CudaCsrMatrix* gemm(CudaCsrMatrix* rhs);
     virtual int NumBytes();
     void ellize();

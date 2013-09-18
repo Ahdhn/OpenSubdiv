@@ -80,7 +80,7 @@ CpuCsrMatrix::CpuCsrMatrix(const CpuCooMatrix* StagedOp, int nve) :
 }
 
 void
-CpuCsrMatrix::logical_spmv(float* __restrict__  d_out, float* __restrict__ d_in) {
+CpuCsrMatrix::logical_spmv(float* __restrict__  d_out, float* __restrict__ d_in, float *h_in) {
     LogicalSpMV_csr1_cpu(m, rows, cols, vals, d_in, d_out);
 }
 

@@ -97,6 +97,8 @@ OsdCudaVertexBuffer::UpdateData(const float *src, int numVertices) {
     void *dst = Map();
     cudaMemcpy(dst, src, _numElements * numVertices * sizeof(float), cudaMemcpyHostToDevice);
     Unmap();
+
+    h_data = std::vector<float>(src, src +( _numElements*numVertices));
 }
 
 void *

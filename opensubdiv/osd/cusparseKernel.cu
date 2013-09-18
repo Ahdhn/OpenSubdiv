@@ -7,9 +7,20 @@
 #define COO_THREADS_PER_BLOCK_0 1024
 #define COO_THREADS_PER_BLOCK_1 1024
 #define COO_THREADS_PER_BLOCK_2 1024
+#define VVADD_THREADS_PER_BLOCK 1024
 #define THREADS_PER_ROW   32
 
 using namespace std;
+
+__global__ void
+vvadd_kernel(float *d, float *e, int n)
+{
+    int tid = threadIdx.x + blockIdx.x*blockDim.x;
+    if (tid >= n)
+        return;
+
+    d[tid] += e[tid];
+}
 
 __global__ void
 transpose(float *odata, float *idata, int m, int n)
@@ -290,6 +301,12 @@ LogicalSpMV_csr(int m, int n, int k, int *rows, int *cols, float *vals, float *v
     int nBlocks = min(m, 32768);
     dim3 nThreads(THREADS_PER_ROW,6);
     logical_spmv_csr_kernel<<<nBlocks,nThreads>>>(m, n, rows, cols, vals, v_in, v_out);
+}
+
+void
+vvadd(float *d, float *e, int n) {
+    int nBlocks = (n + VVADD_THREADS_PER_BLOCK - 1) / VVADD_THREADS_PER_BLOCK;
+    vvadd_kernel<<<nBlocks,VVADD_THREADS_PER_BLOCK>>>(d, e, n);
 }
 
 } /* extern C */

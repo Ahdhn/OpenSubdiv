@@ -66,6 +66,7 @@
     #include <OpenGL/gl3.h>
 #endif
 
+#include <vector>
 #include <string.h> // memcpy (tobe moved to cpp)
 
 namespace OpenSubdiv {
@@ -93,6 +94,8 @@ public:
     }
 
     virtual void Unmap() { }
+
+    std::vector<float> h_data;
 
 protected:
     int _numElements;

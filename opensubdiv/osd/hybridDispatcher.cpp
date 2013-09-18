@@ -106,11 +106,13 @@ HybridCsrMatrix::NumBytes() {
 }
 
 void
-HybridCsrMatrix::logical_spmv(float *d_out, float* d_in) {
+HybridCsrMatrix::logical_spmv(float *d_out, float* d_in, float *h_in) {
     LogicalSpMV_ell0_gpu(m, n, ell_k, ell_cols, ell_vals, d_in, d_out);
+    //LogicalSpMV_csr1_cpu(m, &h_rowPtrs[0], &h_colInds[0], &h_vals[0], &h_in[0], &h_out[0]);
 
-    std::vector<float> h_in(n*6*sizeof(float), 0.0);
-    LogicalSpMV_csr1_cpu(m, &h_rowPtrs[0], &h_colInds[0], &h_vals[0], &h_in[0], &h_out[0]);
+    cudaMemcpy(d_csr_out, &h_out[0], h_out.size()*sizeof(float), cudaMemcpyHostToDevice);
+
+    vvadd(d_out, d_csr_out, m*nve);
 }
 
 void
@@ -231,7 +233,7 @@ HybridCsrMatrix::ellize() {
     h_vals.clear();
     h_rowPtrs.clear();
     h_colInds.clear();
-    h_out.resize(m*6*sizeof(float), 0.0);
+    h_out.resize(m*nve*sizeof(float), 0.0);
 
     for (int i = 0; i < m; i++) {
         int j, z;
@@ -261,6 +263,8 @@ HybridCsrMatrix::ellize() {
     cudaMalloc(&ell_cols, h_ell_cols.size() * sizeof(int));
     cudaMemcpy(ell_vals, &h_ell_vals[0], h_ell_vals.size() * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(ell_cols, &h_ell_cols[0], h_ell_cols.size() * sizeof(int),   cudaMemcpyHostToDevice);
+
+    cudaMalloc(&d_csr_out, m * nve * sizeof(float));
 }
 
 OsdHybridKernelDispatcher::OsdHybridKernelDispatcher(int levels) :

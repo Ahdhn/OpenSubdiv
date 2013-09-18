@@ -122,7 +122,7 @@ CudaCsrMatrix::NumBytes() {
 }
 
 void
-CudaCsrMatrix::logical_spmv(float *d_out, float* d_in) {
+CudaCsrMatrix::logical_spmv(float *d_out, float* d_in, float *h_in) {
     LogicalSpMV_ell0_gpu(m, n, ell_k, ell_cols, ell_vals, d_in, d_out);
     LogicalSpMV_coo0_gpu(m, n, coo_nnz, coo_rows+1, coo_cols+1, coo_vals+1, coo_scratch, d_in, d_out);
 }

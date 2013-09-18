@@ -184,7 +184,7 @@ public:
         float* V_out = (float*) V_in + offset * numElems;
 
         if (logical)
-            SubdivOp->logical_spmv(V_out, V_in);
+            SubdivOp->logical_spmv(V_out, V_in, &_currentVertexBuffer->h_data[0]);
         else
             SubdivOp->spmv(V_out, V_in);
 
@@ -257,7 +257,7 @@ public:
         m(StagedOp->m), n(StagedOp->n), nnz(StagedOp->nnz), nve(nve) { }
 
     virtual void spmv(float* d_out, float* d_in) = 0;
-    virtual void logical_spmv(float* d_out, float* d_in) = 0;
+    virtual void logical_spmv(float* d_out, float* d_in, float* h_in) = 0;
     virtual void dump(std::string ofilename) = 0;
 
     virtual int NumBytes() {
