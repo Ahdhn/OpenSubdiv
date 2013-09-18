@@ -2,6 +2,7 @@
 #include "../osd/mutex.h"
 #include "../osd/hybridDispatcher.h"
 #include "../osd/cusparseDispatcher.h"
+#include "../osd/mklKernel.h"
 #include "../osd/spmvKernel.h"
 
 #include <stdio.h>
@@ -99,7 +100,7 @@ HybridCsrMatrix::HybridCsrMatrix(const HybridCooMatrix* StagedOp, int nve) :
 int
 HybridCsrMatrix::NumBytes() {
     if (ell_k != 0)
-        return m*ell_k*(sizeof(float)+sizeof(int)) + coo_nnz*(2*sizeof(int) + sizeof(float));
+        return m*ell_k*(sizeof(float)+sizeof(int)) + h_vals.size()*(2*sizeof(int) + sizeof(float));
     else
         return this->CsrMatrix::NumBytes();
 }
@@ -107,7 +108,9 @@ HybridCsrMatrix::NumBytes() {
 void
 HybridCsrMatrix::logical_spmv(float *d_out, float* d_in) {
     LogicalSpMV_ell0_gpu(m, n, ell_k, ell_cols, ell_vals, d_in, d_out);
-    LogicalSpMV_coo0_gpu(m, n, coo_nnz, coo_rows+1, coo_cols+1, coo_vals+1, coo_scratch, d_in, d_out);
+
+    std::vector<float> h_in(n*6*sizeof(float), 0.0);
+    LogicalSpMV_csr1_cpu(m, &h_rowPtrs[0], &h_colInds[0], &h_vals[0], &h_in[0], &h_out[0]);
 }
 
 void
@@ -225,37 +228,32 @@ HybridCsrMatrix::ellize() {
     std::vector<float> h_ell_vals(lda*k, 0.0f);
     std::vector<int>   h_ell_cols(lda*k, 0);
 
-    std::vector<float> h_coo_vals;
-    std::vector<int>   h_coo_rows,
-                       h_coo_cols;
+    h_vals.clear();
+    h_rowPtrs.clear();
+    h_colInds.clear();
+    h_out.resize(m*6*sizeof(float), 0.0);
 
-    // sentinel at front
-    h_coo_rows.push_back( -1 );
-    h_coo_cols.push_back( 0 );
-    h_coo_vals.push_back( 0.0 );
-
-    // convert to zero-based indices while we're at it...
     for (int i = 0; i < m; i++) {
         int j, z;
         // regular part
+        // convert to zero-based indices while we're at it...
         for (j = h_rows[i]-1, z = 0; j < h_rows[i+1]-1 && z < k; j++, z++) {
             h_ell_cols[ i + z*lda ] = h_cols[j]-1;
             h_ell_vals[ i + z*lda ] = h_vals[j];
         }
         // irregular part
+        h_rowPtrs.push_back(i+1);
         for ( ; j < h_rows[i+1]-1; j++) {
-            h_coo_rows.push_back( i           );
-            h_coo_cols.push_back( h_cols[j]-1 );
-            h_coo_vals.push_back( h_vals[j]   );
-            assert( 0 <= i           && i           < m );
-            assert( 0 <= h_cols[j]-1 && h_cols[j]-1 < n );
+            h_colInds.push_back( h_cols[j] );
+            h_vals.push_back( h_vals[j]   );
+            assert( 0 < i && i <= m );
+            assert( 0 < h_cols[j] && h_cols[j] <= n );
         }
     }
-
-    coo_nnz = (int) h_coo_vals.size() - 1;
+    h_rowPtrs.push_back(h_vals.size());
 
 #if BENCHMARKING
-    printf(" irreg=%d k=%d", coo_nnz, k);
+    printf(" irreg=%d k=%d", h_vals.size(), k);
 #endif
 
     ell_k = k;
@@ -263,15 +261,6 @@ HybridCsrMatrix::ellize() {
     cudaMalloc(&ell_cols, h_ell_cols.size() * sizeof(int));
     cudaMemcpy(ell_vals, &h_ell_vals[0], h_ell_vals.size() * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(ell_cols, &h_ell_cols[0], h_ell_cols.size() * sizeof(int),   cudaMemcpyHostToDevice);
-
-    int coo_lda = coo_nnz + ((512/sizeof(float)) - (coo_nnz % (512/sizeof(float))));
-    cudaMalloc(&coo_rows, h_coo_rows.size() * sizeof(int));
-    cudaMalloc(&coo_cols, h_coo_cols.size() * sizeof(int));
-    cudaMalloc(&coo_vals, h_coo_vals.size() * sizeof(float));
-    cudaMalloc(&coo_scratch, coo_lda*6*sizeof(float));
-    cudaMemcpy(coo_rows, &h_coo_rows[0], h_coo_rows.size() * sizeof(int),   cudaMemcpyHostToDevice);
-    cudaMemcpy(coo_cols, &h_coo_cols[0], h_coo_cols.size() * sizeof(int),   cudaMemcpyHostToDevice);
-    cudaMemcpy(coo_vals, &h_coo_vals[0], h_coo_vals.size() * sizeof(float), cudaMemcpyHostToDevice);
 }
 
 OsdHybridKernelDispatcher::OsdHybridKernelDispatcher(int levels) :
@@ -289,9 +278,7 @@ OsdHybridKernelDispatcher::~OsdHybridKernelDispatcher() {
 
 void
 OsdHybridKernelDispatcher::FinalizeMatrix() {
-    if (logical)
-        SubdivOp->ellize();
-
+    SubdivOp->ellize();
     this->super::FinalizeMatrix();
 }
 
@@ -308,7 +295,7 @@ OsdHybridKernelDispatcher::Register() {
 void
 OsdHybridKernelDispatcher::Synchronize()
 {
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
 }
 
 } // end namespace OPENSUBDIV_VERSION

@@ -44,13 +44,14 @@ public:
     int* ell_cols;
     int ell_k;
 
-    // COO data
-    int coo_nnz;
-    float *coo_vals, *coo_scratch;
-    int *coo_rows, *coo_cols;
+    // CSR data
+    std::vector<float> h_vals;
+    std::vector<int>   h_rowPtrs,
+                       h_colInds;
 
     // scratch space for tranposes of input and output vectors
     float *d_in_scratch, *d_out_scratch;
+    std::vector<float> h_out;
 };
 
 class OsdHybridKernelDispatcher :
