@@ -13,8 +13,8 @@ paramRange = range(4, 30)
 
 def columnName(k):
     names = {
-      "CustomGPU": "Matrix-driven (GPU)",
-      "CustomHYB": "Matrix-driven (CPU+GPU)",
+      "CustomGPU": "GPU",
+      "CustomHYB": "CPU+GPU",
     }
     try:
       return names[k]

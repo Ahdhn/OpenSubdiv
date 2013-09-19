@@ -82,10 +82,11 @@ class Run(object):
                 setattr(self, key, val)
             elif token:
                 self.frame_times.append( float(token) )
-	    else:
-		print "Bad token: <%s>" % token
+            else:
+                print "Bad token: <%s>" % token
         self.frame_times = np.array(self.frame_times)
-	self.frame_times.sort()
+        self.frame_times.sort()
+        print "%.0f" % self.mean()
 
     def timeofframe(frameid):
         return self.ttff + sum(self.frame_times[:frameid])
@@ -132,7 +133,7 @@ def do_run(model, frames=1000, level=1, kernel='CPU', spyfile=None, regression=F
         cmd_line += ['--reorder']
     if divider:
         cmd_line += ['--divide', '%s' % divider]
-    print "Running: %s" % " ".join(cmd_line)
+    print "Running: %s" % " ".join(cmd_line),
     osd = Popen(cmd_line, stdin=PIPE, stdout=PIPE, stderr=PIPE)
     stdout, stderr = osd.communicate()
     if stderr != "":

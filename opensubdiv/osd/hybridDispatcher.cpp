@@ -113,26 +113,28 @@ HybridCsrMatrix::logical_spmv(float *d_out, float* d_in, float *h_in) {
     LogicalSpMV_ell0_gpu(m, n, ell_k, ell_cols, ell_vals, d_in, d_out, computeStream);
 
     // compute CSR portion - synchronous
-    nvtxRangePushA("logical_spmv_cpu");
-    {
-        LogicalSpMV_coo0_cpu(
+    if (h_coo_vals.size() > 0) {
+        nvtxRangePushA("logical_spmv_cpu");
+        {
+            LogicalSpMV_coo0_cpu(
                 &h_coo_schedule[0], &h_coo_offsets[0],
                 &h_coo_rowInds[0], &h_coo_colInds[0], &h_coo_vals[0],
                 &h_in[0], &h_coo_out_inds[0], &h_coo_out_vals[0]);
+        }
+        nvtxRangePop();
+
+        // copy CSR results to GPU - asynchronous
+        int nOutVals = h_coo_offsets[omp_get_max_threads()];
+        cudaMemcpyAsync(d_coo_out_inds, h_coo_out_inds, nOutVals*sizeof(int),       cudaMemcpyHostToDevice, memStream);
+        cudaMemcpyAsync(d_coo_out_vals, h_coo_out_vals, nOutVals*nve*sizeof(float), cudaMemcpyHostToDevice, memStream);
+
+        // wait for CSR/ELL updates to be in place
+        cudaStreamSynchronize(memStream);
+        cudaStreamSynchronize(computeStream);
+
+        // combine CSR/ELL results
+        spvvadd(d_out, d_coo_out_inds, d_coo_out_vals, nOutVals*nve, computeStream);
     }
-    nvtxRangePop();
-
-    // copy CSR results to GPU - asynchronous
-    int nOutVals = h_coo_offsets[omp_get_max_threads()];
-    cudaMemcpyAsync(d_coo_out_inds, h_coo_out_inds, nOutVals*sizeof(int),       cudaMemcpyHostToDevice, memStream);
-    cudaMemcpyAsync(d_coo_out_vals, h_coo_out_vals, nOutVals*nve*sizeof(float), cudaMemcpyHostToDevice, memStream);
-
-    // wait for CSR/ELL updates to be in place
-    cudaStreamSynchronize(memStream);
-    cudaStreamSynchronize(computeStream);
-
-    // combine CSR/ELL results
-    spvvadd(d_out, d_coo_out_inds, d_coo_out_vals, nOutVals*nve, computeStream);
 }
 
 void
