@@ -12,13 +12,13 @@
 extern "C" {
 
 void
-OsdTranspose(float *odata, float *idata, int m, int n);
+OsdTranspose(float *odata, float *idata, int m, int n, cudaStream_t& stream);
 
 void
 LogicalSpMV_ell0_gpu(int m, int n, int k, int *ell_cols, float *ell_vals, float *v_in, float *v_out, cudaStream_t& stream);
 
 void
-LogicalSpMV_coo0_gpu(int m, int n, int coo_nnz, int *coo_rows, int *coo_cols, float *coo_vals, float *coo_scratch, float *v_in, float *v_out);
+LogicalSpMV_coo0_gpu(int m, int n, int coo_nnz, int *coo_rows, int *coo_cols, float *coo_vals, float *coo_scratch, float *v_in, float *v_out, cudaStream_t& stream);
 
 void
 LogicalSpMV_csr(int m, int n, int k, int *rows, int *cols, float *vals, float *v_in, float *v_out);

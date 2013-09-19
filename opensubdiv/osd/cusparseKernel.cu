@@ -276,26 +276,28 @@ void
 LogicalSpMV_ell0_gpu(int m, int n, int k, int *ell_cols, float *ell_vals, float *v_in, float *v_out, cudaStream_t& stream) {
 
     int nBlocks = (m + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    logical_spmv_ell_kernel<<<nBlocks,THREADS_PER_BLOCK,0,stream>>>
+    size_t nShmemBytes = 6*THREADS_PER_BLOCK*sizeof(float);
+    logical_spmv_ell_kernel<<<nBlocks,THREADS_PER_BLOCK,nShmemBytes,stream>>>
         (m, n, k, ell_cols, ell_vals, v_in, v_out);
 }
 
 void
-LogicalSpMV_coo0_gpu(int m, int n, const int coo_nnz, int *coo_rows, int *coo_cols, float *coo_vals, float *coo_scratch, float *v_in, float *v_out) {
+LogicalSpMV_coo0_gpu(int m, int n, const int coo_nnz, int *coo_rows, int *coo_cols, float *coo_vals, float *coo_scratch, float *v_in, float *v_out, cudaStream_t& stream) {
 
     int nBlocks = (coo_nnz + COO_THREADS_PER_BLOCK_0 - 1) / COO_THREADS_PER_BLOCK_0;
-    logical_spmv_coo_kernel0A<<<nBlocks,COO_THREADS_PER_BLOCK_0>>>
+    logical_spmv_coo_kernel0A<<<nBlocks,COO_THREADS_PER_BLOCK_0,0,stream>>>
         (coo_nnz, coo_rows, coo_cols, coo_vals, coo_scratch, v_in, v_out);
 
     const int tpb1 = COO_THREADS_PER_BLOCK_1;
     for(int nLeft = coo_nnz, stride = 1; nLeft > 0; nLeft /= tpb1, stride *= tpb1) {
+        size_t nShmemBytes = COO_THREADS_PER_BLOCK_1 * (6*sizeof(float) + sizeof(int));
         nBlocks = (nLeft + COO_THREADS_PER_BLOCK_1 - 1) / COO_THREADS_PER_BLOCK_1;
-        logical_spmv_coo_kernel1A<<<nBlocks,COO_THREADS_PER_BLOCK_1>>>
+        logical_spmv_coo_kernel1A<<<nBlocks,COO_THREADS_PER_BLOCK_1,nShmemBytes,stream>>>
             (coo_nnz, coo_rows, stride, coo_scratch);
     }
 
     nBlocks = (coo_nnz + COO_THREADS_PER_BLOCK_2 - 1) / COO_THREADS_PER_BLOCK_2;
-    logical_spmv_coo_kernel2A<<<nBlocks,COO_THREADS_PER_BLOCK_2>>>
+    logical_spmv_coo_kernel2A<<<nBlocks,COO_THREADS_PER_BLOCK_2,0,stream>>>
         (coo_nnz, coo_rows, coo_scratch, v_out);
 }
 

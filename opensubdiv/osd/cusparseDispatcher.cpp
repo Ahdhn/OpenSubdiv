@@ -57,6 +57,9 @@ CudaCsrMatrix::CudaCsrMatrix(int m, int n, int nnz, int nve) :
 
     cudaMalloc( &d_in_scratch,  n*nve*sizeof(float) );
     cudaMalloc( &d_out_scratch, m*nve*sizeof(float) );
+
+    cudaStreamCreate(&memStream);
+    cudaStreamCreate(&computeStream);
 }
 
 CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve) :
@@ -113,6 +116,9 @@ CudaCsrMatrix::CudaCsrMatrix(const CudaCooMatrix* StagedOp, int nve) :
     free(h_rows);
     free(h_cols);
     free(h_vals);
+
+    cudaStreamCreate(&memStream);
+    cudaStreamCreate(&computeStream);
 }
 
 int
@@ -126,7 +132,7 @@ CudaCsrMatrix::NumBytes() {
 void
 CudaCsrMatrix::logical_spmv(float *d_out, float* d_in, float *h_in) {
     LogicalSpMV_ell0_gpu(m, n, ell_k, ell_cols, ell_vals, d_in, d_out, computeStream);
-    LogicalSpMV_coo0_gpu(m, n, coo_nnz, coo_rows+1, coo_cols+1, coo_vals+1, coo_scratch, d_in, d_out);
+    LogicalSpMV_coo0_gpu(m, n, coo_nnz, coo_rows+1, coo_cols+1, coo_vals+1, coo_scratch, d_in, d_out, computeStream);
 }
 
 void
@@ -145,14 +151,14 @@ CudaCsrMatrix::spmv(float *d_out, float* d_in) {
 
     g_matrixTimer.Start();
     {
-        OsdTranspose(d_in_scratch, d_in, csp_ldb, nve);
+        OsdTranspose(d_in_scratch, d_in, csp_ldb, nve, computeStream);
 
         status = cusparseScsrmm(handle, op, csp_m, csp_n, csp_k, csp_nnz,
                 &alpha, desc, vals, rows, cols, d_in_scratch, csp_ldb,
                 &beta, d_out_scratch, csp_ldc);
         cusparseCheckStatus(status);
 
-        OsdTranspose(d_out, d_out_scratch, nve, csp_ldc);
+        OsdTranspose(d_out, d_out_scratch, nve, csp_ldc, computeStream);
     }
     g_matrixTimer.Stop();
 }
@@ -294,9 +300,6 @@ CudaCsrMatrix::ellize() {
     cudaMemcpy(coo_rows, &h_coo_rows[0], h_coo_rows.size() * sizeof(int),   cudaMemcpyHostToDevice);
     cudaMemcpy(coo_cols, &h_coo_cols[0], h_coo_cols.size() * sizeof(int),   cudaMemcpyHostToDevice);
     cudaMemcpy(coo_vals, &h_coo_vals[0], h_coo_vals.size() * sizeof(float), cudaMemcpyHostToDevice);
-
-    cudaStreamCreate(&memStream);
-    cudaStreamCreate(&computeStream);
 }
 
 OsdCusparseKernelDispatcher::OsdCusparseKernelDispatcher(int levels, bool logical) :
