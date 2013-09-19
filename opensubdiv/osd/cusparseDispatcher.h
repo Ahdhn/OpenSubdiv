@@ -12,7 +12,7 @@
 extern "C" {
 
 void
-OsdTranspose(float *odata, float *idata, int m, int n, cudaStream_t& stream);
+OsdTranspose(float *odata, float *idata, int m, int n);
 
 void
 LogicalSpMV_ell0_gpu(int m, int n, int k, int *ell_cols, float *ell_vals, float *v_in, float *v_out, cudaStream_t& stream);

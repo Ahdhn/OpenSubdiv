@@ -145,14 +145,14 @@ CudaCsrMatrix::spmv(float *d_out, float* d_in) {
 
     g_matrixTimer.Start();
     {
-        OsdTranspose(d_in_scratch, d_in, csp_ldb, nve, computeStream);
+        OsdTranspose(d_in_scratch, d_in, csp_ldb, nve);
 
         status = cusparseScsrmm(handle, op, csp_m, csp_n, csp_k, csp_nnz,
                 &alpha, desc, vals, rows, cols, d_in_scratch, csp_ldb,
                 &beta, d_out_scratch, csp_ldc);
         cusparseCheckStatus(status);
 
-        OsdTranspose(d_out, d_out_scratch, nve, csp_ldc, computeStream);
+        OsdTranspose(d_out, d_out_scratch, nve, csp_ldc);
     }
     g_matrixTimer.Stop();
 }
