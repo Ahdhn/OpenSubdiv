@@ -7,7 +7,7 @@ import numpy as np
 if sys.platform == 'darwin':
     VIEWER_PATH = "/Users/mbdriscoll/OpenSubdiv/build/bin/glutViewer"
 else:
-    VIEWER_PATH = "/home/mbdriscoll/OpenSubdiv/build/bin/glutViewer"
+    VIEWER_PATH = "/home/driscoll/OpenSubdiv/build/bin/glutViewer"
 
 kernelNum = {
 	"CPU":        0,
@@ -19,7 +19,8 @@ kernelNum = {
 	"CuSPARSE":   6,
 	"CustomCPU":  7,
 	"CustomGPU":  8,
-	"MAX":        9
+	"CustomHYB":  9,
+	"MAX":        10
 }
 
 activeKernels = [
@@ -32,6 +33,7 @@ activeKernels = [
     "CuSPARSE",
     "CustomCPU",
     "CustomGPU",
+    "CustomHYB",
 ]
 
 modelNum = {
@@ -111,7 +113,7 @@ class Run(object):
 def escape_latex(string):
     return string.replace('_', '\\\\_')
 
-def do_run(model, frames=1000, level=1, kernel='CPU', spyfile=None, regression=False, exact=True, reorder=True):
+def do_run(model, frames=1000, level=1, kernel='CPU', spyfile=None, regression=False, exact=True, reorder=False, divider=None):
     assert 0 < level <= 9, "Must select positive subdiv level from 1 to 7."
     cmd_line = [
         VIEWER_PATH,
@@ -128,6 +130,8 @@ def do_run(model, frames=1000, level=1, kernel='CPU', spyfile=None, regression=F
         cmd_line += ['--exact']
     if reorder:
         cmd_line += ['--reorder']
+    if divider:
+        cmd_line += ['--divide', '%s' % divider]
     print "Running: %s" % " ".join(cmd_line)
     osd = Popen(cmd_line, stdin=PIPE, stdout=PIPE, stderr=PIPE)
     stdout, stderr = osd.communicate()

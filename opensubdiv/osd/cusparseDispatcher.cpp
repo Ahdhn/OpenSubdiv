@@ -236,7 +236,7 @@ CudaCsrMatrix::ellize() {
     for (int i = 38; i >= 0; i--)
         cdf[i] = histogram[i] + cdf[i+1];
 
-    int k = 16;
+    int k = 4;
     if (g_HybridSplitParam != -1)
         k = g_HybridSplitParam;
     else

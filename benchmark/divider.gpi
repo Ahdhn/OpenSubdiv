@@ -1,0 +1,67 @@
+#!/bin/bash
+gnuplot << EOF
+
+# $1 output file
+
+# set terminal
+set term epslatex solid color size 10,7
+
+# set line styles
+set style line 1 lw 4 lt rgb "orange"
+set style line 2 lw 4 lt rgb "dark-green"
+set style line 3 lw 4 lt rgb "dark-red"
+set style line 4 lw 4 lt rgb "dark-blue"
+set style line 5 lw 4 lt rgb "black"
+
+# key font size
+set key font ",2"
+set output "$1"
+
+set multiplot layout 2,2 title "Sustained Performance as a Function of Split Parameter k"
+set xlabel "k"
+set ylabel "Surface Points Computed per Millisecond" offset 1
+#set size 1, 0.80
+
+set key reverse Left
+set key autotitle columnhead
+#set key maxrows 1
+set key samplen 2
+set key width -6 height 1
+
+set autoscale fix
+
+#set logscale y 10
+#set format y "\$10^{%L}\$";
+
+set grid back
+gmean(i,j) = sqrt(i*j)
+
+set title "Big Guy"
+set key top left
+set offset .4, .4, .3, .3
+plot "divider_BigGuy.dat" \
+       using 1:2 w linespoint ls 1, \
+    "" using 1:4 w linespoint ls 2
+
+set title "Bunny"
+set key top left
+set offset .4, .4, .3, .3
+plot "divider_Bunny.dat" \
+       using 1:2 w linespoint ls 1, \
+    "" using 1:4 w linespoint ls 2
+
+set title "Cube"
+set key bottom right
+set offset .4, .6, .3, .3
+plot "divider_Cube.dat" \
+       using 1:2 w linespoint ls 1, \
+    "" using 1:4 w linespoint ls 2
+
+set title "Icosahedron"
+set key bottom right
+set offset .4, .6, .3, .3
+plot "divider_Icosahedron.dat" \
+       using 1:2 w linespoint ls 1, \
+    "" using 1:4 w linespoint ls 2
+
+EOF

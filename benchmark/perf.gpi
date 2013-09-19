@@ -11,6 +11,7 @@ set style line 1 lw 4 lt rgb "orange"
 set style line 2 lw 4 lt rgb "dark-green"
 set style line 3 lw 4 lt rgb "dark-red"
 set style line 4 lw 4 lt rgb "dark-blue"
+set style line 5 lw 4 lt rgb "black"
 
 # key font size
 set key font ",2"
@@ -51,7 +52,8 @@ set label 1 sprintf('%1.2f$\times$', cpu_matrix/cpu_table) at  max_verts*1.1,gme
 set arrow 2 from max_verts,gpu_table to max_verts,gpu_matrix nohead ls 0 lw 1;
 set label 2 sprintf('%1.2f$\times$', gpu_matrix/gpu_table) at  max_verts*1.1,gmean(gpu_table,gpu_matrix) front tc ls 1
 plot "perf_BigGuy.dat" \
-       using 1:16 w linespoint ls 4, \
+       using 1:18 w linespoint ls 5, \
+    "" using 1:16 w linespoint ls 4, \
     "" using 1:6 w linespoint ls 2, \
     "" using 1:14 w linespoint ls 3, \
     "" using 1:4 w linespoint ls 1
