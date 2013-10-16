@@ -46,7 +46,7 @@ transpose(float *odata, float *idata, int m, int n)
 __global__ void
 logical_spmv_coo_kernelB(const int nnz,
     const int  * __restrict__ rows, const int * __restrict__ cols, float * __restrict__ vals,
-    float * __restrict__ scratch, const float * __restrict__ v_in, float * __restrict__ v_out)
+    const float * __restrict__ v_in, float * __restrict__ v_out)
 {
     int nz = threadIdx.x + blockIdx.x * blockDim.x;
     if (nz >= nnz)
@@ -284,6 +284,7 @@ LogicalSpMV_ell0_gpu(int m, int n, int k, int *ell_cols, float *ell_vals, float 
 void
 LogicalSpMV_coo0_gpu(int m, int n, const int coo_nnz, int *coo_rows, int *coo_cols, float *coo_vals, float *coo_scratch, float *v_in, float *v_out, cudaStream_t& stream) {
 
+#if USE_COO_SEGMENTED_REDUCTIONS
     int nBlocks = (coo_nnz + COO_THREADS_PER_BLOCK_0 - 1) / COO_THREADS_PER_BLOCK_0;
     logical_spmv_coo_kernel0A<<<nBlocks,COO_THREADS_PER_BLOCK_0,0,stream>>>
         (coo_nnz, coo_rows, coo_cols, coo_vals, coo_scratch, v_in, v_out);
@@ -299,6 +300,10 @@ LogicalSpMV_coo0_gpu(int m, int n, const int coo_nnz, int *coo_rows, int *coo_co
     nBlocks = (coo_nnz + COO_THREADS_PER_BLOCK_2 - 1) / COO_THREADS_PER_BLOCK_2;
     logical_spmv_coo_kernel2A<<<nBlocks,COO_THREADS_PER_BLOCK_2,0,stream>>>
         (coo_nnz, coo_rows, coo_scratch, v_out);
+#else
+    int nBlocks = (coo_nnz + COO_THREADS_PER_BLOCK_0 - 1) / COO_THREADS_PER_BLOCK_0;
+    logical_spmv_coo_kernelB<<<nBlocks,COO_THREADS_PER_BLOCK_0>>>(coo_nnz, coo_rows, coo_cols, coo_vals, v_in, v_out);
+#endif
 }
 
 void
