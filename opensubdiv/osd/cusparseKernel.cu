@@ -190,7 +190,7 @@ logical_spmv_ell_kernel(const int m, const int n, const int k,
         sum4 = 0.0f,
         sum5 = 0.0f;
 
-    int lda = m + ((512/sizeof(float)) - (m % (512/sizeof(float))));
+    int lda = m + (32 - (m % 32));
 
     for (int i = 0; i < k; i++) {
         int idx = row + i*lda;

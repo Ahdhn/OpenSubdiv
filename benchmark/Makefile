@@ -3,9 +3,11 @@ MEM_DATS := $(addprefix mem_, $(addsuffix .dat, $(MODELS)))
 SPARSITY_DATS := $(addprefix sparsity_, $(addsuffix .dat, $(MODELS)))
 STABILITY_DATS := $(addprefix stability_, $(addsuffix .dat, $(MODELS)))
 PERF_TEXS := $(addprefix perf_, $(addsuffix .tex, $(MODELS)))
+CSRMM_TEXS := $(addprefix csrmm_, $(addsuffix .tex, $(MODELS)))
 RELATIVE_DATS := $(addprefix relative_, $(addsuffix .dat, $(MODELS)))
 REORDER_DATS := $(addprefix reorder_, $(addsuffix .dat, $(MODELS)))
 PERF_DATS := $(addprefix perf_, $(addsuffix .dat, $(MODELS)))
+CSRMM_DATS := $(addprefix csrmm_, $(addsuffix .dat, $(MODELS)))
 DIVIDER_DATS := $(addprefix divider_, $(addsuffix .dat, $(MODELS)))
 STREAM_TEXS := $(addprefix stream_, $(addsuffix .tex, $(MODELS)))
 TTFF_TEXS := $(addprefix ttff_, $(addsuffix .tex, $(MODELS)))
@@ -22,6 +24,11 @@ SPYFILES = $(addprefix spy_, $(addsuffix .pdf, $(MODELS)))
 default:    all
 
 all:  $(SPYFILES) $(TEXFILES)
+
+csrmm_Bunny.tex: csrmm_Bunny.dat
+	./csrmm.gpi $(BUILD_PATH)/$@ $^ $*
+	cp $(BUILD_PATH)/$@ $(INSTALL_PATH)/$@
+	cp $(BUILD_PATH)/$(patsubst %.tex,%.eps, $@) $(INSTALL_PATH)/
 
 perf_%.tex: perf_%.dat
 	./perf.gpi $(BUILD_PATH)/$@ $^ $*
@@ -94,6 +101,9 @@ clean:
 
 perf_%.dat:
 	./perf.py $@
+
+csrmm_%.dat:
+	./csrmm.py $@
 
 divider_%.dat:
 	./divider.py $@

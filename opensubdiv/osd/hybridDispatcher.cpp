@@ -20,6 +20,7 @@ extern "C" {
 #include <omp.h>
 
 int g_HybridSplitParam = -1;
+int g_sliceSize = INT_MAX;
 
 namespace OpenSubdiv {
 namespace OPENSUBDIV_VERSION {
@@ -228,9 +229,12 @@ HybridCsrMatrix::ellize() {
         while ( cdf[k] > std::max(4096, m/3) && k < 39)
             k++;
 
-    int lda = m + ((512/sizeof(float)) - (m % (512/sizeof(float))));
+    int lda = m + (32 - (m % 32));
     std::vector<float> h_ell_vals(lda*k, 0.0f);
     std::vector<int>   h_ell_cols(lda*k, 0);
+
+    int nSlices = (m + g_sliceSize - 1) / g_sliceSize;
+    std::vector<int>   h_ell_slicePtrs(nSlices+1, 0);
 
     h_coo_rowInds.clear(); h_coo_rowInds.reserve(nnz/4);
     h_coo_colInds.clear(); h_coo_colInds.reserve(nnz/4);
