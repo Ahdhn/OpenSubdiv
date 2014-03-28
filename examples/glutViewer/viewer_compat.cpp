@@ -713,6 +713,18 @@ createOsdMesh( const char * shape, int level, int kernel, Scheme scheme, int exa
     printf(" exact=%d",  g_exact);
     printf(" reorder=%d",  g_reorder);
     printf(" divider=%d",  g_HybridSplitParam);
+
+
+    int nIrreg = 0;
+    for (int i = 0; i < g_osdmesh->GetFarMesh()->GetNumCoarseVertices(); i++) {
+        int valence = g_osdmesh->GetFarMesh()->GetHbrVertex(i)->GetValence();
+        if ((scheme == kLoop    && valence != 6) ||
+            (scheme == kCatmark && valence != 4))
+            nIrreg += 1;
+    }
+    printf(" nExtraordinaryVerts=%d", nIrreg);
+    printf(" nBaseVerts=%d", g_osdmesh->GetFarMesh()->GetNumCoarseVertices());
+
 #endif
 }
 
