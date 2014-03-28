@@ -229,7 +229,7 @@ HybridCsrMatrix::ellize() {
         while ( cdf[k] > std::max(4096, m/3) && k < 39)
             k++;
 
-    int lda = m + (32 - (m % 32));
+    int lda = m + ((512/sizeof(float)) - (m % (512/sizeof(float))));
     std::vector<float> h_ell_vals(lda*k, 0.0f);
     std::vector<int>   h_ell_cols(lda*k, 0);
 
