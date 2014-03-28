@@ -16,7 +16,7 @@ MATRIXTIME_TEXS := matrixtime_MKL.tex matrixtime_CuSPARSE.tex
 RELATIVE_TEX := relative.tex
 BUILD_PATH := ./graphs
 INSTALL_PATH := ./graphs/
-INSTALL_PATH := /home/driscoll/sga2013/graphs
+INSTALL_PATH := /home/driscoll/hpg2014/graphs
 
 TEXFILES = mem.tex sparsity.tex stability.tex perf.tex $(PERF_TEXS) $(RELATIVE_TEX) $(STREAM_TEXS) $(TTFF_TEXS) $(FPS_TEXS) $(MATRIXTIME_TEXS)
 SPYFILES = $(addprefix spy_, $(addsuffix .pdf, $(MODELS)))

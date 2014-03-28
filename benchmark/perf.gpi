@@ -52,11 +52,10 @@ set label 1 sprintf('%1.2f$\times$', cpu_matrix/cpu_table) at  max_verts*1.1,gme
 set arrow 2 from max_verts,gpu_table to max_verts,gpu_matrix nohead ls 0 lw 1;
 set label 2 sprintf('%1.2f$\times$', gpu_matrix/gpu_table) at  max_verts*1.1,gmean(gpu_table,gpu_matrix) front tc ls 1
 plot "perf_BigGuy.dat" \
-       using 1:16 w linespoint ls 5, \
-    "" using 1:14 w linespoint ls 4, \
-    "" using 1:6 w linespoint ls 2, \
-    "" using 1:12 w linespoint ls 3, \
-    "" using 1:4 w linespoint ls 1
+       using 1:5 w linespoint ls 4, \
+    "" using 1:3 w linespoint ls 3, \
+    "" using 1:4 w linespoint ls 2, \
+    "" using 1:2 w linespoint ls 1
 
 set title "Bunny"
 set key top left
@@ -71,11 +70,10 @@ set label 1 sprintf('%1.2f$\times$', cpu_matrix/cpu_table) at  max_verts*1.1,gme
 set arrow 2 from max_verts,gpu_table to max_verts,gpu_matrix nohead ls 0 lw 1;
 set label 2 sprintf('%1.2f$\times$', gpu_matrix/gpu_table) at  max_verts*1.1,gmean(gpu_table,gpu_matrix) front tc ls 1
 plot "perf_Bunny.dat" \
-       using 1:16 w linespoint ls 5, \
-    "" using 1:14 w linespoint ls 4, \
-    "" using 1:6 w linespoint ls 2, \
-    "" using 1:12 w linespoint ls 3, \
-    "" using 1:4 w linespoint ls 1
+       using 1:5 w linespoint ls 4, \
+    "" using 1:3 w linespoint ls 3, \
+    "" using 1:4 w linespoint ls 2, \
+    "" using 1:2 w linespoint ls 1
 
 set title "Cube"
 set key bottom right
@@ -90,11 +88,10 @@ set label 1 sprintf('%1.2f$\times$', cpu_matrix/cpu_table) at  max_verts*1.2,gme
 set arrow 2 from max_verts,gpu_table to max_verts,gpu_matrix nohead ls 0 lw 1;
 set label 2 sprintf('%1.2f$\times$', gpu_matrix/gpu_table) at  max_verts*1.2,gmean(gpu_table,gpu_matrix) front tc ls 1
 plot "perf_Cube.dat" \
-       using 1:16 w linespoint ls 5, \
-    "" using 1:14 w linespoint ls 4, \
-    "" using 1:6 w linespoint ls 2, \
-    "" using 1:12 w linespoint ls 3, \
-    "" using 1:4 w linespoint ls 1
+       using 1:5 w linespoint ls 4, \
+    "" using 1:3 w linespoint ls 3, \
+    "" using 1:4 w linespoint ls 2, \
+    "" using 1:2 w linespoint ls 1
 
 set title "Icosahedron"
 set key bottom right
@@ -109,10 +106,9 @@ set label 1 sprintf('%1.2f$\times$', cpu_matrix/cpu_table) at  max_verts*1.2,gme
 set arrow 2 from max_verts,gpu_table to max_verts,gpu_matrix nohead ls 0 lw 1;
 set label 2 sprintf('%1.2f$\times$', gpu_matrix/gpu_table) at  max_verts*1.2,gmean(gpu_table,gpu_matrix) front tc ls 1
 plot "perf_Icosahedron.dat" \
-       using 1:16 w linespoint ls 5, \
-    "" using 1:14 w linespoint ls 4, \
-    "" using 1:6 w linespoint ls 2, \
-    "" using 1:12 w linespoint ls 3, \
-    "" using 1:4 w linespoint ls 1
+       using 1:5 w linespoint ls 4, \
+    "" using 1:3 w linespoint ls 3, \
+    "" using 1:4 w linespoint ls 2, \
+    "" using 1:2 w linespoint ls 1
 
 EOF
