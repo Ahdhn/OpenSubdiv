@@ -11,6 +11,13 @@ activeKernels = [
   "CustomGPU",
 ]
 
+best_k = {
+  "BigGuy": 20,
+  "Bunny": 17,
+  "Cube": 8,
+  "Icosahedron": 9,
+}
+
 def columnName(k):
     names = {
       "Cuda": "Table-driven (GPU)",
@@ -28,7 +35,7 @@ def build_db(model):
     for k in activeKernels:
         for l in range( modelMaxLevel[model] ):
             try:
-                run = do_run(frames=100, model=model, kernel=k, level=l+1)
+                run = do_run(frames=100, model=model, kernel=k, level=l+1, divider=best_k[model])
                 db.add(run)
             except ExecutionError as e:
                 print "\tFailed with: %s" % e.message

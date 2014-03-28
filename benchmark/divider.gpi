@@ -40,28 +40,28 @@ set title "Big Guy"
 set key top left
 set offset .4, .4, .3, .3
 plot "divider_BigGuy.dat" \
-       using 1:2 w linespoint ls 1, \
-    "" using 1:4 w linespoint ls 2
+       using 1:2 w linespoint ls 2, \
+    "" using 1:4 w linespoint ls 4
 
 set title "Bunny"
 set key top left
 set offset .4, .4, .3, .3
 plot "divider_Bunny.dat" \
-       using 1:2 w linespoint ls 1, \
-    "" using 1:4 w linespoint ls 2
+       using 1:2 w linespoint ls 2, \
+    "" using 1:4 w linespoint ls 4
 
 set title "Cube"
 set key bottom right
 set offset .4, .6, .3, .3
 plot "divider_Cube.dat" \
-       using 1:2 w linespoint ls 1, \
-    "" using 1:4 w linespoint ls 2
+       using 1:2 w linespoint ls 2, \
+    "" using 1:4 w linespoint ls 4
 
 set title "Icosahedron"
 set key bottom right
 set offset .4, .6, .3, .3
 plot "divider_Icosahedron.dat" \
-       using 1:2 w linespoint ls 1, \
-    "" using 1:4 w linespoint ls 2
+       using 1:2 w linespoint ls 2, \
+    "" using 1:4 w linespoint ls 4
 
 EOF

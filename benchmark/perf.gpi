@@ -43,10 +43,10 @@ set title "Big Guy"
 set key top left
 set offset .4, .4, .3, .3
 max_verts = 1484802.0
-cpu_table = 39581.0
-cpu_matrix = 78291.0
-gpu_table = 319560.0
-gpu_matrix = 582795.0
+cpu_table = 48848.44
+cpu_matrix = 85186.0
+gpu_table = 323270.57
+gpu_matrix = 821904.21
 set arrow 1 from max_verts,cpu_table to max_verts,cpu_matrix nohead ls 0 lw 1;
 set label 1 sprintf('%1.2f$\times$', cpu_matrix/cpu_table) at  max_verts*1.1,gmean(cpu_table,cpu_matrix) front tc ls 1
 set arrow 2 from max_verts,gpu_table to max_verts,gpu_matrix nohead ls 0 lw 1;
@@ -61,10 +61,10 @@ set title "Bunny"
 set key top left
 set offset .4, .4, .3, .3
 max_verts = 1493741.0
-cpu_table = 42028.0
-cpu_matrix = 102384.0
-gpu_table = 385552.0
-gpu_matrix = 892973.0
+cpu_table = 51165.729657
+cpu_matrix = 108025.696942
+gpu_table = 391435.0
+gpu_matrix = 920819.0
 set arrow 1 from max_verts,cpu_table to max_verts,cpu_matrix nohead ls 0 lw 1;
 set label 1 sprintf('%1.2f$\times$', cpu_matrix/cpu_table) at  max_verts*1.1,gmean(cpu_table,cpu_matrix) front tc ls 1
 set arrow 2 from max_verts,gpu_table to max_verts,gpu_matrix nohead ls 0 lw 1;
@@ -79,10 +79,10 @@ set title "Cube"
 set key bottom right
 set offset .4, .6, .3, .3
 max_verts = 393218.0
-cpu_table = 43355.0
-cpu_matrix = 177680.0
-gpu_table = 279727.0
-gpu_matrix = 886779.0
+cpu_table = 50272.554378
+cpu_matrix = 159064.706758
+gpu_table = 291999.042079
+gpu_matrix = 1412663.595704
 set arrow 1 from max_verts,cpu_table to max_verts,cpu_matrix nohead ls 0 lw 1;
 set label 1 sprintf('%1.2f$\times$', cpu_matrix/cpu_table) at  max_verts*1.2,gmean(cpu_table,cpu_matrix) front tc ls 1
 set arrow 2 from max_verts,gpu_table to max_verts,gpu_matrix nohead ls 0 lw 1;
@@ -97,10 +97,10 @@ set title "Icosahedron"
 set key bottom right
 set offset .4, .6, .3, .3
 max_verts = 655362.0
-cpu_table = 42680.446498
-cpu_matrix = 151676.460241
-gpu_table = 385735.0
-gpu_matrix = 1036087.225516
+cpu_table = 53343.144260
+cpu_matrix = 148706.383547
+gpu_table = 397625.266399
+gpu_matrix = 1528429.25084
 set arrow 1 from max_verts,cpu_table to max_verts,cpu_matrix nohead ls 0 lw 1;
 set label 1 sprintf('%1.2f$\times$', cpu_matrix/cpu_table) at  max_verts*1.2,gmean(cpu_table,cpu_matrix) front tc ls 1
 set arrow 2 from max_verts,gpu_table to max_verts,gpu_matrix nohead ls 0 lw 1;
